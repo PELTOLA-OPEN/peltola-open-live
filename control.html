@@ -317,6 +317,28 @@
         </section>
 
         <section class="card">
+          <h2>Overlay adjustments</h2>
+          <div class="grid">
+            <label>Rolling bar height, px
+              <input id="tickerHeightPx" type="number" min="30" max="120" step="1" />
+            </label>
+            <label>Popup scorecard center X, %
+              <input id="scorecardCenterX" type="number" min="0" max="100" step="1" />
+            </label>
+            <label>Popup scorecard center Y, %
+              <input id="scorecardCenterY" type="number" min="0" max="100" step="1" />
+            </label>
+            <label>Popup scorecard size, %
+              <input id="scorecardScale" type="number" min="50" max="150" step="1" />
+            </label>
+          </div>
+          <p class="muted" style="margin-top: 10px; margin-bottom: 0;">Save event settings after changing these values. X/Y are based on the overlay screen, where 50/50 is the center.</p>
+          <div class="row" style="margin-top: 12px;">
+            <button id="resetOverlayLayoutBtn" type="button">Reset overlay adjustments</button>
+          </div>
+        </section>
+
+        <section class="card">
           <div class="row between">
             <h2>Teams</h2>
             <button id="addTeamBtn" type="button">Add team</button>
@@ -392,6 +414,11 @@
       holeCount: document.getElementById("holeCount"),
       teamCount: document.getElementById("teamCount"),
       overlayMode: document.getElementById("overlayMode"),
+      tickerHeightPx: document.getElementById("tickerHeightPx"),
+      scorecardCenterX: document.getElementById("scorecardCenterX"),
+      scorecardCenterY: document.getElementById("scorecardCenterY"),
+      scorecardScale: document.getElementById("scorecardScale"),
+      resetOverlayLayoutBtn: document.getElementById("resetOverlayLayoutBtn"),
       saveEventBtn: document.getElementById("saveEventBtn"),
       applyTeamCountBtn: document.getElementById("applyTeamCountBtn"),
       resetScoringPositionBtn: document.getElementById("resetScoringPositionBtn"),
@@ -433,6 +460,7 @@
     els.setupTabBtn.addEventListener("click", () => setActiveTab("setup"));
     els.scoringTabBtn.addEventListener("click", () => setActiveTab("scoring"));
     els.saveEventBtn.addEventListener("click", saveEventSettings);
+    els.resetOverlayLayoutBtn.addEventListener("click", resetOverlayLayout);
     els.applyTeamCountBtn.addEventListener("click", applyTeamCount);
     els.resetScoringPositionBtn.addEventListener("click", resetScoringPosition);
     els.overlayMode.addEventListener("change", () => quickUpdate({ overlayMode: els.overlayMode.value }));
@@ -469,6 +497,7 @@
         currentHole: 0,
         holeCount: 18,
         overlayMode: "compact",
+        overlayLayout: getDefaultOverlayLayout(),
         showHoleBug: false,
         showStandings: true,
         holes: initialHoles,
@@ -497,6 +526,11 @@
       els.holeCount.value = holeCount;
       els.teamCount.value = setupTeams.length;
       els.overlayMode.value = eventState.overlayMode || "compact";
+      const overlayLayout = getOverlayLayout();
+      els.tickerHeightPx.value = overlayLayout.tickerHeightPx;
+      els.scorecardCenterX.value = overlayLayout.scorecardCenterX;
+      els.scorecardCenterY.value = overlayLayout.scorecardCenterY;
+      els.scorecardScale.value = overlayLayout.scorecardScale;
       els.showStandings.checked = eventState.showStandings !== false;
 
       renderTeams(setupTeams);
@@ -651,6 +685,7 @@
         name: els.eventName.value.trim() || "Peltola Open",
         holeCount: nextHoleCount,
         overlayMode: els.overlayMode.value,
+        overlayLayout: readOverlayLayoutInputs(),
         showStandings: els.showStandings.checked,
         updatedAt: Date.now()
       };
@@ -779,6 +814,35 @@
       await update(eventRef, { updatedAt: Date.now() });
     }
 
+    async function resetOverlayLayout() {
+      if (!signedIn) return;
+      const defaults = getDefaultOverlayLayout();
+      await update(eventRef, { overlayLayout: defaults, updatedAt: Date.now() });
+      els.eventStatus.textContent = "Overlay adjustments reset.";
+    }
+
+    function readOverlayLayoutInputs() {
+      return {
+        tickerHeightPx: clampInt(els.tickerHeightPx.value, 30, 120),
+        scorecardCenterX: clampNumber(els.scorecardCenterX.value, 0, 100),
+        scorecardCenterY: clampNumber(els.scorecardCenterY.value, 0, 100),
+        scorecardScale: clampInt(els.scorecardScale.value, 50, 150)
+      };
+    }
+
+    function getOverlayLayout() {
+      return { ...getDefaultOverlayLayout(), ...(eventState?.overlayLayout || {}) };
+    }
+
+    function getDefaultOverlayLayout() {
+      return {
+        tickerHeightPx: 58,
+        scorecardCenterX: 50,
+        scorecardCenterY: 43,
+        scorecardScale: 100
+      };
+    }
+
     async function applyTeamCount() {
       if (!signedIn) return;
       const targetCount = clampInt(els.teamCount.value, 0, 40);
@@ -905,6 +969,12 @@
 
     function clampInt(value, min, max) {
       const number = Number.parseInt(value, 10);
+      if (!Number.isFinite(number)) return min;
+      return Math.max(min, Math.min(max, number));
+    }
+
+    function clampNumber(value, min, max) {
+      const number = Number(value);
       if (!Number.isFinite(number)) return min;
       return Math.max(min, Math.min(max, number));
     }

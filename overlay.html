@@ -131,7 +131,7 @@
       left: 3vw;
       right: 3vw;
       bottom: 4vh;
-      height: clamp(42px, 4.8vw, 58px);
+      height: var(--ticker-height, clamp(42px, 4.8vw, 58px));
       display: flex;
       overflow: hidden;
       border-radius: 16px;
@@ -202,12 +202,12 @@
 
     .scorecard-pop {
       position: absolute;
-      left: 50%;
-      top: 11vh;
+      left: var(--scorecard-center-x, 50%);
+      top: var(--scorecard-center-y, 43%);
       width: auto;
       max-width: 96vw;
       max-height: 74vh;
-      transform: translateX(-50%) translateY(24px) scale(0.96);
+      transform: translate(-50%, -50%) translateY(24px) scale(var(--scorecard-hidden-scale, 0.96));
       opacity: 0;
       padding: 16px 16px 18px;
       border: 2px solid rgba(255, 255, 255, 0.72);
@@ -219,7 +219,7 @@
     }
 
     .scorecard-pop.show {
-      transform: translateX(-50%) translateY(0) scale(1);
+      transform: translate(-50%, -50%) translateY(0) scale(var(--scorecard-show-scale, 1));
       opacity: 1;
     }
 
@@ -347,8 +347,8 @@
       }
 
       .scorecard-pop {
-        left: 50%;
-        top: 12px;
+        left: var(--scorecard-center-x, 50%);
+        top: var(--scorecard-center-y, 43%);
         width: calc(100vw - 16px);
         max-width: calc(100vw - 16px);
         max-height: calc(100vh - 76px);
@@ -475,6 +475,7 @@
         return;
       }
 
+      applyOverlayLayout(event);
       const mode = forcedMode || event.overlayMode || "compact";
       const completedThrough = getCompletedThrough(event);
       const label = formatPlayedLabel(completedThrough);
@@ -484,6 +485,27 @@
       else renderCompactBox(event, standings, completedThrough, label);
 
       maybeShowScorecardFlash(event);
+    }
+
+    function applyOverlayLayout(event) {
+      const layout = {
+        tickerHeightPx: 58,
+        scorecardCenterX: 50,
+        scorecardCenterY: 43,
+        scorecardScale: 100,
+        ...(event.overlayLayout || {})
+      };
+
+      const tickerHeight = clampNumber(layout.tickerHeightPx, 30, 120);
+      const centerX = clampNumber(layout.scorecardCenterX, 0, 100);
+      const centerY = clampNumber(layout.scorecardCenterY, 0, 100);
+      const scale = clampNumber(layout.scorecardScale, 50, 150) / 100;
+
+      document.documentElement.style.setProperty("--ticker-height", `${tickerHeight}px`);
+      document.documentElement.style.setProperty("--scorecard-center-x", `${centerX}%`);
+      document.documentElement.style.setProperty("--scorecard-center-y", `${centerY}%`);
+      document.documentElement.style.setProperty("--scorecard-show-scale", String(scale));
+      document.documentElement.style.setProperty("--scorecard-hidden-scale", String(scale * 0.96));
     }
 
     function maybeShowScorecardFlash(event) {
@@ -701,6 +723,12 @@
 
     function clampInt(value, min, max) {
       const number = Number.parseInt(value, 10);
+      if (!Number.isFinite(number)) return min;
+      return Math.max(min, Math.min(max, number));
+    }
+
+    function clampNumber(value, min, max) {
+      const number = Number(value);
       if (!Number.isFinite(number)) return min;
       return Math.max(min, Math.min(max, number));
     }
