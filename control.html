@@ -546,7 +546,7 @@
     function renderScoring(currentHole, holeCount) {
       const holeKey = String(currentHole);
       const par = getPar(currentHole);
-      const standings = getLiveStandings(currentHole);
+      const scoringOrder = getScoringOrderForHole(currentHole);
 
       els.scoreHoleTitle.textContent = `Hole ${currentHole}`;
       els.scoreHoleSub.textContent = `Par ${par}`;
@@ -554,7 +554,7 @@
       els.nextHoleBtn.disabled = currentHole >= holeCount;
       els.scoreList.innerHTML = "";
 
-      if (!standings.length) {
+      if (!scoringOrder.length) {
         const empty = document.createElement("p");
         empty.className = "muted";
         empty.textContent = "Add teams in the Setup tab first.";
@@ -562,7 +562,8 @@
         return;
       }
 
-      for (const [index, team] of standings.entries()) {
+      for (const [index, orderedTeam] of scoringOrder.entries()) {
+        const team = getTeamTotals(orderedTeam, currentHole);
         const storedScore = Number(eventState.teams?.[team.id]?.scores?.[holeKey]);
         const strokes = Number.isFinite(storedScore) && storedScore > 0 ? storedScore : par;
         const relative = strokes - par;
@@ -723,22 +724,37 @@
         .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name));
     }
 
+    function getScoringOrderForHole(currentHole) {
+      // Keep the list stable while entering a hole. The order is based on the
+      // leaderboard at the start of the hole, so score edits on the current hole
+      // update totals but do not move rows around until the next/previous arrow is used.
+      return getLiveStandings(Math.max(0, currentHole - 1));
+    }
+
     function getLiveStandings(throughHole) {
-      return getSetupTeams().map(team => {
-        let strokes = 0;
-        let parTotal = 0;
-        let played = 0;
-        for (let hole = 1; hole <= throughHole; hole += 1) {
-          const holeKey = String(hole);
-          const par = getPar(hole);
-          const raw = Number(eventState.teams?.[team.id]?.scores?.[holeKey]);
-          const score = Number.isFinite(raw) && raw > 0 ? raw : par;
-          strokes += score;
-          parTotal += par;
-          if (Number.isFinite(raw) && raw > 0) played += 1;
-        }
-        return { ...team, strokes, par: parTotal, toPar: strokes - parTotal, played };
-      }).sort((a, b) => a.toPar - b.toPar || a.strokes - b.strokes || a.order - b.order || a.name.localeCompare(b.name));
+      return getSetupTeams()
+        .map(team => getTeamTotals(team, throughHole))
+        .sort(compareTeamsByScore);
+    }
+
+    function getTeamTotals(team, throughHole) {
+      let strokes = 0;
+      let parTotal = 0;
+      let played = 0;
+      for (let hole = 1; hole <= throughHole; hole += 1) {
+        const holeKey = String(hole);
+        const par = getPar(hole);
+        const raw = Number(eventState.teams?.[team.id]?.scores?.[holeKey]);
+        const score = Number.isFinite(raw) && raw > 0 ? raw : par;
+        strokes += score;
+        parTotal += par;
+        if (Number.isFinite(raw) && raw > 0) played += 1;
+      }
+      return { ...team, strokes, par: parTotal, toPar: strokes - parTotal, played };
+    }
+
+    function compareTeamsByScore(a, b) {
+      return a.toPar - b.toPar || a.strokes - b.strokes || a.order - b.order || a.name.localeCompare(b.name);
     }
 
     function getPar(holeNumber) {
