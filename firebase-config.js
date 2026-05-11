@@ -1,4 +1,3 @@
-uld // Replace this object with your Firebase web app config.
 // Firebase Console -> Project settings -> Your apps -> Web app -> SDK setup and configuration.
 export const firebaseConfig = {
   apiKey: "AIzaSyAJ0Dn-d-grdKE5noTyhDDQHc4fDcei_3s",
