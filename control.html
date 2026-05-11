@@ -728,14 +728,22 @@
 
     async function resetScoringPosition() {
       if (!signedIn) return;
-      if (!window.confirm("Reset the Scoring tab to before Hole 1? This does not delete team scores.")) return;
-      await update(eventRef, {
+      if (!window.confirm("Reset all entered scores and return to before Hole 1? Team names and hole pars will stay unchanged.")) return;
+
+      const updates = {
         currentHole: 0,
         overlayFlash: null,
         overlayFlashShownHoles: null,
         updatedAt: Date.now()
+      };
+
+      Object.keys(eventState.teams || {}).forEach(teamId => {
+        updates[`teams/${teamId}/scores`] = null;
       });
-      els.eventStatus.textContent = "Scoring position reset to before Hole 1.";
+
+      await update(eventRef, updates);
+      els.eventStatus.textContent = "All scores cleared. Scoring reset to before Hole 1.";
+      els.scoreStatus.textContent = "All scores cleared. Press → to start Hole 1.";
     }
 
     function getCompletedThrough() {
