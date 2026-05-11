@@ -136,8 +136,6 @@
       overflow: hidden;
       border-radius: 16px;
       background: var(--panel);
-      backdrop-filter: blur(2px);
-      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.38);
     }
 
     .ticker-viewport {
@@ -177,6 +175,15 @@
       font-variant-numeric: tabular-nums;
     }
 
+    .ticker-separator {
+      align-self: stretch;
+      width: 5px;
+      margin: 0 10px 0 2px;
+      background: rgba(0, 0, 0, 0.9);
+      border-radius: 999px;
+      opacity: 0.95;
+    }
+
     .ticker-info {
       display: grid;
       place-items: center;
@@ -197,10 +204,11 @@
       position: absolute;
       left: 50%;
       bottom: 9vh;
-      width: min(94vw, 1500px);
+      width: auto;
+      max-width: 96vw;
       transform: translateX(-50%) translateY(28px) scale(0.96);
       opacity: 0;
-      padding: 18px 20px 20px;
+      padding: 16px 16px 18px;
       border: 2px solid rgba(255, 255, 255, 0.72);
       border-radius: 16px;
       background: rgba(0, 0, 0, 0.5);
@@ -243,22 +251,23 @@
 
     .scorecard-table-wrap {
       overflow: hidden;
-      width: 100%;
+      width: max-content;
+      max-width: 100%;
     }
 
     .scorecard-table {
-      width: 100%;
+      width: auto;
       border-collapse: collapse;
-      table-layout: fixed;
+      table-layout: auto;
       color: white;
       font-variant-numeric: tabular-nums;
     }
 
     .scorecard-table th,
     .scorecard-table td {
-      height: clamp(26px, 2.9vw, 40px);
+      height: clamp(24px, 2.45vw, 35px);
       border: 1px solid rgba(255, 255, 255, 0.46);
-      padding: 3px 4px;
+      padding: 2px 3px;
       text-align: center;
       vertical-align: middle;
     }
@@ -276,20 +285,24 @@
     }
 
     .scorecard-player {
-      width: clamp(155px, 21vw, 310px);
+      width: 1%;
+      max-width: min(360px, 31vw);
       text-align: left !important;
-      padding-left: 10px !important;
+      padding-left: 7px !important;
+      padding-right: 7px !important;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
     .scorecard-hole {
-      width: clamp(28px, 3.4vw, 48px);
+      width: clamp(22px, 2.25vw, 34px);
+      min-width: clamp(22px, 2.25vw, 34px);
+      max-width: clamp(22px, 2.25vw, 34px);
     }
 
     .scorecard-total {
-      width: clamp(54px, 6vw, 88px);
+      width: clamp(42px, 4.2vw, 66px);
       font-weight: 950 !important;
     }
 
@@ -449,7 +462,7 @@
         <table class="scorecard-table">
           <thead>
             <tr>
-              <th class="scorecard-player">Player name</th>
+              <th class="scorecard-player"></th>
               ${headerCells}
               <th class="scorecard-total">Total</th>
             </tr>
@@ -496,8 +509,8 @@
         : `<span class="ticker-item"><span class="ticker-team">Add teams in the control panel</span></span>`;
 
       tickerTrackEl.innerHTML = `
-        <div class="ticker-copy">${content}</div>
-        <div class="ticker-copy" aria-hidden="true">${content}</div>
+        <div class="ticker-copy">${content}<span class="ticker-separator" aria-hidden="true"></span></div>
+        <div class="ticker-copy" aria-hidden="true">${content}<span class="ticker-separator" aria-hidden="true"></span></div>
       `;
 
       const oldDurationSeconds = Math.max(26, Math.min(70, standings.length * 5 + 18));
