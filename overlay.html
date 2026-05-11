@@ -6,8 +6,8 @@
   <title>Peltola Open Overlay</title>
   <style>
     :root {
-      --panel: rgba(0, 0, 0, 0.74);
-      --panel-strong: rgba(0, 0, 0, 0.86);
+      --panel: rgba(0, 0, 0, 0.76);
+      --panel-strong: rgba(0, 0, 0, 0.88);
       --text: #ffffff;
       --muted: rgba(255, 255, 255, 0.72);
       --line: rgba(255, 255, 255, 0.16);
@@ -40,91 +40,64 @@
       display: none !important;
     }
 
-    .hole-bug {
+    .compact-box {
       position: absolute;
-      top: 4.5vh;
-      left: 4vw;
-      display: flex;
-      overflow: hidden;
+      right: 3.5vw;
+      bottom: 4.5vh;
+      width: min(360px, 34vw);
+      padding: 14px 16px 12px;
       border-radius: 18px;
-      background: var(--panel-strong);
-      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.3);
+      background: var(--panel);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.38);
     }
 
-    .hole-bug .brand {
-      padding: 14px 18px;
-      background: rgba(255, 255, 255, 0.14);
-      font-size: clamp(14px, 1.8vw, 24px);
+    .box-title {
+      overflow: hidden;
+      font-size: clamp(13px, 1.2vw, 18px);
+      font-weight: 950;
+      letter-spacing: 0.06em;
+      text-overflow: ellipsis;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .box-subtitle {
+      margin-top: 2px;
+      margin-bottom: 10px;
+      padding-bottom: 9px;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-size: clamp(11px, 1vw, 14px);
+      font-weight: 850;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .table-head,
+    .score-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 58px;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .table-head {
+      padding-bottom: 5px;
+      color: var(--muted);
+      font-size: clamp(10px, 0.9vw, 12px);
       font-weight: 900;
       letter-spacing: 0.08em;
       text-transform: uppercase;
     }
 
-    .hole-bug .hole {
-      padding: 14px 20px;
-      font-size: clamp(15px, 1.9vw, 26px);
-      font-weight: 850;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
-
-    .leaderboard {
-      position: absolute;
-      right: 4vw;
-      bottom: 5vh;
-      min-width: min(560px, 46vw);
-      max-width: 48vw;
-      padding: 20px 22px 18px;
-      border-radius: 22px;
-      background: var(--panel);
-      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.38);
-    }
-
-    .leaderboard-header {
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-      gap: 18px;
-      margin-bottom: 10px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .leaderboard-title {
-      font-size: clamp(17px, 2vw, 28px);
-      font-weight: 950;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      white-space: nowrap;
-    }
-
-    .leaderboard-subtitle {
-      color: var(--muted);
-      font-size: clamp(11px, 1.2vw, 16px);
-      font-weight: 750;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      white-space: nowrap;
-    }
-
-    .row {
-      display: grid;
-      grid-template-columns: 42px minmax(0, 1fr) 76px 64px;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 0;
-      font-size: clamp(15px, 1.7vw, 24px);
+    .score-row {
+      padding: 5px 0;
+      font-size: clamp(14px, 1.45vw, 20px);
       line-height: 1.15;
     }
 
-    .row + .row {
+    .score-row + .score-row {
       border-top: 1px solid rgba(255, 255, 255, 0.08);
-    }
-
-    .rank {
-      color: var(--muted);
-      font-weight: 900;
-      font-variant-numeric: tabular-nums;
     }
 
     .team-name {
@@ -132,14 +105,6 @@
       font-weight: 850;
       white-space: nowrap;
       text-overflow: ellipsis;
-    }
-
-    .through {
-      color: var(--muted);
-      font-size: 0.72em;
-      font-weight: 750;
-      text-align: right;
-      text-transform: uppercase;
     }
 
     .score {
@@ -150,32 +115,106 @@
 
     .empty {
       color: var(--muted);
-      font-size: clamp(14px, 1.4vw, 20px);
+      font-size: clamp(13px, 1.2vw, 18px);
       font-weight: 750;
     }
 
+    .ticker {
+      position: absolute;
+      left: 3vw;
+      right: 3vw;
+      bottom: 4vh;
+      height: clamp(42px, 4.8vw, 58px);
+      display: flex;
+      overflow: hidden;
+      border-radius: 16px;
+      background: var(--panel);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.38);
+    }
+
+    .ticker-viewport {
+      flex: 1;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    .ticker-track {
+      display: flex;
+      width: max-content;
+      height: 100%;
+      animation: ticker-scroll var(--ticker-duration, 34s) linear infinite;
+      will-change: transform;
+    }
+
+    .ticker-copy {
+      display: flex;
+      align-items: center;
+      gap: 34px;
+      padding: 0 22px;
+      white-space: nowrap;
+    }
+
+    .ticker-item {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 10px;
+      font-size: clamp(15px, 1.6vw, 23px);
+      line-height: 1;
+    }
+
+    .ticker-team {
+      font-weight: 850;
+    }
+
+    .ticker-score {
+      font-weight: 950;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .ticker-info {
+      display: grid;
+      place-items: center;
+      min-width: clamp(104px, 10vw, 150px);
+      padding: 0 12px;
+      border-left: 1px solid var(--line);
+      background: var(--panel-strong);
+      font-size: clamp(11px, 1vw, 15px);
+      font-weight: 950;
+      letter-spacing: 0.06em;
+      text-align: center;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    @keyframes ticker-scroll {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+
     @media (max-aspect-ratio: 4 / 3) {
-      .leaderboard {
-        right: 3vw;
-        left: 3vw;
-        max-width: none;
+      .compact-box {
+        width: min(360px, 54vw);
       }
     }
   </style>
 </head>
 <body>
   <main class="stage">
-    <section id="holeBug" class="hole-bug hidden" aria-live="polite">
-      <div id="brand" class="brand">Peltola Open</div>
-      <div id="holeText" class="hole">Hole 1 · Par 3</div>
+    <section id="compactBox" class="compact-box hidden" aria-live="polite">
+      <div id="boxTitle" class="box-title">Peltola Open</div>
+      <div id="boxSubtitle" class="box-subtitle">Before round</div>
+      <div class="table-head">
+        <div>Team</div>
+        <div class="score">Score</div>
+      </div>
+      <div id="scoreRows"></div>
     </section>
 
-    <section id="leaderboard" class="leaderboard hidden" aria-live="polite">
-      <div class="leaderboard-header">
-        <div id="leaderboardTitle" class="leaderboard-title">Peltola Open</div>
-        <div id="leaderboardSubtitle" class="leaderboard-subtitle">Standings</div>
+    <section id="ticker" class="ticker hidden" aria-live="polite">
+      <div class="ticker-viewport">
+        <div id="tickerTrack" class="ticker-track"></div>
       </div>
-      <div id="leaderboardRows"></div>
+      <div id="tickerInfo" class="ticker-info">Before round</div>
     </section>
   </main>
 
@@ -186,7 +225,8 @@
 
     const params = new URLSearchParams(location.search);
     const eventId = params.get("event") || "2026";
-    const maxRows = Number(params.get("rows") || 8);
+    const maxRows = Number(params.get("rows") || 12);
+    const forcedMode = params.get("mode");
 
     if (params.get("debug") === "1") {
       document.body.classList.add("debug");
@@ -195,13 +235,13 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    const holeBugEl = document.getElementById("holeBug");
-    const brandEl = document.getElementById("brand");
-    const holeTextEl = document.getElementById("holeText");
-    const leaderboardEl = document.getElementById("leaderboard");
-    const leaderboardTitleEl = document.getElementById("leaderboardTitle");
-    const leaderboardSubtitleEl = document.getElementById("leaderboardSubtitle");
-    const leaderboardRowsEl = document.getElementById("leaderboardRows");
+    const compactBoxEl = document.getElementById("compactBox");
+    const boxTitleEl = document.getElementById("boxTitle");
+    const boxSubtitleEl = document.getElementById("boxSubtitle");
+    const scoreRowsEl = document.getElementById("scoreRows");
+    const tickerEl = document.getElementById("ticker");
+    const tickerTrackEl = document.getElementById("tickerTrack");
+    const tickerInfoEl = document.getElementById("tickerInfo");
 
     onValue(ref(db, `events/${eventId}`), snapshot => {
       const event = snapshot.val();
@@ -209,83 +249,135 @@
     });
 
     function renderOverlay(event) {
-      if (!event) {
-        holeBugEl.classList.add("hidden");
-        leaderboardEl.classList.add("hidden");
+      if (!event || event.showStandings === false) {
+        compactBoxEl.classList.add("hidden");
+        tickerEl.classList.add("hidden");
         return;
       }
 
-      const name = event.name || "Peltola Open";
-      const currentHole = Number(event.currentHole || 1);
-      const currentPar = Number(event.holes?.[currentHole]?.par || 0);
+      const mode = forcedMode || event.overlayMode || "compact";
+      const completedThrough = getCompletedThrough(event);
+      const label = formatPlayedLabel(completedThrough);
+      const standings = calculateStandings(event, completedThrough);
 
-      brandEl.textContent = name;
-      holeTextEl.textContent = `Hole ${currentHole}${currentPar ? ` · Par ${currentPar}` : ""}`;
-      holeBugEl.classList.toggle("hidden", event.showHoleBug === false);
-
-      leaderboardTitleEl.textContent = name;
-      leaderboardSubtitleEl.textContent = `Through hole ${currentHole}`;
-
-      const standings = calculateStandings(event, currentHole).slice(0, maxRows);
-      leaderboardRowsEl.innerHTML = standings.length
-        ? standings.map((team, index) => rowTemplate(team, index)).join("")
-        : `<div class="empty">Add teams in the control panel.</div>`;
-
-      leaderboardEl.classList.toggle("hidden", event.showStandings === false);
+      if (mode === "ticker") {
+        renderTicker(event, standings, completedThrough, label);
+      } else {
+        renderCompactBox(event, standings, completedThrough, label);
+      }
     }
 
-    function calculateStandings(event, currentHole) {
+    function renderCompactBox(event, standings, completedThrough, label) {
+      tickerEl.classList.add("hidden");
+      compactBoxEl.classList.remove("hidden");
+
+      boxTitleEl.textContent = event.name || "Peltola Open";
+      boxSubtitleEl.textContent = label;
+
+      const rows = standings.slice(0, maxRows);
+      scoreRowsEl.innerHTML = rows.length
+        ? rows.map(team => `
+          <div class="score-row">
+            <div class="team-name">${escapeHtml(team.name)}</div>
+            <div class="score">${completedThrough ? formatToPar(team.toPar) : "--"}</div>
+          </div>
+        `).join("")
+        : `<div class="empty">Add teams in the control panel.</div>`;
+    }
+
+    function renderTicker(event, standings, completedThrough, label) {
+      compactBoxEl.classList.add("hidden");
+      tickerEl.classList.remove("hidden");
+
+      tickerInfoEl.textContent = completedThrough ? `Through ${completedThrough}` : "Before round";
+
+      const content = standings.length
+        ? standings.map(team => `
+          <span class="ticker-item">
+            <span class="ticker-team">${escapeHtml(team.name)}</span>
+            <span class="ticker-score">${completedThrough ? formatToPar(team.toPar) : "--"}</span>
+          </span>
+        `).join("")
+        : `<span class="ticker-item"><span class="ticker-team">Add teams in the control panel</span></span>`;
+
+      tickerTrackEl.innerHTML = `
+        <div class="ticker-copy">${content}</div>
+        <div class="ticker-copy" aria-hidden="true">${content}</div>
+      `;
+
+      const durationSeconds = Math.max(26, Math.min(70, standings.length * 5 + 18));
+      tickerTrackEl.style.setProperty("--ticker-duration", `${durationSeconds}s`);
+    }
+
+    function getCompletedThrough(event) {
+      const teams = Object.values(event.teams || {});
+      if (!teams.length) return 0;
+
+      const holeCount = clampInt(event.holeCount || 18, 1, 36);
+      let completedThrough = 0;
+
+      for (let hole = 1; hole <= holeCount; hole += 1) {
+        const holeKey = String(hole);
+        const everyTeamHasScore = teams.every(team => {
+          const score = Number(team.scores?.[holeKey]);
+          return Number.isFinite(score) && score > 0;
+        });
+
+        if (!everyTeamHasScore) break;
+        completedThrough = hole;
+      }
+
+      return completedThrough;
+    }
+
+    function calculateStandings(event, completedThrough) {
       const holes = event.holes || {};
       const teams = event.teams || {};
 
-      return Object.entries(teams).map(([teamId, team]) => {
+      return Object.entries(teams).map(([teamId, team], index) => {
         let strokes = 0;
         let par = 0;
-        let holesPlayed = 0;
 
-        for (const [holeNumber, rawScore] of Object.entries(team.scores || {})) {
-          const n = Number(holeNumber);
-          const score = Number(rawScore);
-          const holePar = Number(holes[holeNumber]?.par || 0);
+        for (let hole = 1; hole <= completedThrough; hole += 1) {
+          const holeKey = String(hole);
+          const score = Number(team.scores?.[holeKey]);
+          const holePar = Number(holes[holeKey]?.par || 0);
 
-          if (Number.isFinite(score) && score > 0 && n <= currentHole) {
+          if (Number.isFinite(score) && score > 0) {
             strokes += score;
             par += holePar;
-            holesPlayed += 1;
           }
         }
 
         return {
           id: teamId,
-          name: team.name || "Unnamed team",
-          order: Number(team.order || 9999),
+          name: team.name || `Team ${index + 1}`,
+          order: Number(team.order || index + 1),
           strokes,
           par,
-          holesPlayed,
           toPar: strokes - par
         };
       }).sort((a, b) => {
-        if (a.holesPlayed === 0 && b.holesPlayed > 0) return 1;
-        if (b.holesPlayed === 0 && a.holesPlayed > 0) return -1;
+        if (!completedThrough) return a.order - b.order || a.name.localeCompare(b.name);
         return a.toPar - b.toPar || a.strokes - b.strokes || a.order - b.order || a.name.localeCompare(b.name);
       });
     }
 
-    function rowTemplate(team, index) {
-      const through = team.holesPlayed ? `Thru ${team.holesPlayed}` : "No score";
-      return `
-        <div class="row">
-          <div class="rank">${index + 1}</div>
-          <div class="team-name">${escapeHtml(team.name)}</div>
-          <div class="through">${through}</div>
-          <div class="score">${team.holesPlayed ? formatToPar(team.toPar) : "—"}</div>
-        </div>
-      `;
+    function formatPlayedLabel(completedThrough) {
+      if (!completedThrough) return "Before round";
+      if (completedThrough === 1) return "Through 1 hole";
+      return `Through ${completedThrough} holes`;
     }
 
     function formatToPar(value) {
       if (value === 0) return "E";
       return value > 0 ? `+${value}` : String(value);
+    }
+
+    function clampInt(value, min, max) {
+      const number = Number.parseInt(value, 10);
+      if (!Number.isFinite(number)) return min;
+      return Math.max(min, Math.min(max, number));
     }
 
     function escapeHtml(value) {

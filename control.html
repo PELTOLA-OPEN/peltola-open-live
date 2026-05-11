@@ -243,7 +243,7 @@
   <main>
     <header>
       <h1>Peltola Open control</h1>
-      <p>Set up teams, current hole, pars, and scores. The overlay updates automatically.</p>
+      <p>Set up teams, current hole, pars, scores, and the overlay style. The stream overlay updates automatically.</p>
     </header>
 
     <section class="card" id="authCard">
@@ -272,7 +272,7 @@
 
     <section class="card">
       <h2>Overlay URL</h2>
-      <p class="muted">Paste this into PRISM Live Studio as the Web Browser Widget URL.</p>
+      <p class="muted">Paste this into PRISM Live Studio as the Web Browser Widget URL. Choose Compact box or Rolling ticker in the Event section.</p>
       <div id="overlayUrl" class="url-box"></div>
     </section>
 
@@ -292,16 +292,19 @@
           <label>Team count
             <input id="teamCount" type="number" min="0" max="40" step="1" />
           </label>
+          <label>Overlay style
+            <select id="overlayMode">
+              <option value="compact">Compact box</option>
+              <option value="ticker">Rolling ticker</option>
+            </select>
+          </label>
         </div>
 
         <div class="row" style="margin-top: 12px;">
           <button id="saveEventBtn" type="button">Save event settings</button>
           <button id="applyTeamCountBtn" type="button">Apply team count</button>
           <label class="row" style="display:flex; gap:8px;">
-            <input id="showHoleBug" type="checkbox" /> Show hole box
-          </label>
-          <label class="row" style="display:flex; gap:8px;">
-            <input id="showStandings" type="checkbox" /> Show standings
+            <input id="showStandings" type="checkbox" /> Show score overlay
           </label>
         </div>
         <div id="eventStatus" class="status"></div>
@@ -372,9 +375,9 @@
       currentHole: document.getElementById("currentHole"),
       holeCount: document.getElementById("holeCount"),
       teamCount: document.getElementById("teamCount"),
+      overlayMode: document.getElementById("overlayMode"),
       saveEventBtn: document.getElementById("saveEventBtn"),
       applyTeamCountBtn: document.getElementById("applyTeamCountBtn"),
-      showHoleBug: document.getElementById("showHoleBug"),
       showStandings: document.getElementById("showStandings"),
       eventStatus: document.getElementById("eventStatus"),
       parGrid: document.getElementById("parGrid"),
@@ -404,7 +407,7 @@
 
     els.saveEventBtn.addEventListener("click", saveEventSettings);
     els.applyTeamCountBtn.addEventListener("click", applyTeamCount);
-    els.showHoleBug.addEventListener("change", () => quickUpdate({ showHoleBug: els.showHoleBug.checked }));
+    els.overlayMode.addEventListener("change", () => quickUpdate({ overlayMode: els.overlayMode.value }));
     els.showStandings.addEventListener("change", () => quickUpdate({ showStandings: els.showStandings.checked }));
     els.addTeamBtn.addEventListener("click", addTeam);
     els.setAllPar3Btn.addEventListener("click", setAllPar3);
@@ -439,7 +442,8 @@
         name: `Peltola Open ${new Date().getFullYear()}`,
         currentHole: 1,
         holeCount: 18,
-        showHoleBug: true,
+        overlayMode: "compact",
+        showHoleBug: false,
         showStandings: true,
         holes: initialHoles,
         teams: {},
@@ -459,7 +463,7 @@
       els.currentHole.max = holeCount;
       els.holeCount.value = holeCount;
       els.teamCount.value = teams.length;
-      els.showHoleBug.checked = eventState.showHoleBug !== false;
+      els.overlayMode.value = eventState.overlayMode || "compact";
       els.showStandings.checked = eventState.showStandings !== false;
 
       renderParGrid(holeCount);
@@ -560,7 +564,7 @@
         name: els.eventName.value.trim() || "Peltola Open",
         currentHole: nextCurrentHole,
         holeCount: nextHoleCount,
-        showHoleBug: els.showHoleBug.checked,
+        overlayMode: els.overlayMode.value,
         showStandings: els.showStandings.checked,
         updatedAt: Date.now()
       };
