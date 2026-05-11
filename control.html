@@ -274,6 +274,8 @@
       <h2>Overlay URL</h2>
       <p class="muted">Paste this into PRISM Live Studio as the Web Browser Widget URL.</p>
       <div id="overlayUrl" class="url-box"></div>
+      <p class="muted" style="margin-top:12px;">Permanent scorecard page for browsers and phones.</p>
+      <div id="scorecardUrl" class="url-box"></div>
     </section>
 
     <section id="controlSections" class="hide">
@@ -382,6 +384,7 @@
       loginBtn: document.getElementById("loginBtn"),
       logoutBtn: document.getElementById("logoutBtn"),
       overlayUrl: document.getElementById("overlayUrl"),
+      scorecardUrl: document.getElementById("scorecardUrl"),
       setupTabBtn: document.getElementById("setupTabBtn"),
       scoringTabBtn: document.getElementById("scoringTabBtn"),
       setupTab: document.getElementById("setupTab"),
@@ -411,6 +414,10 @@
     const overlayUrl = new URL("overlay.html", location.href);
     overlayUrl.searchParams.set("event", eventId);
     els.overlayUrl.textContent = overlayUrl.href;
+
+    const scorecardUrl = new URL("scorecard.html", location.href);
+    scorecardUrl.searchParams.set("event", eventId);
+    els.scorecardUrl.textContent = scorecardUrl.href;
 
     els.loginBtn.addEventListener("click", async () => {
       try {

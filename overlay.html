@@ -203,10 +203,11 @@
     .scorecard-pop {
       position: absolute;
       left: 50%;
-      bottom: 9vh;
+      top: 6vh;
       width: auto;
       max-width: 96vw;
-      transform: translateX(-50%) translateY(28px) scale(0.96);
+      max-height: 74vh;
+      transform: translateX(-50%) translateY(24px) scale(0.96);
       opacity: 0;
       padding: 16px 16px 18px;
       border: 2px solid rgba(255, 255, 255, 0.72);
@@ -308,6 +309,94 @@
 
     .scorecard-empty-cell {
       color: rgba(255, 255, 255, 0.28);
+    }
+
+
+    @media (max-width: 760px) {
+      body.debug {
+        background: #102018;
+      }
+
+      .compact-box {
+        right: 12px;
+        bottom: 16px;
+        max-width: calc(100vw - 24px);
+      }
+
+      .ticker {
+        left: 8px;
+        right: 8px;
+        bottom: 12px;
+        height: 44px;
+        border-radius: 12px;
+      }
+
+      .ticker-info {
+        min-width: 84px;
+        padding: 0 8px;
+        font-size: 10px;
+      }
+
+      .ticker-copy {
+        gap: 24px;
+        padding: 0 12px;
+      }
+
+      .ticker-item {
+        font-size: 14px;
+      }
+
+      .scorecard-pop {
+        left: 50%;
+        top: 12px;
+        width: calc(100vw - 16px);
+        max-width: calc(100vw - 16px);
+        max-height: calc(100vh - 76px);
+        padding: 10px;
+        border-radius: 12px;
+      }
+
+      .scorecard-table-wrap {
+        width: 100%;
+      }
+
+      .scorecard-title {
+        font-size: 16px;
+      }
+
+      .scorecard-through {
+        font-size: 11px;
+      }
+
+      .scorecard-table th,
+      .scorecard-table td {
+        height: 22px;
+        padding: 1px 2px;
+      }
+
+      .scorecard-table th {
+        font-size: 9px;
+      }
+
+      .scorecard-table td {
+        font-size: 10px;
+      }
+
+      .scorecard-player {
+        max-width: 116px;
+        padding-left: 4px !important;
+        padding-right: 4px !important;
+      }
+
+      .scorecard-hole {
+        width: 20px;
+        min-width: 20px;
+        max-width: 20px;
+      }
+
+      .scorecard-total {
+        width: 38px;
+      }
     }
 
     @keyframes ticker-scroll {
