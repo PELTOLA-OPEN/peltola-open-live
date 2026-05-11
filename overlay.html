@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Peltola Open Overlay</title>
+  <style>
+    :root {
+      --panel: rgba(0, 0, 0, 0.74);
+      --panel-strong: rgba(0, 0, 0, 0.86);
+      --text: #ffffff;
+      --muted: rgba(255, 255, 255, 0.72);
+      --line: rgba(255, 255, 255, 0.16);
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: transparent;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body.debug {
+      background: linear-gradient(135deg, #295b41, #1b2838);
+    }
+
+    .stage {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      color: var(--text);
+      pointer-events: none;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .hole-bug {
+      position: absolute;
+      top: 4.5vh;
+      left: 4vw;
+      display: flex;
+      overflow: hidden;
+      border-radius: 18px;
+      background: var(--panel-strong);
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.3);
+    }
+
+    .hole-bug .brand {
+      padding: 14px 18px;
+      background: rgba(255, 255, 255, 0.14);
+      font-size: clamp(14px, 1.8vw, 24px);
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .hole-bug .hole {
+      padding: 14px 20px;
+      font-size: clamp(15px, 1.9vw, 26px);
+      font-weight: 850;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .leaderboard {
+      position: absolute;
+      right: 4vw;
+      bottom: 5vh;
+      min-width: min(560px, 46vw);
+      max-width: 48vw;
+      padding: 20px 22px 18px;
+      border-radius: 22px;
+      background: var(--panel);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.38);
+    }
+
+    .leaderboard-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .leaderboard-title {
+      font-size: clamp(17px, 2vw, 28px);
+      font-weight: 950;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .leaderboard-subtitle {
+      color: var(--muted);
+      font-size: clamp(11px, 1.2vw, 16px);
+      font-weight: 750;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr) 76px 64px;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      font-size: clamp(15px, 1.7vw, 24px);
+      line-height: 1.15;
+    }
+
+    .row + .row {
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .rank {
+      color: var(--muted);
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .team-name {
+      overflow: hidden;
+      font-weight: 850;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .through {
+      color: var(--muted);
+      font-size: 0.72em;
+      font-weight: 750;
+      text-align: right;
+      text-transform: uppercase;
+    }
+
+    .score {
+      font-weight: 950;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .empty {
+      color: var(--muted);
+      font-size: clamp(14px, 1.4vw, 20px);
+      font-weight: 750;
+    }
+
+    @media (max-aspect-ratio: 4 / 3) {
+      .leaderboard {
+        right: 3vw;
+        left: 3vw;
+        max-width: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="stage">
+    <section id="holeBug" class="hole-bug hidden" aria-live="polite">
+      <div id="brand" class="brand">Peltola Open</div>
+      <div id="holeText" class="hole">Hole 1 · Par 3</div>
+    </section>
+
+    <section id="leaderboard" class="leaderboard hidden" aria-live="polite">
+      <div class="leaderboard-header">
+        <div id="leaderboardTitle" class="leaderboard-title">Peltola Open</div>
+        <div id="leaderboardSubtitle" class="leaderboard-subtitle">Standings</div>
+      </div>
+      <div id="leaderboardRows"></div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+    import { firebaseConfig } from "./firebase-config.js";
+
+    const params = new URLSearchParams(location.search);
+    const eventId = params.get("event") || "2026";
+    const maxRows = Number(params.get("rows") || 8);
+
+    if (params.get("debug") === "1") {
+      document.body.classList.add("debug");
+    }
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const holeBugEl = document.getElementById("holeBug");
+    const brandEl = document.getElementById("brand");
+    const holeTextEl = document.getElementById("holeText");
+    const leaderboardEl = document.getElementById("leaderboard");
+    const leaderboardTitleEl = document.getElementById("leaderboardTitle");
+    const leaderboardSubtitleEl = document.getElementById("leaderboardSubtitle");
+    const leaderboardRowsEl = document.getElementById("leaderboardRows");
+
+    onValue(ref(db, `events/${eventId}`), snapshot => {
+      const event = snapshot.val();
+      renderOverlay(event);
+    });
+
+    function renderOverlay(event) {
+      if (!event) {
+        holeBugEl.classList.add("hidden");
+        leaderboardEl.classList.add("hidden");
+        return;
+      }
+
+      const name = event.name || "Peltola Open";
+      const currentHole = Number(event.currentHole || 1);
+      const currentPar = Number(event.holes?.[currentHole]?.par || 0);
+
+      brandEl.textContent = name;
+      holeTextEl.textContent = `Hole ${currentHole}${currentPar ? ` · Par ${currentPar}` : ""}`;
+      holeBugEl.classList.toggle("hidden", event.showHoleBug === false);
+
+      leaderboardTitleEl.textContent = name;
+      leaderboardSubtitleEl.textContent = `Through hole ${currentHole}`;
+
+      const standings = calculateStandings(event, currentHole).slice(0, maxRows);
+      leaderboardRowsEl.innerHTML = standings.length
+        ? standings.map((team, index) => rowTemplate(team, index)).join("")
+        : `<div class="empty">Add teams in the control panel.</div>`;
+
+      leaderboardEl.classList.toggle("hidden", event.showStandings === false);
+    }
+
+    function calculateStandings(event, currentHole) {
+      const holes = event.holes || {};
+      const teams = event.teams || {};
+
+      return Object.entries(teams).map(([teamId, team]) => {
+        let strokes = 0;
+        let par = 0;
+        let holesPlayed = 0;
+
+        for (const [holeNumber, rawScore] of Object.entries(team.scores || {})) {
+          const n = Number(holeNumber);
+          const score = Number(rawScore);
+          const holePar = Number(holes[holeNumber]?.par || 0);
+
+          if (Number.isFinite(score) && score > 0 && n <= currentHole) {
+            strokes += score;
+            par += holePar;
+            holesPlayed += 1;
+          }
+        }
+
+        return {
+          id: teamId,
+          name: team.name || "Unnamed team",
+          order: Number(team.order || 9999),
+          strokes,
+          par,
+          holesPlayed,
+          toPar: strokes - par
+        };
+      }).sort((a, b) => {
+        if (a.holesPlayed === 0 && b.holesPlayed > 0) return 1;
+        if (b.holesPlayed === 0 && a.holesPlayed > 0) return -1;
+        return a.toPar - b.toPar || a.strokes - b.strokes || a.order - b.order || a.name.localeCompare(b.name);
+      });
+    }
+
+    function rowTemplate(team, index) {
+      const through = team.holesPlayed ? `Thru ${team.holesPlayed}` : "No score";
+      return `
+        <div class="row">
+          <div class="rank">${index + 1}</div>
+          <div class="team-name">${escapeHtml(team.name)}</div>
+          <div class="through">${through}</div>
+          <div class="score">${team.holesPlayed ? formatToPar(team.toPar) : "—"}</div>
+        </div>
+      `;
+    }
+
+    function formatToPar(value) {
+      if (value === 0) return "E";
+      return value > 0 ? `+${value}` : String(value);
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      }[char]));
+    }
+  </script>
+</body>
+</html>
