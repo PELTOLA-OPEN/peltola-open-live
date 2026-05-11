@@ -36,24 +36,25 @@
       text-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
     }
 
-    .hidden {
-      display: none !important;
-    }
+    .hidden { display: none !important; }
 
     .compact-box {
       position: absolute;
       right: 3.5vw;
       bottom: 4.5vh;
-      width: min(360px, 34vw);
-      padding: 14px 16px 12px;
-      border-radius: 18px;
+      display: inline-block;
+      width: max-content;
+      max-width: min(520px, 44vw);
+      padding: 12px 14px 11px;
+      border-radius: 16px;
       background: var(--panel);
       box-shadow: 0 18px 42px rgba(0, 0, 0, 0.38);
     }
 
     .box-title {
+      max-width: 100%;
       overflow: hidden;
-      font-size: clamp(13px, 1.2vw, 18px);
+      font-size: clamp(12px, 1.05vw, 16px);
       font-weight: 950;
       letter-spacing: 0.06em;
       text-overflow: ellipsis;
@@ -62,45 +63,49 @@
     }
 
     .box-subtitle {
-      margin-top: 2px;
-      margin-bottom: 10px;
-      padding-bottom: 9px;
+      margin-top: 1px;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
       border-bottom: 1px solid var(--line);
       color: var(--muted);
-      font-size: clamp(11px, 1vw, 14px);
+      font-size: clamp(10px, 0.9vw, 13px);
       font-weight: 850;
       letter-spacing: 0.06em;
       text-transform: uppercase;
     }
 
-    .table-head,
-    .score-row {
+    .score-table {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 58px;
-      gap: 10px;
+      grid-template-columns: max-content max-content;
+      column-gap: 12px;
+      row-gap: 0;
       align-items: center;
     }
 
-    .table-head {
+    .table-head,
+    #scoreRows { display: contents; }
+
+    .table-head div {
       padding-bottom: 5px;
       color: var(--muted);
-      font-size: clamp(10px, 0.9vw, 12px);
+      font-size: clamp(9px, 0.8vw, 11px);
       font-weight: 900;
       letter-spacing: 0.08em;
       text-transform: uppercase;
     }
 
-    .score-row {
-      padding: 5px 0;
-      font-size: clamp(14px, 1.45vw, 20px);
-      line-height: 1.15;
-    }
+    .score-row { display: contents; }
 
-    .score-row + .score-row {
+    .team-name,
+    .score {
+      padding: 4px 0;
       border-top: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: clamp(13px, 1.25vw, 18px);
+      line-height: 1.12;
     }
 
     .team-name {
+      max-width: min(370px, 34vw);
       overflow: hidden;
       font-weight: 850;
       white-space: nowrap;
@@ -108,6 +113,7 @@
     }
 
     .score {
+      min-width: 34px;
       font-weight: 950;
       text-align: right;
       font-variant-numeric: tabular-nums;
@@ -142,7 +148,7 @@
       display: flex;
       width: max-content;
       height: 100%;
-      animation: ticker-scroll var(--ticker-duration, 34s) linear infinite;
+      animation: ticker-scroll var(--ticker-duration, 27.2s) linear infinite;
       will-change: transform;
     }
 
@@ -162,9 +168,7 @@
       line-height: 1;
     }
 
-    .ticker-team {
-      font-weight: 850;
-    }
+    .ticker-team { font-weight: 850; }
 
     .ticker-score {
       font-weight: 950;
@@ -190,12 +194,6 @@
       from { transform: translateX(0); }
       to { transform: translateX(-50%); }
     }
-
-    @media (max-aspect-ratio: 4 / 3) {
-      .compact-box {
-        width: min(360px, 54vw);
-      }
-    }
   </style>
 </head>
 <body>
@@ -203,11 +201,13 @@
     <section id="compactBox" class="compact-box hidden" aria-live="polite">
       <div id="boxTitle" class="box-title">Peltola Open</div>
       <div id="boxSubtitle" class="box-subtitle">Before round</div>
-      <div class="table-head">
-        <div>Team</div>
-        <div class="score">Score</div>
+      <div id="scoreTable" class="score-table">
+        <div class="table-head">
+          <div>Team</div>
+          <div class="score">Score</div>
+        </div>
+        <div id="scoreRows"></div>
       </div>
-      <div id="scoreRows"></div>
     </section>
 
     <section id="ticker" class="ticker hidden" aria-live="polite">
@@ -228,9 +228,7 @@
     const maxRows = Number(params.get("rows") || 12);
     const forcedMode = params.get("mode");
 
-    if (params.get("debug") === "1") {
-      document.body.classList.add("debug");
-    }
+    if (params.get("debug") === "1") document.body.classList.add("debug");
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
@@ -238,15 +236,13 @@
     const compactBoxEl = document.getElementById("compactBox");
     const boxTitleEl = document.getElementById("boxTitle");
     const boxSubtitleEl = document.getElementById("boxSubtitle");
-    const scoreRowsEl = document.getElementById("scoreRows");
+    const scoreTableEl = document.getElementById("scoreTable");
+    let scoreRowsEl = document.getElementById("scoreRows");
     const tickerEl = document.getElementById("ticker");
     const tickerTrackEl = document.getElementById("tickerTrack");
     const tickerInfoEl = document.getElementById("tickerInfo");
 
-    onValue(ref(db, `events/${eventId}`), snapshot => {
-      const event = snapshot.val();
-      renderOverlay(event);
-    });
+    onValue(ref(db, `events/${eventId}`), snapshot => renderOverlay(snapshot.val()));
 
     function renderOverlay(event) {
       if (!event || event.showStandings === false) {
@@ -260,11 +256,8 @@
       const label = formatPlayedLabel(completedThrough);
       const standings = calculateStandings(event, completedThrough);
 
-      if (mode === "ticker") {
-        renderTicker(event, standings, completedThrough, label);
-      } else {
-        renderCompactBox(event, standings, completedThrough, label);
-      }
+      if (mode === "ticker") renderTicker(event, standings, completedThrough, label);
+      else renderCompactBox(event, standings, completedThrough, label);
     }
 
     function renderCompactBox(event, standings, completedThrough, label) {
@@ -275,14 +268,15 @@
       boxSubtitleEl.textContent = label;
 
       const rows = standings.slice(0, maxRows);
-      scoreRowsEl.innerHTML = rows.length
+      scoreRowsEl.outerHTML = `<div id="scoreRows">${rows.length
         ? rows.map(team => `
           <div class="score-row">
             <div class="team-name">${escapeHtml(team.name)}</div>
             <div class="score">${completedThrough ? formatToPar(team.toPar) : "--"}</div>
           </div>
         `).join("")
-        : `<div class="empty">Add teams in the control panel.</div>`;
+        : `<div class="empty">Add teams in the control panel.</div>`}</div>`;
+      scoreRowsEl = document.getElementById("scoreRows");
     }
 
     function renderTicker(event, standings, completedThrough, label) {
@@ -305,8 +299,9 @@
         <div class="ticker-copy" aria-hidden="true">${content}</div>
       `;
 
-      const durationSeconds = Math.max(26, Math.min(70, standings.length * 5 + 18));
-      tickerTrackEl.style.setProperty("--ticker-duration", `${durationSeconds}s`);
+      const oldDurationSeconds = Math.max(26, Math.min(70, standings.length * 5 + 18));
+      const fasterDurationSeconds = oldDurationSeconds / 1.25;
+      tickerTrackEl.style.setProperty("--ticker-duration", `${fasterDurationSeconds}s`);
     }
 
     function getCompletedThrough(event) {
@@ -322,11 +317,9 @@
           const score = Number(team.scores?.[holeKey]);
           return Number.isFinite(score) && score > 0;
         });
-
         if (!everyTeamHasScore) break;
         completedThrough = hole;
       }
-
       return completedThrough;
     }
 
@@ -342,7 +335,6 @@
           const holeKey = String(hole);
           const score = Number(team.scores?.[holeKey]);
           const holePar = Number(holes[holeKey]?.par || 0);
-
           if (Number.isFinite(score) && score > 0) {
             strokes += score;
             par += holePar;

@@ -16,11 +16,10 @@
       --input: #0c0f14;
       --danger: #5c1f25;
       --danger-border: #a84952;
+      --accent: #d8f15a;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     html,
     body {
@@ -31,9 +30,7 @@
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
-    body {
-      padding: 14px;
-    }
+    body { padding: 14px; }
 
     main {
       max-width: 980px;
@@ -41,28 +38,10 @@
       padding-bottom: 48px;
     }
 
-    h1,
-    h2,
-    h3,
-    p {
-      margin-top: 0;
-    }
-
-    h1 {
-      margin-bottom: 6px;
-      font-size: 28px;
-    }
-
-    h2 {
-      margin-bottom: 12px;
-      font-size: 20px;
-    }
-
-    p,
-    label,
-    .muted {
-      color: var(--muted);
-    }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { margin-bottom: 6px; font-size: 28px; }
+    h2 { margin-bottom: 12px; font-size: 20px; }
+    p, label, .muted { color: var(--muted); }
 
     .card {
       margin: 14px 0;
@@ -85,9 +64,7 @@
       flex-wrap: wrap;
     }
 
-    .between {
-      justify-content: space-between;
-    }
+    .between { justify-content: space-between; }
 
     label {
       display: grid;
@@ -96,16 +73,13 @@
       font-weight: 700;
     }
 
-    input,
-    button,
-    select {
+    input, button, select {
       min-height: 42px;
       border-radius: 12px;
       font: inherit;
     }
 
-    input,
-    select {
+    input, select {
       width: 100%;
       padding: 10px 12px;
       border: 1px solid var(--border);
@@ -113,10 +87,7 @@
       color: var(--text);
     }
 
-    input[type="checkbox"] {
-      width: 22px;
-      min-height: 22px;
-    }
+    input[type="checkbox"] { width: 22px; min-height: 22px; }
 
     button {
       padding: 9px 13px;
@@ -127,15 +98,9 @@
       cursor: pointer;
     }
 
-    button:disabled {
-      cursor: not-allowed;
-      opacity: 0.45;
-    }
-
-    button.danger {
-      border-color: var(--danger-border);
-      background: var(--danger);
-    }
+    button:disabled { cursor: not-allowed; opacity: 0.45; }
+    button.danger { border-color: var(--danger-border); background: var(--danger); }
+    button.primary { border-color: rgba(216, 241, 90, 0.42); color: var(--accent); }
 
     .status {
       min-height: 22px;
@@ -144,10 +109,7 @@
       font-size: 13px;
     }
 
-    .auth-state {
-      font-size: 13px;
-      color: var(--muted);
-    }
+    .auth-state { font-size: 13px; color: var(--muted); }
 
     .url-box {
       overflow-wrap: anywhere;
@@ -159,14 +121,29 @@
       font-size: 13px;
     }
 
-    .teams {
+    .tabs {
       display: grid;
-      gap: 12px;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin: 14px 0;
     }
+
+    .tab-btn {
+      min-height: 48px;
+      background: var(--panel);
+    }
+
+    .tab-btn.active {
+      border-color: rgba(216, 241, 90, 0.55);
+      color: var(--accent);
+      background: #232c36;
+    }
+
+    .teams { display: grid; gap: 12px; }
 
     .team-card {
       display: grid;
-      grid-template-columns: minmax(210px, 1fr) auto auto auto auto;
+      grid-template-columns: minmax(210px, 1fr) auto auto auto;
       align-items: end;
       gap: 10px;
       padding: 12px;
@@ -175,67 +152,88 @@
       background: var(--panel-2);
     }
 
-    .score-controls {
-      display: grid;
-      grid-template-columns: 42px 68px 42px;
-      gap: 6px;
-      align-items: end;
-    }
-
-    .score-controls input {
-      text-align: center;
-      font-weight: 900;
-      font-variant-numeric: tabular-nums;
-    }
-
-    .summary {
-      min-width: 72px;
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 800;
-      text-align: right;
-    }
-
     .par-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(86px, 1fr));
       gap: 8px;
     }
 
-    .par-cell {
+    .par-cell { display: grid; gap: 4px; }
+    .par-cell span { color: var(--muted); font-size: 12px; font-weight: 800; text-align: center; }
+    .par-cell input { text-align: center; font-weight: 900; }
+
+    .hole-nav {
       display: grid;
-      gap: 4px;
+      grid-template-columns: 58px 1fr 58px;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 12px;
     }
 
-    .par-cell span {
+    .hole-title {
+      display: grid;
+      place-items: center;
+      min-height: 58px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--panel-2);
+      text-align: center;
+    }
+
+    .hole-title strong { display: block; font-size: 23px; }
+    .hole-title span { display: block; color: var(--muted); font-size: 13px; font-weight: 750; }
+
+    .score-list { display: grid; gap: 10px; }
+
+    .score-card {
+      display: grid;
+      grid-template-columns: 44px minmax(130px, 1fr) 52px 76px 52px 86px;
+      gap: 8px;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--panel-2);
+    }
+
+    .position {
+      display: grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 999px;
+      background: var(--input);
       color: var(--muted);
-      font-size: 12px;
-      font-weight: 800;
-      text-align: center;
+      font-weight: 950;
+      font-variant-numeric: tabular-nums;
     }
 
-    .par-cell input {
+    .score-team { min-width: 0; font-weight: 900; }
+    .score-team-name { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .score-team-sub { margin-top: 2px; color: var(--muted); font-size: 12px; font-weight: 750; }
+
+    .hole-score, .total-score {
       text-align: center;
-      font-weight: 900;
+      font-weight: 950;
+      font-size: 22px;
+      font-variant-numeric: tabular-nums;
     }
 
-    .hide {
-      display: none !important;
+    .total-score {
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: var(--input);
     }
+
+    .hide { display: none !important; }
 
     @media (max-width: 760px) {
-      .team-card {
-        grid-template-columns: 1fr;
-        align-items: stretch;
+      .team-card { grid-template-columns: 1fr; align-items: stretch; }
+      .score-card {
+        grid-template-columns: 38px minmax(0, 1fr) 48px 62px 48px;
       }
-
-      .score-controls {
-        grid-template-columns: 52px 1fr 52px;
-      }
-
-      .summary {
-        text-align: left;
-      }
+      .total-score { grid-column: 2 / -1; }
+      .hole-nav { grid-template-columns: 52px 1fr 52px; }
     }
   </style>
 </head>
@@ -243,7 +241,7 @@
   <main>
     <header>
       <h1>Peltola Open control</h1>
-      <p>Set up teams, current hole, pars, scores, and the overlay style. The stream overlay updates automatically.</p>
+      <p>Set up the event and teams in Setup. Enter hole scores in Scoring. The stream overlay updates automatically.</p>
     </header>
 
     <section class="card" id="authCard">
@@ -251,7 +249,6 @@
         <h2>Login</h2>
         <div id="authState" class="auth-state">Not signed in</div>
       </div>
-
       <div id="loginForm" class="grid">
         <label>Email
           <input id="email" type="email" autocomplete="email" placeholder="scorekeeper@example.com" />
@@ -263,7 +260,6 @@
           <button id="loginBtn" type="button">Sign in</button>
         </label>
       </div>
-
       <div id="signedInTools" class="row hide">
         <button id="logoutBtn" type="button">Sign out</button>
       </div>
@@ -272,81 +268,90 @@
 
     <section class="card">
       <h2>Overlay URL</h2>
-      <p class="muted">Paste this into PRISM Live Studio as the Web Browser Widget URL. Choose Compact box or Rolling ticker in the Event section.</p>
+      <p class="muted">Paste this into PRISM Live Studio as the Web Browser Widget URL.</p>
       <div id="overlayUrl" class="url-box"></div>
     </section>
 
     <section id="controlSections" class="hide">
-      <section class="card">
-        <h2>Event</h2>
-        <div class="grid">
-          <label>Event name
-            <input id="eventName" type="text" placeholder="Peltola Open 2026" />
-          </label>
-          <label>Current hole
-            <input id="currentHole" type="number" min="1" step="1" />
-          </label>
-          <label>Number of holes
-            <input id="holeCount" type="number" min="1" max="36" step="1" />
-          </label>
-          <label>Team count
-            <input id="teamCount" type="number" min="0" max="40" step="1" />
-          </label>
-          <label>Overlay style
-            <select id="overlayMode">
-              <option value="compact">Compact box</option>
-              <option value="ticker">Rolling ticker</option>
-            </select>
-          </label>
-        </div>
+      <nav class="tabs" aria-label="Control panel tabs">
+        <button id="setupTabBtn" class="tab-btn active" type="button">Setup</button>
+        <button id="scoringTabBtn" class="tab-btn" type="button">Scoring</button>
+      </nav>
 
-        <div class="row" style="margin-top: 12px;">
-          <button id="saveEventBtn" type="button">Save event settings</button>
-          <button id="applyTeamCountBtn" type="button">Apply team count</button>
-          <label class="row" style="display:flex; gap:8px;">
-            <input id="showStandings" type="checkbox" /> Show score overlay
-          </label>
-        </div>
-        <div id="eventStatus" class="status"></div>
+      <section id="setupTab">
+        <section class="card">
+          <h2>Event</h2>
+          <div class="grid">
+            <label>Event name
+              <input id="eventName" type="text" placeholder="Peltola Open 2026" />
+            </label>
+            <label>Current hole
+              <input id="currentHole" type="number" min="1" step="1" />
+            </label>
+            <label>Number of holes
+              <input id="holeCount" type="number" min="1" max="36" step="1" />
+            </label>
+            <label>Team count
+              <input id="teamCount" type="number" min="0" max="40" step="1" />
+            </label>
+            <label>Overlay style
+              <select id="overlayMode">
+                <option value="compact">Compact box</option>
+                <option value="ticker">Rolling ticker</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="row" style="margin-top: 12px;">
+            <button id="saveEventBtn" type="button">Save event settings</button>
+            <button id="applyTeamCountBtn" type="button">Apply team count</button>
+            <label class="row" style="display:flex; gap:8px;">
+              <input id="showStandings" type="checkbox" /> Show score overlay
+            </label>
+          </div>
+          <div id="eventStatus" class="status"></div>
+        </section>
+
+        <section class="card">
+          <div class="row between">
+            <h2>Teams</h2>
+            <button id="addTeamBtn" type="button">Add team</button>
+          </div>
+          <p class="muted">Edit team names here. Score entry is in the Scoring tab.</p>
+          <div id="teams" class="teams"></div>
+        </section>
+
+        <section class="card">
+          <div class="row between">
+            <h2>Hole pars</h2>
+            <button id="setAllPar3Btn" type="button">Set all par 3</button>
+          </div>
+          <div id="parGrid" class="par-grid"></div>
+        </section>
       </section>
 
-      <section class="card">
-        <div class="row between">
-          <h2>Hole pars</h2>
-          <button id="setAllPar3Btn" type="button">Set all par 3</button>
-        </div>
-        <div id="parGrid" class="par-grid"></div>
-      </section>
-
-      <section class="card">
-        <div class="row between">
-          <h2>Teams and current-hole scores</h2>
-          <button id="addTeamBtn" type="button">Add team</button>
-        </div>
-        <p class="muted">Team names and the amount of teams are stored in Firebase, not in the overlay code.</p>
-        <div id="teams" class="teams"></div>
+      <section id="scoringTab" class="hide">
+        <section class="card">
+          <div class="hole-nav">
+            <button id="prevHoleBtn" type="button">←</button>
+            <div class="hole-title">
+              <strong id="scoreHoleTitle">Hole 1</strong>
+              <span id="scoreHoleSub">Par 3</span>
+            </div>
+            <button id="nextHoleBtn" type="button">→</button>
+          </div>
+          <p class="muted">Each team starts as E for the selected hole. Use + and − to set the hole score relative to par. Pressing → saves any unchanged E scores for the current hole and moves forward.</p>
+          <div id="scoreList" class="score-list"></div>
+          <div id="scoreStatus" class="status"></div>
+        </section>
       </section>
     </section>
   </main>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import {
-      getDatabase,
-      ref,
-      onValue,
-      set,
-      update,
-      remove,
-      push,
-      get
-    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
-    import {
-      getAuth,
-      onAuthStateChanged,
-      signInWithEmailAndPassword,
-      signOut
-    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { getDatabase, ref, onValue, set, update, remove, push, get } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
     import { firebaseConfig } from "./firebase-config.js";
 
     const params = new URLSearchParams(location.search);
@@ -359,6 +364,7 @@
 
     let eventState = null;
     let signedIn = false;
+    let activeTab = "setup";
 
     const els = {
       authState: document.getElementById("authState"),
@@ -371,6 +377,10 @@
       loginBtn: document.getElementById("loginBtn"),
       logoutBtn: document.getElementById("logoutBtn"),
       overlayUrl: document.getElementById("overlayUrl"),
+      setupTabBtn: document.getElementById("setupTabBtn"),
+      scoringTabBtn: document.getElementById("scoringTabBtn"),
+      setupTab: document.getElementById("setupTab"),
+      scoringTab: document.getElementById("scoringTab"),
       eventName: document.getElementById("eventName"),
       currentHole: document.getElementById("currentHole"),
       holeCount: document.getElementById("holeCount"),
@@ -380,10 +390,15 @@
       applyTeamCountBtn: document.getElementById("applyTeamCountBtn"),
       showStandings: document.getElementById("showStandings"),
       eventStatus: document.getElementById("eventStatus"),
+      teams: document.getElementById("teams"),
       parGrid: document.getElementById("parGrid"),
       setAllPar3Btn: document.getElementById("setAllPar3Btn"),
-      addTeamBtn: document.getElementById("addTeamBtn"),
-      teams: document.getElementById("teams")
+      prevHoleBtn: document.getElementById("prevHoleBtn"),
+      nextHoleBtn: document.getElementById("nextHoleBtn"),
+      scoreHoleTitle: document.getElementById("scoreHoleTitle"),
+      scoreHoleSub: document.getElementById("scoreHoleSub"),
+      scoreList: document.getElementById("scoreList"),
+      scoreStatus: document.getElementById("scoreStatus")
     };
 
     const overlayUrl = new URL("overlay.html", location.href);
@@ -401,16 +416,17 @@
       }
     });
 
-    els.logoutBtn.addEventListener("click", async () => {
-      await signOut(auth);
-    });
-
+    els.logoutBtn.addEventListener("click", () => signOut(auth));
+    els.setupTabBtn.addEventListener("click", () => setActiveTab("setup"));
+    els.scoringTabBtn.addEventListener("click", () => setActiveTab("scoring"));
     els.saveEventBtn.addEventListener("click", saveEventSettings);
     els.applyTeamCountBtn.addEventListener("click", applyTeamCount);
     els.overlayMode.addEventListener("change", () => quickUpdate({ overlayMode: els.overlayMode.value }));
     els.showStandings.addEventListener("change", () => quickUpdate({ showStandings: els.showStandings.checked }));
     els.addTeamBtn.addEventListener("click", addTeam);
     els.setAllPar3Btn.addEventListener("click", setAllPar3);
+    els.prevHoleBtn.addEventListener("click", () => moveScoringHole(-1));
+    els.nextHoleBtn.addEventListener("click", () => moveScoringHole(1));
 
     onAuthStateChanged(auth, async user => {
       signedIn = Boolean(user);
@@ -418,10 +434,7 @@
       els.loginForm.classList.toggle("hide", Boolean(user));
       els.signedInTools.classList.toggle("hide", !user);
       els.controlSections.classList.toggle("hide", !user);
-
-      if (user) {
-        await initEventIfMissing();
-      }
+      if (user) await initEventIfMissing();
     });
 
     onValue(eventRef, snapshot => {
@@ -434,9 +447,7 @@
       if (snapshot.exists()) return;
 
       const initialHoles = {};
-      for (let i = 1; i <= 18; i += 1) {
-        initialHoles[String(i)] = { par: 3 };
-      }
+      for (let i = 1; i <= 18; i += 1) initialHoles[String(i)] = { par: 3 };
 
       await set(eventRef, {
         name: `Peltola Open ${new Date().getFullYear()}`,
@@ -451,46 +462,37 @@
       });
     }
 
+    function setActiveTab(tab) {
+      activeTab = tab;
+      els.setupTab.classList.toggle("hide", tab !== "setup");
+      els.scoringTab.classList.toggle("hide", tab !== "scoring");
+      els.setupTabBtn.classList.toggle("active", tab === "setup");
+      els.scoringTabBtn.classList.toggle("active", tab === "scoring");
+      render();
+    }
+
     function render() {
       if (!eventState) return;
 
       const holeCount = clampInt(eventState.holeCount || 18, 1, 36);
       const currentHole = clampInt(eventState.currentHole || 1, 1, holeCount);
-      const teams = getSortedTeams();
+      const setupTeams = getSetupTeams();
 
       els.eventName.value = eventState.name || "";
       els.currentHole.value = currentHole;
       els.currentHole.max = holeCount;
       els.holeCount.value = holeCount;
-      els.teamCount.value = teams.length;
+      els.teamCount.value = setupTeams.length;
       els.overlayMode.value = eventState.overlayMode || "compact";
       els.showStandings.checked = eventState.showStandings !== false;
 
+      renderTeams(setupTeams);
       renderParGrid(holeCount);
-      renderTeams(teams, currentHole);
+      renderScoring(currentHole, holeCount);
     }
 
-    function renderParGrid(holeCount) {
-      els.parGrid.innerHTML = "";
-
-      for (let hole = 1; hole <= holeCount; hole += 1) {
-        const holeKey = String(hole);
-        const par = Number(eventState.holes?.[holeKey]?.par || 3);
-        const cell = document.createElement("label");
-        cell.className = "par-cell";
-        cell.innerHTML = `<span>Hole ${hole}</span><input type="number" min="1" max="9" step="1" value="${par}" />`;
-        const input = cell.querySelector("input");
-        input.addEventListener("change", () => {
-          const nextPar = clampInt(input.value, 1, 9);
-          update(ref(db, `events/${eventId}/holes/${holeKey}`), { par: nextPar });
-        });
-        els.parGrid.appendChild(cell);
-      }
-    }
-
-    function renderTeams(teams, currentHole) {
+    function renderTeams(teams) {
       els.teams.innerHTML = "";
-
       if (!teams.length) {
         const empty = document.createElement("p");
         empty.className = "muted";
@@ -500,28 +502,18 @@
       }
 
       for (const [index, team] of teams.entries()) {
-        const score = eventState.teams?.[team.id]?.scores?.[currentHole] ?? "";
-        const summary = calculateTeamSummary(team.id);
         const card = document.createElement("article");
         card.className = "team-card";
         card.innerHTML = `
           <label>Team name
             <input class="team-name-input" type="text" value="${escapeAttribute(team.name || "")}" placeholder="Team ${index + 1}" />
           </label>
-          <div class="score-controls" aria-label="Score controls">
-            <button class="minus" type="button">−</button>
-            <input class="score-input" type="number" min="1" max="20" step="1" inputmode="numeric" value="${escapeAttribute(score)}" />
-            <button class="plus" type="button">+</button>
-          </div>
-          <div class="summary">${summary}</div>
           <button class="move-up" type="button" ${index === 0 ? "disabled" : ""}>↑</button>
           <button class="move-down" type="button" ${index === teams.length - 1 ? "disabled" : ""}>↓</button>
           <button class="danger delete" type="button">Delete</button>
         `;
 
         const nameInput = card.querySelector(".team-name-input");
-        const scoreInput = card.querySelector(".score-input");
-
         nameInput.addEventListener("change", () => {
           update(ref(db, `events/${eventId}/teams/${team.id}`), {
             name: nameInput.value.trim() || `Team ${index + 1}`,
@@ -529,35 +521,73 @@
           });
         });
 
-        scoreInput.addEventListener("change", () => {
-          saveScore(team.id, currentHole, scoreInput.value);
-        });
-
-        card.querySelector(".minus").addEventListener("click", () => {
-          const current = Number(scoreInput.value || 0);
-          const next = Math.max(1, current - 1 || 1);
-          scoreInput.value = next;
-          saveScore(team.id, currentHole, next);
-        });
-
-        card.querySelector(".plus").addEventListener("click", () => {
-          const current = Number(scoreInput.value || 0);
-          const next = Math.min(20, current + 1 || 1);
-          scoreInput.value = next;
-          saveScore(team.id, currentHole, next);
-        });
-
         card.querySelector(".delete").addEventListener("click", () => deleteTeam(team.id, team.name));
         card.querySelector(".move-up").addEventListener("click", () => moveTeam(teams, index, -1));
         card.querySelector(".move-down").addEventListener("click", () => moveTeam(teams, index, 1));
-
         els.teams.appendChild(card);
+      }
+    }
+
+    function renderParGrid(holeCount) {
+      els.parGrid.innerHTML = "";
+      for (let hole = 1; hole <= holeCount; hole += 1) {
+        const holeKey = String(hole);
+        const par = Number(eventState.holes?.[holeKey]?.par || 3);
+        const cell = document.createElement("label");
+        cell.className = "par-cell";
+        cell.innerHTML = `<span>Hole ${hole}</span><input type="number" min="1" max="9" step="1" value="${par}" />`;
+        const input = cell.querySelector("input");
+        input.addEventListener("change", () => update(ref(db, `events/${eventId}/holes/${holeKey}`), { par: clampInt(input.value, 1, 9) }));
+        els.parGrid.appendChild(cell);
+      }
+    }
+
+    function renderScoring(currentHole, holeCount) {
+      const holeKey = String(currentHole);
+      const par = getPar(currentHole);
+      const standings = getLiveStandings(currentHole);
+
+      els.scoreHoleTitle.textContent = `Hole ${currentHole}`;
+      els.scoreHoleSub.textContent = `Par ${par}`;
+      els.prevHoleBtn.disabled = currentHole <= 1;
+      els.nextHoleBtn.disabled = currentHole >= holeCount;
+      els.scoreList.innerHTML = "";
+
+      if (!standings.length) {
+        const empty = document.createElement("p");
+        empty.className = "muted";
+        empty.textContent = "Add teams in the Setup tab first.";
+        els.scoreList.appendChild(empty);
+        return;
+      }
+
+      for (const [index, team] of standings.entries()) {
+        const storedScore = Number(eventState.teams?.[team.id]?.scores?.[holeKey]);
+        const strokes = Number.isFinite(storedScore) && storedScore > 0 ? storedScore : par;
+        const relative = strokes - par;
+
+        const card = document.createElement("article");
+        card.className = "score-card";
+        card.innerHTML = `
+          <div class="position">${index + 1}</div>
+          <div class="score-team">
+            <div class="score-team-name">${escapeHtml(team.name)}</div>
+            <div class="score-team-sub">${team.played ? `${team.strokes} strokes` : "No completed holes"}</div>
+          </div>
+          <button class="score-minus" type="button">−</button>
+          <div class="hole-score">${formatToPar(relative)}</div>
+          <button class="score-plus" type="button">+</button>
+          <div class="total-score">${formatToPar(team.toPar)}</div>
+        `;
+
+        card.querySelector(".score-minus").addEventListener("click", () => setHoleRelative(team.id, currentHole, relative - 1));
+        card.querySelector(".score-plus").addEventListener("click", () => setHoleRelative(team.id, currentHole, relative + 1));
+        els.scoreList.appendChild(card);
       }
     }
 
     async function saveEventSettings() {
       if (!signedIn) return;
-
       const nextHoleCount = clampInt(els.holeCount.value, 1, 36);
       const nextCurrentHole = clampInt(els.currentHole.value, 1, nextHoleCount);
       const updates = {
@@ -568,13 +598,9 @@
         showStandings: els.showStandings.checked,
         updatedAt: Date.now()
       };
-
       for (let hole = 1; hole <= nextHoleCount; hole += 1) {
-        if (!eventState.holes?.[hole]) {
-          updates[`holes/${hole}/par`] = 3;
-        }
+        if (!eventState.holes?.[hole]) updates[`holes/${hole}/par`] = 3;
       }
-
       try {
         await update(eventRef, updates);
         els.eventStatus.textContent = "Event settings saved.";
@@ -583,11 +609,41 @@
       }
     }
 
+    async function moveScoringHole(direction) {
+      if (!signedIn || !eventState) return;
+      const holeCount = clampInt(eventState.holeCount || 18, 1, 36);
+      const currentHole = clampInt(eventState.currentHole || 1, 1, holeCount);
+      const nextHole = clampInt(currentHole + direction, 1, holeCount);
+      if (nextHole === currentHole) return;
+
+      const updates = { currentHole: nextHole, updatedAt: Date.now() };
+      if (direction > 0) addMissingParScoresToUpdates(updates, currentHole);
+      await update(eventRef, updates);
+      els.scoreStatus.textContent = direction > 0 ? `Saved Hole ${currentHole} defaults and moved to Hole ${nextHole}.` : `Moved to Hole ${nextHole}.`;
+    }
+
+    function addMissingParScoresToUpdates(updates, holeNumber) {
+      const holeKey = String(holeNumber);
+      const par = getPar(holeNumber);
+      for (const team of getSetupTeams()) {
+        const existing = Number(eventState.teams?.[team.id]?.scores?.[holeKey]);
+        if (!Number.isFinite(existing) || existing <= 0) {
+          updates[`teams/${team.id}/scores/${holeKey}`] = par;
+        }
+      }
+    }
+
+    async function setHoleRelative(teamId, holeNumber, relative) {
+      const par = getPar(holeNumber);
+      const strokes = clampInt(par + relative, 1, 20);
+      await set(ref(db, `events/${eventId}/teams/${teamId}/scores/${holeNumber}`), strokes);
+      await update(eventRef, { updatedAt: Date.now() });
+    }
+
     async function applyTeamCount() {
       if (!signedIn) return;
-
       const targetCount = clampInt(els.teamCount.value, 0, 40);
-      const teams = getSortedTeams();
+      const teams = getSetupTeams();
       const currentCount = teams.length;
 
       if (targetCount === currentCount) {
@@ -597,9 +653,7 @@
 
       if (targetCount > currentCount) {
         const additions = targetCount - currentCount;
-        for (let i = 0; i < additions; i += 1) {
-          await createTeam(`Team ${currentCount + i + 1}`, currentCount + i + 1);
-        }
+        for (let i = 0; i < additions; i += 1) await createTeam(`Team ${currentCount + i + 1}`, currentCount + i + 1);
         els.eventStatus.textContent = `Added ${additions} team${additions === 1 ? "" : "s"}.`;
         return;
       }
@@ -607,38 +661,27 @@
       const deleteCount = currentCount - targetCount;
       const teamsToDelete = teams.slice(targetCount);
       const names = teamsToDelete.map(team => team.name).join(", ");
-      const ok = window.confirm(`This will delete ${deleteCount} team${deleteCount === 1 ? "" : "s"}: ${names}. Continue?`);
-      if (!ok) return;
+      if (!window.confirm(`This will delete ${deleteCount} team${deleteCount === 1 ? "" : "s"}: ${names}. Continue?`)) return;
 
       const remainingTeams = teams.slice(0, targetCount);
-      for (const team of teamsToDelete) {
-        await remove(ref(db, `events/${eventId}/teams/${team.id}`));
-      }
+      for (const team of teamsToDelete) await remove(ref(db, `events/${eventId}/teams/${team.id}`));
       await renumberTeamOrder(remainingTeams);
       els.eventStatus.textContent = `Deleted ${deleteCount} team${deleteCount === 1 ? "" : "s"}.`;
     }
 
     async function addTeam() {
-      const teams = getSortedTeams();
+      const teams = getSetupTeams();
       await createTeam(`Team ${teams.length + 1}`, teams.length + 1);
     }
 
     async function createTeam(name, order) {
       const newTeamRef = push(ref(db, `events/${eventId}/teams`));
-      await set(newTeamRef, {
-        name,
-        order,
-        scores: {},
-        createdAt: Date.now(),
-        updatedAt: Date.now()
-      });
+      await set(newTeamRef, { name, order, scores: {}, createdAt: Date.now(), updatedAt: Date.now() });
     }
 
     async function deleteTeam(teamId, teamName) {
-      const ok = window.confirm(`Delete ${teamName || "this team"}? This also deletes its scores.`);
-      if (!ok) return;
-
-      const remainingTeams = getSortedTeams().filter(team => team.id !== teamId);
+      if (!window.confirm(`Delete ${teamName || "this team"}? This also deletes its scores.`)) return;
+      const remainingTeams = getSetupTeams().filter(team => team.id !== teamId);
       await remove(ref(db, `events/${eventId}/teams/${teamId}`));
       await renumberTeamOrder(remainingTeams);
     }
@@ -648,7 +691,6 @@
       const current = teams[index];
       const other = teams[otherIndex];
       if (!current || !other) return;
-
       await update(eventRef, {
         [`teams/${current.id}/order`]: other.order,
         [`teams/${other.id}/order`]: current.order,
@@ -656,25 +698,10 @@
       });
     }
 
-    async function renumberTeamOrder(teams = getSortedTeams()) {
+    async function renumberTeamOrder(teams = getSetupTeams()) {
       const updates = { updatedAt: Date.now() };
-      teams.forEach((team, index) => {
-        updates[`teams/${team.id}/order`] = index + 1;
-      });
+      teams.forEach((team, index) => { updates[`teams/${team.id}/order`] = index + 1; });
       await update(eventRef, updates);
-    }
-
-    async function saveScore(teamId, holeNumber, value) {
-      const score = Number(value);
-      const scoreRef = ref(db, `events/${eventId}/teams/${teamId}/scores/${holeNumber}`);
-
-      if (!Number.isFinite(score) || score <= 0) {
-        await remove(scoreRef);
-        return;
-      }
-
-      await set(scoreRef, clampInt(score, 1, 20));
-      await update(eventRef, { updatedAt: Date.now() });
     }
 
     async function quickUpdate(values) {
@@ -685,42 +712,41 @@
     async function setAllPar3() {
       const holeCount = clampInt(eventState?.holeCount || 18, 1, 36);
       const updates = { updatedAt: Date.now() };
-      for (let hole = 1; hole <= holeCount; hole += 1) {
-        updates[`holes/${hole}/par`] = 3;
-      }
+      for (let hole = 1; hole <= holeCount; hole += 1) updates[`holes/${hole}/par`] = 3;
       await update(eventRef, updates);
     }
 
-    function getSortedTeams() {
+    function getSetupTeams() {
       return Object.entries(eventState?.teams || {})
-        .map(([id, team], index) => ({
-          id,
-          name: team.name || `Team ${index + 1}`,
-          order: Number(team.order || index + 1)
-        }))
+        .map(([id, team], index) => ({ id, name: team.name || `Team ${index + 1}`, order: Number(team.order || index + 1) }))
         .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name));
     }
 
-    function calculateTeamSummary(teamId) {
-      const team = eventState?.teams?.[teamId];
-      if (!team) return "—";
+    function getLiveStandings(throughHole) {
+      return getSetupTeams().map(team => {
+        let strokes = 0;
+        let parTotal = 0;
+        let played = 0;
+        for (let hole = 1; hole <= throughHole; hole += 1) {
+          const holeKey = String(hole);
+          const par = getPar(hole);
+          const raw = Number(eventState.teams?.[team.id]?.scores?.[holeKey]);
+          const score = Number.isFinite(raw) && raw > 0 ? raw : par;
+          strokes += score;
+          parTotal += par;
+          if (Number.isFinite(raw) && raw > 0) played += 1;
+        }
+        return { ...team, strokes, par: parTotal, toPar: strokes - parTotal, played };
+      }).sort((a, b) => a.toPar - b.toPar || a.strokes - b.strokes || a.order - b.order || a.name.localeCompare(b.name));
+    }
 
-      let strokes = 0;
-      let par = 0;
-      let played = 0;
+    function getPar(holeNumber) {
+      return clampInt(eventState?.holes?.[String(holeNumber)]?.par || 3, 1, 9);
+    }
 
-      for (const [holeNumber, rawScore] of Object.entries(team.scores || {})) {
-        const score = Number(rawScore);
-        if (!Number.isFinite(score) || score <= 0) continue;
-        strokes += score;
-        par += Number(eventState.holes?.[holeNumber]?.par || 0);
-        played += 1;
-      }
-
-      if (!played) return "No score";
-      const toPar = strokes - par;
-      const formatted = toPar === 0 ? "E" : toPar > 0 ? `+${toPar}` : String(toPar);
-      return `${formatted} · ${strokes}`;
+    function formatToPar(value) {
+      if (value === 0) return "E";
+      return value > 0 ? `+${value}` : String(value);
     }
 
     function clampInt(value, min, max) {
@@ -729,19 +755,12 @@
       return Math.max(min, Math.min(max, number));
     }
 
-    function escapeAttribute(value) {
-      return String(value).replace(/[&<>"']/g, char => ({
-        "&": "&amp;",
-        "<": "&lt;",
-        ">": "&gt;",
-        '"': "&quot;",
-        "'": "&#039;"
-      }[char]));
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char]));
     }
 
-    function readableFirebaseError(error) {
-      return error?.message || "Firebase error.";
-    }
+    function escapeAttribute(value) { return escapeHtml(value); }
+    function readableFirebaseError(error) { return error?.message || "Firebase error."; }
   </script>
 </body>
 </html>
