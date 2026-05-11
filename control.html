@@ -196,6 +196,10 @@
       background: var(--panel-2);
     }
 
+    .score-card.total-card {
+      grid-template-columns: 44px minmax(130px, 1fr) 96px;
+    }
+
     .position {
       display: grid;
       place-items: center;
@@ -285,9 +289,6 @@
             <label>Event name
               <input id="eventName" type="text" placeholder="Peltola Open 2026" />
             </label>
-            <label>Current hole
-              <input id="currentHole" type="number" min="1" step="1" />
-            </label>
             <label>Number of holes
               <input id="holeCount" type="number" min="1" max="36" step="1" />
             </label>
@@ -305,6 +306,7 @@
           <div class="row" style="margin-top: 12px;">
             <button id="saveEventBtn" type="button">Save event settings</button>
             <button id="applyTeamCountBtn" type="button">Apply team count</button>
+            <button id="resetScoringPositionBtn" type="button">Reset scoring position</button>
             <label class="row" style="display:flex; gap:8px;">
               <input id="showStandings" type="checkbox" /> Show score overlay
             </label>
@@ -340,7 +342,7 @@
             </div>
             <button id="nextHoleBtn" type="button">→</button>
           </div>
-          <p class="muted">Each team starts as E for the selected hole. Use + and − to set the hole score relative to par. Pressing → saves any unchanged E scores for the current hole and moves forward.</p>
+          <p class="muted">Each team starts as E for the selected hole. Use + and − to set the hole score relative to par. Pressing → saves any unchanged E scores for the current hole and moves forward. After the last hole, → opens the Total page and updates the final overlay.</p>
           <div id="scoreList" class="score-list"></div>
           <div class="row" style="margin-top: 12px;">
             <button id="showScorecardBtn" class="primary" type="button">Show scorecard now</button>
@@ -385,12 +387,12 @@
       setupTab: document.getElementById("setupTab"),
       scoringTab: document.getElementById("scoringTab"),
       eventName: document.getElementById("eventName"),
-      currentHole: document.getElementById("currentHole"),
       holeCount: document.getElementById("holeCount"),
       teamCount: document.getElementById("teamCount"),
       overlayMode: document.getElementById("overlayMode"),
       saveEventBtn: document.getElementById("saveEventBtn"),
       applyTeamCountBtn: document.getElementById("applyTeamCountBtn"),
+      resetScoringPositionBtn: document.getElementById("resetScoringPositionBtn"),
       showStandings: document.getElementById("showStandings"),
       addTeamBtn: document.getElementById("addTeamBtn"),
       eventStatus: document.getElementById("eventStatus"),
@@ -426,6 +428,7 @@
     els.scoringTabBtn.addEventListener("click", () => setActiveTab("scoring"));
     els.saveEventBtn.addEventListener("click", saveEventSettings);
     els.applyTeamCountBtn.addEventListener("click", applyTeamCount);
+    els.resetScoringPositionBtn.addEventListener("click", resetScoringPosition);
     els.overlayMode.addEventListener("change", () => quickUpdate({ overlayMode: els.overlayMode.value }));
     els.showStandings.addEventListener("change", () => quickUpdate({ showStandings: els.showStandings.checked }));
     els.addTeamBtn.addEventListener("click", addTeam);
@@ -457,7 +460,7 @@
 
       await set(eventRef, {
         name: `Peltola Open ${new Date().getFullYear()}`,
-        currentHole: 1,
+        currentHole: 0,
         holeCount: 18,
         overlayMode: "compact",
         showHoleBug: false,
@@ -481,12 +484,10 @@
       if (!eventState) return;
 
       const holeCount = clampInt(eventState.holeCount || 18, 1, 36);
-      const currentHole = clampInt(eventState.currentHole || 1, 1, holeCount);
+      const currentHole = clampInt(eventState.currentHole ?? 0, 0, holeCount + 1);
       const setupTeams = getSetupTeams();
 
       els.eventName.value = eventState.name || "";
-      els.currentHole.value = currentHole;
-      els.currentHole.max = holeCount;
       els.holeCount.value = holeCount;
       els.teamCount.value = setupTeams.length;
       els.overlayMode.value = eventState.overlayMode || "compact";
@@ -549,15 +550,59 @@
     }
 
     function renderScoring(currentHole, holeCount) {
+      els.scoreList.innerHTML = "";
+
+      if (currentHole <= 0) {
+        els.scoreHoleTitle.textContent = "Before Hole 1";
+        els.scoreHoleSub.textContent = "Press → to start";
+        els.prevHoleBtn.disabled = true;
+        els.nextHoleBtn.disabled = false;
+        const empty = document.createElement("p");
+        empty.className = "muted";
+        empty.textContent = "No hole is selected yet. Press → to start scoring Hole 1.";
+        els.scoreList.appendChild(empty);
+        return;
+      }
+
+      if (currentHole > holeCount) {
+        els.scoreHoleTitle.textContent = "Total";
+        els.scoreHoleSub.textContent = `Final after ${holeCount} holes`;
+        els.prevHoleBtn.disabled = false;
+        els.nextHoleBtn.disabled = true;
+
+        const standings = getLiveStandings(holeCount);
+        if (!standings.length) {
+          const empty = document.createElement("p");
+          empty.className = "muted";
+          empty.textContent = "Add teams in the Setup tab first.";
+          els.scoreList.appendChild(empty);
+          return;
+        }
+
+        for (const [index, team] of standings.entries()) {
+          const card = document.createElement("article");
+          card.className = "score-card total-card";
+          card.innerHTML = `
+            <div class="position">${index + 1}</div>
+            <div class="score-team">
+              <div class="score-team-name">${escapeHtml(team.name)}</div>
+              <div class="score-team-sub">${team.strokes} strokes</div>
+            </div>
+            <div class="total-score">${formatToPar(team.toPar)}</div>
+          `;
+          els.scoreList.appendChild(card);
+        }
+        return;
+      }
+
       const holeKey = String(currentHole);
       const par = getPar(currentHole);
       const scoringOrder = getScoringOrderForHole(currentHole);
 
       els.scoreHoleTitle.textContent = `Hole ${currentHole}`;
       els.scoreHoleSub.textContent = `Par ${par}`;
-      els.prevHoleBtn.disabled = currentHole <= 1;
-      els.nextHoleBtn.disabled = currentHole >= holeCount;
-      els.scoreList.innerHTML = "";
+      els.prevHoleBtn.disabled = currentHole <= 0;
+      els.nextHoleBtn.disabled = false;
 
       if (!scoringOrder.length) {
         const empty = document.createElement("p");
@@ -596,10 +641,8 @@
     async function saveEventSettings() {
       if (!signedIn) return;
       const nextHoleCount = clampInt(els.holeCount.value, 1, 36);
-      const nextCurrentHole = clampInt(els.currentHole.value, 1, nextHoleCount);
       const updates = {
         name: els.eventName.value.trim() || "Peltola Open",
-        currentHole: nextCurrentHole,
         holeCount: nextHoleCount,
         overlayMode: els.overlayMode.value,
         showStandings: els.showStandings.checked,
@@ -619,14 +662,14 @@
     async function moveScoringHole(direction) {
       if (!signedIn || !eventState) return;
       const holeCount = clampInt(eventState.holeCount || 18, 1, 36);
-      const currentHole = clampInt(eventState.currentHole || 1, 1, holeCount);
-      const nextHole = clampInt(currentHole + direction, 1, holeCount);
+      const currentHole = clampInt(eventState.currentHole ?? 0, 0, holeCount + 1);
+      const nextHole = clampInt(currentHole + direction, 0, holeCount + 1);
       if (nextHole === currentHole) return;
 
       const now = Date.now();
       const updates = { currentHole: nextHole, updatedAt: now };
 
-      if (direction > 0) {
+      if (direction > 0 && currentHole >= 1 && currentHole <= holeCount) {
         addMissingParScoresToUpdates(updates, currentHole);
 
         const alreadyShown = eventState.overlayFlashShownHoles?.[String(currentHole)] === true;
@@ -637,9 +680,10 @@
       }
 
       await update(eventRef, updates);
-      els.scoreStatus.textContent = direction > 0
-        ? `Saved Hole ${currentHole} defaults and moved to Hole ${nextHole}.`
-        : `Moved to Hole ${nextHole}.`;
+      const nextLabel = nextHole === 0 ? "before Hole 1" : nextHole > holeCount ? "Total" : `Hole ${nextHole}`;
+      els.scoreStatus.textContent = direction > 0 && currentHole >= 1 && currentHole <= holeCount
+        ? `Saved Hole ${currentHole} defaults and moved to ${nextLabel}.`
+        : `Moved to ${nextLabel}.`;
     }
 
     function addMissingParScoresToUpdates(updates, holeNumber) {
@@ -679,6 +723,19 @@
           durationMs: 10000
         }
       };
+    }
+
+
+    async function resetScoringPosition() {
+      if (!signedIn) return;
+      if (!window.confirm("Reset the Scoring tab to before Hole 1? This does not delete team scores.")) return;
+      await update(eventRef, {
+        currentHole: 0,
+        overlayFlash: null,
+        overlayFlashShownHoles: null,
+        updatedAt: Date.now()
+      });
+      els.eventStatus.textContent = "Scoring position reset to before Hole 1.";
     }
 
     function getCompletedThrough() {
