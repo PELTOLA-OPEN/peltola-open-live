@@ -6,8 +6,8 @@
   <title>Peltola Open Overlay</title>
   <style>
     :root {
-      --panel: rgba(0, 0, 0, 0.76);
-      --panel-strong: rgba(0, 0, 0, 0.88);
+      --panel: rgba(0, 0, 0, 0.5);
+      --panel-strong: rgba(0, 0, 0, 0.5);
       --text: #ffffff;
       --muted: rgba(255, 255, 255, 0.72);
       --line: rgba(255, 255, 255, 0.16);
@@ -48,6 +48,7 @@
       padding: 12px 14px 11px;
       border-radius: 16px;
       background: var(--panel);
+      backdrop-filter: blur(2px);
       box-shadow: 0 18px 42px rgba(0, 0, 0, 0.38);
     }
 
@@ -135,6 +136,7 @@
       overflow: hidden;
       border-radius: 16px;
       background: var(--panel);
+      backdrop-filter: blur(2px);
       box-shadow: 0 18px 42px rgba(0, 0, 0, 0.38);
     }
 
@@ -180,7 +182,7 @@
       place-items: center;
       min-width: clamp(104px, 10vw, 150px);
       padding: 0 12px;
-      border-left: 1px solid var(--line);
+      border-right: 1px solid var(--line);
       background: var(--panel-strong);
       font-size: clamp(11px, 1vw, 15px);
       font-weight: 950;
@@ -211,10 +213,10 @@
     </section>
 
     <section id="ticker" class="ticker hidden" aria-live="polite">
+      <div id="tickerInfo" class="ticker-info">Before round</div>
       <div class="ticker-viewport">
         <div id="tickerTrack" class="ticker-track"></div>
       </div>
-      <div id="tickerInfo" class="ticker-info">Before round</div>
     </section>
   </main>
 
@@ -254,7 +256,7 @@
       const mode = forcedMode || event.overlayMode || "compact";
       const completedThrough = getCompletedThrough(event);
       const label = formatPlayedLabel(completedThrough);
-      const standings = calculateStandings(event, completedThrough);
+      const standings = assignPositions(calculateStandings(event, completedThrough));
 
       if (mode === "ticker") renderTicker(event, standings, completedThrough, label);
       else renderCompactBox(event, standings, completedThrough, label);
@@ -271,7 +273,7 @@
       scoreRowsEl.outerHTML = `<div id="scoreRows">${rows.length
         ? rows.map(team => `
           <div class="score-row">
-            <div class="team-name">${escapeHtml(team.name)}</div>
+            <div class="team-name">${escapeHtml(team.positionLabel)} - ${escapeHtml(team.name)}</div>
             <div class="score">${completedThrough ? formatToPar(team.toPar) : "--"}</div>
           </div>
         `).join("")
@@ -288,7 +290,7 @@
       const content = standings.length
         ? standings.map(team => `
           <span class="ticker-item">
-            <span class="ticker-team">${escapeHtml(team.name)}</span>
+            <span class="ticker-team">${escapeHtml(team.positionLabel)} - ${escapeHtml(team.name)}</span>
             <span class="ticker-score">${completedThrough ? formatToPar(team.toPar) : "--"}</span>
           </span>
         `).join("")
@@ -355,10 +357,40 @@
       });
     }
 
+
+    function assignPositions(standings) {
+      let previousKey = null;
+      let previousRank = 0;
+      return standings.map((team, index) => {
+        const key = `${team.toPar}|${team.strokes}`;
+        const rank = previousKey !== null && key === previousKey ? previousRank : index + 1;
+        previousKey = key;
+        previousRank = rank;
+        return {
+          ...team,
+          rank,
+          positionLabel: formatOrdinal(rank)
+        };
+      });
+    }
+
     function formatPlayedLabel(completedThrough) {
       if (!completedThrough) return "Before round";
       if (completedThrough === 1) return "Through 1 hole";
       return `Through ${completedThrough} holes`;
+    }
+
+
+    function formatOrdinal(value) {
+      const v = Math.abs(Number(value));
+      const mod100 = v % 100;
+      if (mod100 >= 11 && mod100 <= 13) return `${v}th`;
+      switch (v % 10) {
+        case 1: return `${v}st`;
+        case 2: return `${v}nd`;
+        case 3: return `${v}rd`;
+        default: return `${v}th`;
+      }
     }
 
     function formatToPar(value) {
