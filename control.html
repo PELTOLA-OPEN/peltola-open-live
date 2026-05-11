@@ -342,6 +342,9 @@
           </div>
           <p class="muted">Each team starts as E for the selected hole. Use + and − to set the hole score relative to par. Pressing → saves any unchanged E scores for the current hole and moves forward.</p>
           <div id="scoreList" class="score-list"></div>
+          <div class="row" style="margin-top: 12px;">
+            <button id="showScorecardBtn" class="primary" type="button">Show scorecard now</button>
+          </div>
           <div id="scoreStatus" class="status"></div>
         </section>
       </section>
@@ -396,6 +399,7 @@
       setAllPar3Btn: document.getElementById("setAllPar3Btn"),
       prevHoleBtn: document.getElementById("prevHoleBtn"),
       nextHoleBtn: document.getElementById("nextHoleBtn"),
+      showScorecardBtn: document.getElementById("showScorecardBtn"),
       scoreHoleTitle: document.getElementById("scoreHoleTitle"),
       scoreHoleSub: document.getElementById("scoreHoleSub"),
       scoreList: document.getElementById("scoreList"),
@@ -428,6 +432,7 @@
     els.setAllPar3Btn.addEventListener("click", setAllPar3);
     els.prevHoleBtn.addEventListener("click", () => moveScoringHole(-1));
     els.nextHoleBtn.addEventListener("click", () => moveScoringHole(1));
+    els.showScorecardBtn.addEventListener("click", showScorecardNow);
 
     onAuthStateChanged(auth, async user => {
       signedIn = Boolean(user);
@@ -618,10 +623,23 @@
       const nextHole = clampInt(currentHole + direction, 1, holeCount);
       if (nextHole === currentHole) return;
 
-      const updates = { currentHole: nextHole, updatedAt: Date.now() };
-      if (direction > 0) addMissingParScoresToUpdates(updates, currentHole);
+      const now = Date.now();
+      const updates = { currentHole: nextHole, updatedAt: now };
+
+      if (direction > 0) {
+        addMissingParScoresToUpdates(updates, currentHole);
+
+        const alreadyShown = eventState.overlayFlashShownHoles?.[String(currentHole)] === true;
+        if (!alreadyShown) {
+          Object.assign(updates, buildScorecardFlashUpdates(currentHole, now));
+          updates[`overlayFlashShownHoles/${currentHole}`] = true;
+        }
+      }
+
       await update(eventRef, updates);
-      els.scoreStatus.textContent = direction > 0 ? `Saved Hole ${currentHole} defaults and moved to Hole ${nextHole}.` : `Moved to Hole ${nextHole}.`;
+      els.scoreStatus.textContent = direction > 0
+        ? `Saved Hole ${currentHole} defaults and moved to Hole ${nextHole}.`
+        : `Moved to Hole ${nextHole}.`;
     }
 
     function addMissingParScoresToUpdates(updates, holeNumber) {
@@ -633,6 +651,54 @@
           updates[`teams/${team.id}/scores/${holeKey}`] = par;
         }
       }
+    }
+
+    async function showScorecardNow() {
+      if (!signedIn || !eventState) return;
+      const throughHole = getCompletedThrough();
+      if (!throughHole) {
+        els.scoreStatus.textContent = "No completed holes yet. Enter all team scores for at least Hole 1 first.";
+        return;
+      }
+
+      const now = Date.now();
+      await update(eventRef, {
+        ...buildScorecardFlashUpdates(throughHole, now),
+        updatedAt: now
+      });
+      els.scoreStatus.textContent = `Showing scorecard through Hole ${throughHole}.`;
+    }
+
+    function buildScorecardFlashUpdates(throughHole, now = Date.now()) {
+      return {
+        overlayFlash: {
+          type: "scorecard",
+          hole: throughHole,
+          sequence: now,
+          triggeredAt: now,
+          durationMs: 10000
+        }
+      };
+    }
+
+    function getCompletedThrough() {
+      const teams = getSetupTeams();
+      if (!teams.length) return 0;
+
+      const holeCount = clampInt(eventState.holeCount || 18, 1, 36);
+      let completedThrough = 0;
+
+      for (let hole = 1; hole <= holeCount; hole += 1) {
+        const holeKey = String(hole);
+        const everyTeamHasScore = teams.every(team => {
+          const score = Number(eventState.teams?.[team.id]?.scores?.[holeKey]);
+          return Number.isFinite(score) && score > 0;
+        });
+        if (!everyTeamHasScore) break;
+        completedThrough = hole;
+      }
+
+      return completedThrough;
     }
 
     async function setHoleRelative(teamId, holeNumber, relative) {
