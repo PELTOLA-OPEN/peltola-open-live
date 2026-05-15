@@ -258,7 +258,8 @@
 
     .scorecard-table {
       width: auto;
-      border-collapse: collapse;
+      border-collapse: separate;
+      border-spacing: 0;
       table-layout: auto;
       color: white;
       font-variant-numeric: tabular-nums;
@@ -266,12 +267,23 @@
 
     .scorecard-table th,
     .scorecard-table td {
-      height: clamp(24px, 2.45vw, 35px);
+      height: var(--scorecard-cell-height, clamp(24px, 2.45vw, 35px));
       border: 1px solid rgba(255, 255, 255, 0.46);
+      border-left-width: 0;
+      border-top-width: 0;
       padding: 2px 3px;
       text-align: center;
       vertical-align: middle;
       line-height: 1;
+    }
+
+    .scorecard-table tr:first-child th {
+      border-top-width: 1px;
+    }
+
+    .scorecard-table th:first-child,
+    .scorecard-table td:first-child {
+      border-left-width: 1px;
     }
 
     .scorecard-table th {
@@ -289,7 +301,7 @@
 
     .scorecard-player {
       width: 1%;
-      max-width: min(360px, 31vw);
+      max-width: var(--scorecard-player-max, min(360px, 31vw));
       text-align: left !important;
       padding-left: 7px !important;
       padding-right: 7px !important;
@@ -299,16 +311,23 @@
     }
 
     .scorecard-hole {
-      width: clamp(22px, 2.25vw, 34px);
-      min-width: clamp(22px, 2.25vw, 34px);
-      max-width: clamp(22px, 2.25vw, 34px);
+      width: var(--scorecard-hole-width, clamp(22px, 2.25vw, 34px));
+      min-width: var(--scorecard-hole-width, clamp(22px, 2.25vw, 34px));
+      max-width: var(--scorecard-hole-width, clamp(22px, 2.25vw, 34px));
+      box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.46);
       text-align: center !important;
       vertical-align: middle !important;
       overflow: visible;
     }
 
+    .scorecard-table th:nth-child(7),
+    .scorecard-table td:nth-child(7) {
+      border-left-width: 1px;
+    }
+
     .scorecard-total {
-      width: clamp(42px, 4.2vw, 66px);
+      width: var(--scorecard-total-width, clamp(42px, 4.2vw, 66px));
+      min-width: var(--scorecard-total-width, clamp(42px, 4.2vw, 66px));
       font-weight: 950 !important;
     }
 
@@ -421,15 +440,15 @@
       }
 
       .scorecard-player {
-        max-width: 116px;
+        max-width: var(--scorecard-player-mobile-max, 116px);
         padding-left: 4px !important;
         padding-right: 4px !important;
       }
 
       .scorecard-hole {
-        width: 20px;
-        min-width: 20px;
-        max-width: 20px;
+        width: var(--scorecard-hole-mobile-width, 20px);
+        min-width: var(--scorecard-hole-mobile-width, 20px);
+        max-width: var(--scorecard-hole-mobile-width, 20px);
       }
 
       .scorecard-mark {
@@ -443,7 +462,7 @@
       }
 
       .scorecard-total {
-        width: 38px;
+        width: var(--scorecard-total-mobile-width, 38px);
       }
 
       .scorecard-mark {
@@ -454,7 +473,7 @@
 
     @keyframes ticker-scroll {
       from { transform: translateX(0); }
-      to { transform: translateX(-50%); }
+      to { transform: translateX(-25%); }
     }
   </style>
 </head>
@@ -546,6 +565,8 @@
         scorecardCenterX: 50,
         scorecardCenterY: 43,
         scorecardScale: 100,
+        scorecardWidthScale: 100,
+        scorecardHeightScale: 100,
         ...(event.overlayLayout || {})
       };
 
@@ -553,12 +574,29 @@
       const centerX = clampNumber(layout.scorecardCenterX, 0, 100);
       const centerY = clampNumber(layout.scorecardCenterY, 0, 100);
       const scale = clampNumber(layout.scorecardScale, 50, 150) / 100;
+      const widthScale = clampNumber(layout.scorecardWidthScale, 50, 180) / 100;
+      const heightScale = clampNumber(layout.scorecardHeightScale, 50, 180) / 100;
+      const viewportWidth = Math.max(320, window.innerWidth || 1920);
+      const baseHoleWidth = Math.max(22, Math.min(34, viewportWidth * 0.0225));
+      const baseTotalWidth = Math.max(42, Math.min(66, viewportWidth * 0.042));
+      const basePlayerMax = Math.min(360, viewportWidth * 0.31);
+      const baseCellHeight = Math.max(24, Math.min(35, viewportWidth * 0.0245));
+      const mobileBaseHoleWidth = 20;
+      const mobileBaseTotalWidth = 38;
+      const mobileBasePlayerMax = 116;
 
       document.documentElement.style.setProperty("--ticker-height", `${tickerHeight}px`);
       document.documentElement.style.setProperty("--scorecard-center-x", `${centerX}%`);
       document.documentElement.style.setProperty("--scorecard-center-y", `${centerY}%`);
       document.documentElement.style.setProperty("--scorecard-show-scale", String(scale));
       document.documentElement.style.setProperty("--scorecard-hidden-scale", String(scale * 0.96));
+      document.documentElement.style.setProperty("--scorecard-hole-width", `${baseHoleWidth * widthScale}px`);
+      document.documentElement.style.setProperty("--scorecard-total-width", `${baseTotalWidth * widthScale}px`);
+      document.documentElement.style.setProperty("--scorecard-player-max", `${basePlayerMax * widthScale}px`);
+      document.documentElement.style.setProperty("--scorecard-cell-height", `${baseCellHeight * heightScale}px`);
+      document.documentElement.style.setProperty("--scorecard-hole-mobile-width", `${mobileBaseHoleWidth * widthScale}px`);
+      document.documentElement.style.setProperty("--scorecard-total-mobile-width", `${mobileBaseTotalWidth * widthScale}px`);
+      document.documentElement.style.setProperty("--scorecard-player-mobile-max", `${mobileBasePlayerMax * widthScale}px`);
     }
 
     function maybeShowScorecardFlash(event) {
@@ -673,10 +711,9 @@
         `).join("")
         : `<span class="ticker-item"><span class="ticker-team">Add teams in the control panel</span></span>`;
 
-      tickerTrackEl.innerHTML = `
-        <div class="ticker-copy">${content}<span class="ticker-separator" aria-hidden="true"></span></div>
-        <div class="ticker-copy" aria-hidden="true">${content}<span class="ticker-separator" aria-hidden="true"></span></div>
-      `;
+      tickerTrackEl.innerHTML = Array.from({ length: 4 }, (_, index) => `
+        <div class="ticker-copy" ${index ? 'aria-hidden="true"' : ''}>${content}<span class="ticker-separator" aria-hidden="true"></span></div>
+      `).join("");
 
       const oldDurationSeconds = Math.max(26, Math.min(70, standings.length * 5 + 18));
       const fasterDurationSeconds = oldDurationSeconds / 1.25;

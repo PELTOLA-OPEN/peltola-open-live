@@ -337,8 +337,14 @@
             <label>Popup scorecard size, %
               <input id="scorecardScale" type="number" min="50" max="150" step="1" />
             </label>
+            <label>Popup width scale, %
+              <input id="scorecardWidthScale" type="number" min="50" max="180" step="1" />
+            </label>
+            <label>Popup height scale, %
+              <input id="scorecardHeightScale" type="number" min="50" max="180" step="1" />
+            </label>
           </div>
-          <p class="muted" style="margin-top: 10px; margin-bottom: 0;">Save event settings after changing these values. X/Y are based on the overlay screen, where 50/50 is the center.</p>
+          <p class="muted" style="margin-top: 10px; margin-bottom: 0;">Save event settings after changing these values. X/Y are based on the overlay screen, where 50/50 is the center. Width/height scale changes the popup scorecard aspect ratio without stretching the text.</p>
           <div class="row" style="margin-top: 12px;">
             <button id="resetOverlayLayoutBtn" type="button">Reset overlay adjustments</button>
           </div>
@@ -425,6 +431,8 @@
       scorecardCenterX: document.getElementById("scorecardCenterX"),
       scorecardCenterY: document.getElementById("scorecardCenterY"),
       scorecardScale: document.getElementById("scorecardScale"),
+      scorecardWidthScale: document.getElementById("scorecardWidthScale"),
+      scorecardHeightScale: document.getElementById("scorecardHeightScale"),
       resetOverlayLayoutBtn: document.getElementById("resetOverlayLayoutBtn"),
       saveEventBtn: document.getElementById("saveEventBtn"),
       applyTeamCountBtn: document.getElementById("applyTeamCountBtn"),
@@ -541,6 +549,8 @@
       els.scorecardCenterX.value = overlayLayout.scorecardCenterX;
       els.scorecardCenterY.value = overlayLayout.scorecardCenterY;
       els.scorecardScale.value = overlayLayout.scorecardScale;
+      els.scorecardWidthScale.value = overlayLayout.scorecardWidthScale;
+      els.scorecardHeightScale.value = overlayLayout.scorecardHeightScale;
       els.showStandings.checked = eventState.showStandings !== false;
 
       renderTeams(setupTeams);
@@ -837,7 +847,9 @@
         tickerHeightPx: clampInt(els.tickerHeightPx.value, 30, 120),
         scorecardCenterX: clampNumber(els.scorecardCenterX.value, 0, 100),
         scorecardCenterY: clampNumber(els.scorecardCenterY.value, 0, 100),
-        scorecardScale: clampInt(els.scorecardScale.value, 50, 150)
+        scorecardScale: clampInt(els.scorecardScale.value, 50, 150),
+        scorecardWidthScale: clampInt(els.scorecardWidthScale.value, 50, 180),
+        scorecardHeightScale: clampInt(els.scorecardHeightScale.value, 50, 180)
       };
     }
 
@@ -850,7 +862,9 @@
         tickerHeightPx: 58,
         scorecardCenterX: 50,
         scorecardCenterY: 43,
-        scorecardScale: 100
+        scorecardScale: 100,
+        scorecardWidthScale: 100,
+        scorecardHeightScale: 100
       };
     }
 
