@@ -271,6 +271,7 @@
       padding: 2px 3px;
       text-align: center;
       vertical-align: middle;
+      line-height: 1;
     }
 
     .scorecard-table th {
@@ -301,6 +302,9 @@
       width: clamp(22px, 2.25vw, 34px);
       min-width: clamp(22px, 2.25vw, 34px);
       max-width: clamp(22px, 2.25vw, 34px);
+      text-align: center !important;
+      vertical-align: middle !important;
+      overflow: visible;
     }
 
     .scorecard-total {
@@ -311,25 +315,33 @@
 
 
     .scorecard-mark {
-      display: inline-grid;
-      place-items: center;
-      width: clamp(15px, 1.55vw, 24px);
-      height: clamp(15px, 1.55vw, 24px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: clamp(13px, 1.25vw, 20px);
+      min-width: clamp(13px, 1.25vw, 20px);
+      max-width: clamp(13px, 1.25vw, 20px);
+      height: clamp(13px, 1.25vw, 20px);
+      min-height: clamp(13px, 1.25vw, 20px);
+      max-height: clamp(13px, 1.25vw, 20px);
+      aspect-ratio: 1 / 1;
       margin: 0 auto;
-      border-radius: 999px;
+      border-radius: 50%;
       color: #ffffff;
       line-height: 1;
       font-weight: 950;
       text-align: center;
       vertical-align: middle;
+      box-sizing: border-box;
+      white-space: nowrap;
     }
 
     .scorecard-mark-albatross { background: #245f9e; }
     .scorecard-mark-birdie { background: #6db7f2; }
-    .scorecard-mark-bogey { background: #e3a17d; color: #1e130e; }
-    .scorecard-mark-double { background: #d86431; }
-    .scorecard-mark-triple { background: #9d3f1b; }
-    .scorecard-mark-quad { background: #b91f1f; }
+    .scorecard-mark-bogey { background: #e3a17d; color: #111111; }
+    .scorecard-mark-double { background: #d86431; color: #111111; }
+    .scorecard-mark-triple { background: #d92828; color: #111111; }
+    .scorecard-mark-quad { background: #c70000; color: #111111; }
 
     .scorecard-empty-cell {
       color: rgba(255, 255, 255, 0.28);
@@ -416,6 +428,16 @@
         width: 20px;
         min-width: 20px;
         max-width: 20px;
+      }
+
+      .scorecard-mark {
+        width: 14px;
+        min-width: 14px;
+        max-width: 14px;
+        height: 14px;
+        min-height: 14px;
+        max-height: 14px;
+        font-size: 9px;
       }
 
       .scorecard-total {
