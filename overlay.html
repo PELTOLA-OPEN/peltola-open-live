@@ -283,6 +283,7 @@
     .scorecard-table td {
       font-size: clamp(11px, 1.1vw, 18px);
       font-weight: 850;
+      line-height: 1;
     }
 
     .scorecard-player {
@@ -307,35 +308,31 @@
       font-weight: 950 !important;
     }
 
-    .scorecard-empty-cell {
-      color: rgba(255, 255, 255, 0.28);
-    }
 
-    .scorecard-pill {
+
+    .scorecard-mark {
       display: inline-grid;
       place-items: center;
-      min-width: clamp(18px, 1.9vw, 27px);
-      height: clamp(18px, 1.9vw, 27px);
-      padding: 0 clamp(4px, 0.45vw, 7px);
+      width: clamp(15px, 1.55vw, 24px);
+      height: clamp(15px, 1.55vw, 24px);
+      margin: 0 auto;
       border-radius: 999px;
       color: #ffffff;
-      font-weight: 950;
       line-height: 1;
-      text-shadow: none;
+      font-weight: 950;
+      text-align: center;
+      vertical-align: middle;
     }
 
-    .scorecard-pill.score-birdie { background: #74aeea; }
-    .scorecard-pill.score-albatross { background: #1f5f9f; }
-    .scorecard-pill.score-bogey { background: #e7b294; color: #111111; }
-    .scorecard-pill.score-double-bogey { background: #d86f3d; }
+    .scorecard-mark-albatross { background: #245f9e; }
+    .scorecard-mark-birdie { background: #6db7f2; }
+    .scorecard-mark-bogey { background: #e3a17d; color: #1e130e; }
+    .scorecard-mark-double { background: #d86431; }
+    .scorecard-mark-triple { background: #9d3f1b; }
+    .scorecard-mark-quad { background: #b91f1f; }
 
-    .scorecard-pill.score-par {
-      background: transparent;
-      color: #ffffff;
-      padding: 0;
-      min-width: 0;
-      height: auto;
-      border-radius: 0;
+    .scorecard-empty-cell {
+      color: rgba(255, 255, 255, 0.28);
     }
 
 
@@ -423,6 +420,11 @@
 
       .scorecard-total {
         width: 38px;
+      }
+
+      .scorecard-mark {
+        width: 16px;
+        height: 16px;
       }
     }
 
@@ -584,8 +586,7 @@
           const par = Number(event.holes?.[holeKey]?.par || 0);
           if (!Number.isFinite(score) || score <= 0 || !Number.isFinite(par) || par <= 0) return `<td class="scorecard-hole scorecard-empty-cell">·</td>`;
 
-          const relative = score - par;
-          return `<td class="scorecard-hole"><span class="scorecard-pill ${scoreClass(relative)}">${score}</span></td>`;
+          return `<td class="scorecard-hole">${formatHoleScore(score, par)}</td>`;
         }).join("");
 
         return `
@@ -745,12 +746,21 @@
     }
 
 
-    function scoreClass(relative) {
-      if (relative <= -2) return "score-albatross";
-      if (relative === -1) return "score-birdie";
-      if (relative === 1) return "score-bogey";
-      if (relative >= 2) return "score-double-bogey";
-      return "score-par";
+    function formatHoleScore(score, par) {
+      const relative = score - par;
+      const className = getScorecardMarkClass(relative);
+      if (!className) return String(score);
+      return `<span class="scorecard-mark ${className}">${score}</span>`;
+    }
+
+    function getScorecardMarkClass(relative) {
+      if (relative <= -2) return "scorecard-mark-albatross";
+      if (relative === -1) return "scorecard-mark-birdie";
+      if (relative === 1) return "scorecard-mark-bogey";
+      if (relative === 2) return "scorecard-mark-double";
+      if (relative === 3) return "scorecard-mark-triple";
+      if (relative >= 4) return "scorecard-mark-quad";
+      return "";
     }
 
     function formatToPar(value) {
