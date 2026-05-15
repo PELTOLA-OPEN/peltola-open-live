@@ -303,6 +303,12 @@
                 <option value="ticker">Rolling ticker</option>
               </select>
             </label>
+            <label>Scorecard coloring
+              <select id="scorecardColorMode">
+                <option value="circle">Colored circles</option>
+                <option value="cell">Fill whole cell</option>
+              </select>
+            </label>
           </div>
 
           <div class="row" style="margin-top: 12px;">
@@ -414,6 +420,7 @@
       holeCount: document.getElementById("holeCount"),
       teamCount: document.getElementById("teamCount"),
       overlayMode: document.getElementById("overlayMode"),
+      scorecardColorMode: document.getElementById("scorecardColorMode"),
       tickerHeightPx: document.getElementById("tickerHeightPx"),
       scorecardCenterX: document.getElementById("scorecardCenterX"),
       scorecardCenterY: document.getElementById("scorecardCenterY"),
@@ -464,6 +471,7 @@
     els.applyTeamCountBtn.addEventListener("click", applyTeamCount);
     els.resetScoringPositionBtn.addEventListener("click", resetScoringPosition);
     els.overlayMode.addEventListener("change", () => quickUpdate({ overlayMode: els.overlayMode.value }));
+    els.scorecardColorMode.addEventListener("change", () => quickUpdate({ scorecardColorMode: els.scorecardColorMode.value }));
     els.showStandings.addEventListener("change", () => quickUpdate({ showStandings: els.showStandings.checked }));
     els.addTeamBtn.addEventListener("click", addTeam);
     els.setAllPar3Btn.addEventListener("click", setAllPar3);
@@ -497,6 +505,7 @@
         currentHole: 0,
         holeCount: 18,
         overlayMode: "compact",
+        scorecardColorMode: "circle",
         overlayLayout: getDefaultOverlayLayout(),
         showHoleBug: false,
         showStandings: true,
@@ -526,6 +535,7 @@
       els.holeCount.value = holeCount;
       els.teamCount.value = setupTeams.length;
       els.overlayMode.value = eventState.overlayMode || "compact";
+      els.scorecardColorMode.value = eventState.scorecardColorMode === "cell" ? "cell" : "circle";
       const overlayLayout = getOverlayLayout();
       els.tickerHeightPx.value = overlayLayout.tickerHeightPx;
       els.scorecardCenterX.value = overlayLayout.scorecardCenterX;
@@ -685,6 +695,7 @@
         name: els.eventName.value.trim() || "Peltola Open",
         holeCount: nextHoleCount,
         overlayMode: els.overlayMode.value,
+        scorecardColorMode: els.scorecardColorMode.value,
         overlayLayout: readOverlayLayoutInputs(),
         showStandings: els.showStandings.checked,
         updatedAt: Date.now()

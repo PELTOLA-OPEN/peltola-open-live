@@ -315,33 +315,35 @@
 
 
     .scorecard-mark {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: clamp(13px, 1.25vw, 20px);
-      min-width: clamp(13px, 1.25vw, 20px);
-      max-width: clamp(13px, 1.25vw, 20px);
-      height: clamp(13px, 1.25vw, 20px);
-      min-height: clamp(13px, 1.25vw, 20px);
-      max-height: clamp(13px, 1.25vw, 20px);
+      display: inline-grid;
+      place-items: center;
+      width: clamp(18px, 1.75vw, 28px);
+      min-width: clamp(18px, 1.75vw, 28px);
+      max-width: clamp(18px, 1.75vw, 28px);
+      height: clamp(18px, 1.75vw, 28px);
+      min-height: clamp(18px, 1.75vw, 28px);
+      max-height: clamp(18px, 1.75vw, 28px);
       aspect-ratio: 1 / 1;
       margin: 0 auto;
-      border-radius: 50%;
+      border-radius: 999px;
       color: #ffffff;
       line-height: 1;
       font-weight: 950;
       text-align: center;
-      vertical-align: middle;
       box-sizing: border-box;
       white-space: nowrap;
+    }
+
+    .scorecard-cell-fill {
+      font-weight: 950 !important;
     }
 
     .scorecard-mark-albatross { background: #245f9e; }
     .scorecard-mark-birdie { background: #6db7f2; }
     .scorecard-mark-bogey { background: #e3a17d; color: #111111; }
     .scorecard-mark-double { background: #d86431; color: #111111; }
-    .scorecard-mark-triple { background: #d92828; color: #111111; }
-    .scorecard-mark-quad { background: #c70000; color: #111111; }
+    .scorecard-mark-triple { background: #d10f0f; color: #111111; }
+    .scorecard-mark-quad { background: #b90000; color: #111111; }
 
     .scorecard-empty-cell {
       color: rgba(255, 255, 255, 0.28);
@@ -597,6 +599,7 @@
       scorecardTitleEl.textContent = event.name || "Peltola Open";
       scorecardThroughEl.textContent = throughHole === 1 ? "Through 1 hole" : `Through ${throughHole} holes`;
 
+      const colorMode = getScorecardColorMode(event);
       const headerCells = Array.from({ length: holeCount }, (_, index) => `<th class="scorecard-hole">${index + 1}</th>`).join("");
       const rows = standings.map(team => {
         const holeCells = Array.from({ length: holeCount }, (_, index) => {
@@ -608,7 +611,7 @@
           const par = Number(event.holes?.[holeKey]?.par || 0);
           if (!Number.isFinite(score) || score <= 0 || !Number.isFinite(par) || par <= 0) return `<td class="scorecard-hole scorecard-empty-cell">·</td>`;
 
-          return `<td class="scorecard-hole">${formatHoleScore(score, par)}</td>`;
+          return renderScorecardHoleCell(score, par, colorMode);
         }).join("");
 
         return `
@@ -768,11 +771,18 @@
     }
 
 
-    function formatHoleScore(score, par) {
+    function renderScorecardHoleCell(score, par, colorMode) {
       const relative = score - par;
       const className = getScorecardMarkClass(relative);
-      if (!className) return String(score);
-      return `<span class="scorecard-mark ${className}">${score}</span>`;
+      if (!className) return `<td class="scorecard-hole">${score}</td>`;
+      if (colorMode === "cell") {
+        return `<td class="scorecard-hole scorecard-cell-fill ${className}">${score}</td>`;
+      }
+      return `<td class="scorecard-hole"><span class="scorecard-mark ${className}">${score}</span></td>`;
+    }
+
+    function getScorecardColorMode(event) {
+      return event.scorecardColorMode === "cell" ? "cell" : "circle";
     }
 
     function getScorecardMarkClass(relative) {

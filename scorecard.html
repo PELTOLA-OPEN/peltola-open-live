@@ -165,9 +165,8 @@
 
 
     .score-mark {
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: inline-grid;
+      place-items: center;
       width: 24px;
       min-width: 24px;
       max-width: 24px;
@@ -176,22 +175,25 @@
       max-height: 24px;
       aspect-ratio: 1 / 1;
       margin: 0 auto;
-      border-radius: 50%;
+      border-radius: 999px;
       color: #ffffff;
       line-height: 1;
       font-weight: 950;
       text-align: center;
-      vertical-align: middle;
       box-sizing: border-box;
       white-space: nowrap;
+    }
+
+    .score-cell-fill {
+      font-weight: 950 !important;
     }
 
     .mark-albatross { background: #245f9e; }
     .mark-birdie { background: #6db7f2; }
     .mark-bogey { background: #e3a17d; color: #111111; }
     .mark-double { background: #d86431; color: #111111; }
-    .mark-triple { background: #d92828; color: #111111; }
-    .mark-quad { background: #c70000; color: #111111; }
+    .mark-triple { background: #d10f0f; color: #111111; }
+    .mark-quad { background: #b90000; color: #111111; }
 
     .empty-cell {
       color: rgba(255, 255, 255, 0.32);
@@ -336,6 +338,7 @@
         return `<td class="hole">${par || "-"}</td>`;
       }).join("");
 
+      const colorMode = getScorecardColorMode(event);
       const rows = standings.map(team => {
         const holeCells = Array.from({ length: holeCount }, (_, index) => {
           const hole = index + 1;
@@ -343,7 +346,7 @@
           const score = Number(event.teams?.[team.id]?.scores?.[holeKey]);
           const par = Number(event.holes?.[holeKey]?.par || 0);
           if (!Number.isFinite(score) || score <= 0 || !Number.isFinite(par) || par <= 0) return `<td class="hole empty-cell">·</td>`;
-          return `<td class="hole">${formatHoleScore(score, par)}</td>`;
+          return renderScoreHoleCell(score, par, colorMode);
         }).join("");
 
         return `
@@ -453,11 +456,16 @@
     }
 
 
-    function formatHoleScore(score, par) {
+    function renderScoreHoleCell(score, par, colorMode) {
       const relative = score - par;
       const className = getScoreMarkClass(relative);
-      if (!className) return String(score);
-      return `<span class="score-mark ${className}">${score}</span>`;
+      if (!className) return `<td class="hole">${score}</td>`;
+      if (colorMode === "cell") return `<td class="hole score-cell-fill ${className}">${score}</td>`;
+      return `<td class="hole"><span class="score-mark ${className}">${score}</span></td>`;
+    }
+
+    function getScorecardColorMode(event) {
+      return event.scorecardColorMode === "cell" ? "cell" : "circle";
     }
 
     function getScoreMarkClass(relative) {
