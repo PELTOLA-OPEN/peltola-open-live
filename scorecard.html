@@ -163,6 +163,33 @@
       color: rgba(255, 255, 255, 0.32);
     }
 
+    .score-pill {
+      display: inline-grid;
+      place-items: center;
+      min-width: 24px;
+      height: 24px;
+      padding: 0 6px;
+      border-radius: 999px;
+      color: #ffffff;
+      font-weight: 950;
+      line-height: 1;
+      text-shadow: none;
+    }
+
+    .score-pill.score-birdie { background: #74aeea; }
+    .score-pill.score-albatross { background: #1f5f9f; }
+    .score-pill.score-bogey { background: #e7b294; color: #111111; }
+    .score-pill.score-double-bogey { background: #d86f3d; }
+
+    .score-pill.score-par {
+      background: transparent;
+      color: var(--text);
+      padding: 0;
+      min-width: 0;
+      height: auto;
+      border-radius: 0;
+    }
+
     .status {
       margin-top: 10px;
       color: var(--muted);
@@ -232,6 +259,12 @@
         min-width: 44px;
         max-width: 44px;
       }
+
+      .score-pill {
+        min-width: 21px;
+        height: 21px;
+        padding: 0 5px;
+      }
     }
   </style>
 </head>
@@ -295,7 +328,8 @@
           const score = Number(event.teams?.[team.id]?.scores?.[holeKey]);
           const par = Number(event.holes?.[holeKey]?.par || 0);
           if (!Number.isFinite(score) || score <= 0 || !Number.isFinite(par) || par <= 0) return `<td class="hole empty-cell">·</td>`;
-          return `<td class="hole">${formatToPar(score - par)}</td>`;
+          const relative = score - par;
+          return `<td class="hole"><span class="score-pill ${scoreClass(relative)}">${score}</span></td>`;
         }).join("");
 
         return `
@@ -402,6 +436,15 @@
         case 3: return `${v}rd`;
         default: return `${v}th`;
       }
+    }
+
+
+    function scoreClass(relative) {
+      if (relative <= -2) return "score-albatross";
+      if (relative === -1) return "score-birdie";
+      if (relative === 1) return "score-bogey";
+      if (relative >= 2) return "score-double-bogey";
+      return "score-par";
     }
 
     function formatToPar(value) {

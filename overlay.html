@@ -311,6 +311,33 @@
       color: rgba(255, 255, 255, 0.28);
     }
 
+    .scorecard-pill {
+      display: inline-grid;
+      place-items: center;
+      min-width: clamp(18px, 1.9vw, 27px);
+      height: clamp(18px, 1.9vw, 27px);
+      padding: 0 clamp(4px, 0.45vw, 7px);
+      border-radius: 999px;
+      color: #ffffff;
+      font-weight: 950;
+      line-height: 1;
+      text-shadow: none;
+    }
+
+    .scorecard-pill.score-birdie { background: #74aeea; }
+    .scorecard-pill.score-albatross { background: #1f5f9f; }
+    .scorecard-pill.score-bogey { background: #e7b294; color: #111111; }
+    .scorecard-pill.score-double-bogey { background: #d86f3d; }
+
+    .scorecard-pill.score-par {
+      background: transparent;
+      color: #ffffff;
+      padding: 0;
+      min-width: 0;
+      height: auto;
+      border-radius: 0;
+    }
+
 
     @media (max-width: 760px) {
       body.debug {
@@ -550,14 +577,15 @@
       const rows = standings.map(team => {
         const holeCells = Array.from({ length: holeCount }, (_, index) => {
           const hole = index + 1;
-          if (hole > throughHole) return `<td class="scorecard-empty-cell">·</td>`;
+          if (hole > throughHole) return `<td class="scorecard-hole scorecard-empty-cell">·</td>`;
 
           const holeKey = String(hole);
           const score = Number(event.teams?.[team.id]?.scores?.[holeKey]);
           const par = Number(event.holes?.[holeKey]?.par || 0);
-          if (!Number.isFinite(score) || score <= 0 || !Number.isFinite(par) || par <= 0) return `<td class="scorecard-empty-cell">·</td>`;
+          if (!Number.isFinite(score) || score <= 0 || !Number.isFinite(par) || par <= 0) return `<td class="scorecard-hole scorecard-empty-cell">·</td>`;
 
-          return `<td>${formatToPar(score - par)}</td>`;
+          const relative = score - par;
+          return `<td class="scorecard-hole"><span class="scorecard-pill ${scoreClass(relative)}">${score}</span></td>`;
         }).join("");
 
         return `
@@ -714,6 +742,15 @@
         case 3: return `${v}rd`;
         default: return `${v}th`;
       }
+    }
+
+
+    function scoreClass(relative) {
+      if (relative <= -2) return "score-albatross";
+      if (relative === -1) return "score-birdie";
+      if (relative === 1) return "score-bogey";
+      if (relative >= 2) return "score-double-bogey";
+      return "score-par";
     }
 
     function formatToPar(value) {
