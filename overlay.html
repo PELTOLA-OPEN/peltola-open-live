@@ -225,7 +225,8 @@
       width: auto;
       max-width: 96vw;
       max-height: 74vh;
-      transform: translate(-50%, -50%) translateY(24px) scale(var(--scorecard-hidden-scale, 0.96));
+      transform: translate(-50%, -50%) translateY(24px) scale(var(--scorecard-hidden-scale, 0.96)) scaleX(var(--scorecard-width-factor, 1)) scaleY(var(--scorecard-height-factor, 1));
+      transform-origin: center center;
       opacity: 0;
       padding: 16px 16px 18px;
       border: 2px solid rgba(255, 255, 255, 0.72);
@@ -237,7 +238,7 @@
     }
 
     .scorecard-pop.show {
-      transform: translate(-50%, -50%) translateY(0) scale(var(--scorecard-show-scale, 1));
+      transform: translate(-50%, -50%) translateY(0) scale(var(--scorecard-show-scale, 1)) scaleX(var(--scorecard-width-factor, 1)) scaleY(var(--scorecard-height-factor, 1));
       opacity: 1;
     }
 
@@ -588,8 +589,8 @@
       const centerX = clampNumber(layout.scorecardCenterX, 0, 100);
       const centerY = clampNumber(layout.scorecardCenterY, 0, 100);
       const scale = clampNumber(layout.scorecardScale, 50, 150) / 100;
-      const widthScale = clampNumber(layout.scorecardWidthScale, 50, 180) / 100;
-      const heightScale = clampNumber(layout.scorecardHeightScale, 50, 180) / 100;
+      const widthFactor = clampNumber(layout.scorecardWidthScale, 50, 180) / 100;
+      const heightFactor = clampNumber(layout.scorecardHeightScale, 50, 180) / 100;
       const viewportWidth = Math.max(320, window.innerWidth || 1920);
       const baseHoleWidth = Math.max(22, Math.min(34, viewportWidth * 0.0225));
       const baseTotalWidth = Math.max(42, Math.min(66, viewportWidth * 0.042));
@@ -604,13 +605,15 @@
       document.documentElement.style.setProperty("--scorecard-center-y", `${centerY}%`);
       document.documentElement.style.setProperty("--scorecard-show-scale", String(scale));
       document.documentElement.style.setProperty("--scorecard-hidden-scale", String(scale * 0.96));
-      document.documentElement.style.setProperty("--scorecard-hole-width", `${baseHoleWidth * widthScale}px`);
-      document.documentElement.style.setProperty("--scorecard-total-width", `${baseTotalWidth * widthScale}px`);
-      document.documentElement.style.setProperty("--scorecard-player-max", `${basePlayerMax * widthScale}px`);
-      document.documentElement.style.setProperty("--scorecard-cell-height", `${baseCellHeight * heightScale}px`);
-      document.documentElement.style.setProperty("--scorecard-hole-mobile-width", `${mobileBaseHoleWidth * widthScale}px`);
-      document.documentElement.style.setProperty("--scorecard-total-mobile-width", `${mobileBaseTotalWidth * widthScale}px`);
-      document.documentElement.style.setProperty("--scorecard-player-mobile-max", `${mobileBasePlayerMax * widthScale}px`);
+      document.documentElement.style.setProperty("--scorecard-width-factor", String(widthFactor));
+      document.documentElement.style.setProperty("--scorecard-height-factor", String(heightFactor));
+      document.documentElement.style.setProperty("--scorecard-hole-width", `${baseHoleWidth}px`);
+      document.documentElement.style.setProperty("--scorecard-total-width", `${baseTotalWidth}px`);
+      document.documentElement.style.setProperty("--scorecard-player-max", `${basePlayerMax}px`);
+      document.documentElement.style.setProperty("--scorecard-cell-height", `${baseCellHeight}px`);
+      document.documentElement.style.setProperty("--scorecard-hole-mobile-width", `${mobileBaseHoleWidth}px`);
+      document.documentElement.style.setProperty("--scorecard-total-mobile-width", `${mobileBaseTotalWidth}px`);
+      document.documentElement.style.setProperty("--scorecard-player-mobile-max", `${mobileBasePlayerMax}px`);
     }
 
     function maybeShowScorecardFlash(event) {
@@ -680,13 +683,15 @@
     }
 
     function updateHelsinkiClock() {
-      helsinkiClockEl.textContent = new Intl.DateTimeFormat("fi-FI", {
+      const parts = new Intl.DateTimeFormat("en-GB", {
         timeZone: "Europe/Helsinki",
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",
         hour12: false
-      }).format(new Date());
+      }).formatToParts(new Date());
+      const value = Object.fromEntries(parts.filter(part => part.type !== "literal").map(part => [part.type, part.value]));
+      helsinkiClockEl.textContent = `${value.hour}:${value.minute}:${value.second}`;
     }
 
     function renderScorecardPop(event, throughHole) {

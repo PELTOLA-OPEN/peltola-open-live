@@ -344,7 +344,7 @@
               <input id="scorecardHeightScale" type="number" min="50" max="180" step="1" />
             </label>
           </div>
-          <p class="muted" style="margin-top: 10px; margin-bottom: 0;">Save event settings after changing these values. X/Y are based on the overlay screen, where 50/50 is the center. Width/height scale changes the popup scorecard aspect ratio without stretching the text.</p>
+          <p class="muted" style="margin-top: 10px; margin-bottom: 0;">These overlay adjustments save automatically while you edit them. X/Y are based on the overlay screen, where 50/50 is the center. Width/height scale changes the popup scorecard aspect ratio in the stream overlay.</p>
           <div class="row" style="margin-top: 12px;">
             <button id="resetOverlayLayoutBtn" type="button">Reset overlay adjustments</button>
             <label class="row" style="display:flex; gap:8px;">
@@ -411,6 +411,7 @@
     let eventState = null;
     let signedIn = false;
     let activeTab = "setup";
+    let overlayLayoutSaveTimer = null;
 
     const els = {
       authState: document.getElementById("authState"),
@@ -484,6 +485,17 @@
     els.scoringTabBtn.addEventListener("click", () => setActiveTab("scoring"));
     els.saveEventBtn.addEventListener("click", saveEventSettings);
     els.resetOverlayLayoutBtn.addEventListener("click", resetOverlayLayout);
+    [
+      els.tickerHeightPx,
+      els.scorecardCenterX,
+      els.scorecardCenterY,
+      els.scorecardScale,
+      els.scorecardWidthScale,
+      els.scorecardHeightScale
+    ].forEach(input => {
+      input.addEventListener("input", saveOverlayLayoutLive);
+      input.addEventListener("change", saveOverlayLayoutLive);
+    });
     els.showScorecardPreview.addEventListener("change", () => quickUpdate({ showScorecardPreview: els.showScorecardPreview.checked }));
     els.showHelsinkiClock.addEventListener("change", () => quickUpdate({ showHelsinkiClock: els.showHelsinkiClock.checked }));
     els.applyTeamCountBtn.addEventListener("click", applyTeamCount);
@@ -849,6 +861,22 @@
       const strokes = clampInt(par + relative, 1, 20);
       await set(ref(db, `events/${eventId}/teams/${teamId}/scores/${holeNumber}`), strokes);
       await update(eventRef, { updatedAt: Date.now() });
+    }
+
+    function saveOverlayLayoutLive() {
+      if (!signedIn || !eventState) return;
+      window.clearTimeout(overlayLayoutSaveTimer);
+      overlayLayoutSaveTimer = window.setTimeout(async () => {
+        try {
+          await update(eventRef, {
+            overlayLayout: readOverlayLayoutInputs(),
+            updatedAt: Date.now()
+          });
+          els.eventStatus.textContent = "Overlay adjustments saved.";
+        } catch (error) {
+          els.eventStatus.textContent = readableFirebaseError(error);
+        }
+      }, 180);
     }
 
     async function resetOverlayLayout() {
