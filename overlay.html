@@ -199,6 +199,24 @@
       white-space: nowrap;
     }
 
+    .helsinki-clock {
+      position: absolute;
+      left: 3vw;
+      bottom: calc(4vh + var(--ticker-height, 58px) + 8px);
+      min-width: clamp(104px, 10vw, 150px);
+      padding: 8px 12px;
+      border-radius: 12px;
+      background: var(--panel-strong);
+      color: var(--text);
+      font-size: clamp(12px, 1.1vw, 17px);
+      font-weight: 950;
+      letter-spacing: 0.06em;
+      line-height: 1;
+      text-align: center;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
+      white-space: nowrap;
+    }
+
 
     .scorecard-pop {
       position: absolute;
@@ -258,32 +276,22 @@
 
     .scorecard-table {
       width: auto;
-      border-collapse: separate;
-      border-spacing: 0;
+      border-collapse: collapse;
       table-layout: auto;
       color: white;
       font-variant-numeric: tabular-nums;
+      --scorecard-grid: rgba(255, 255, 255, 0.46);
     }
 
     .scorecard-table th,
     .scorecard-table td {
       height: var(--scorecard-cell-height, clamp(24px, 2.45vw, 35px));
-      border: 1px solid rgba(255, 255, 255, 0.46);
-      border-left-width: 0;
-      border-top-width: 0;
+      border: 1px solid var(--scorecard-grid);
       padding: 2px 3px;
       text-align: center;
       vertical-align: middle;
       line-height: 1;
-    }
-
-    .scorecard-table tr:first-child th {
-      border-top-width: 1px;
-    }
-
-    .scorecard-table th:first-child,
-    .scorecard-table td:first-child {
-      border-left-width: 1px;
+      background-clip: padding-box;
     }
 
     .scorecard-table th {
@@ -314,15 +322,9 @@
       width: var(--scorecard-hole-width, clamp(22px, 2.25vw, 34px));
       min-width: var(--scorecard-hole-width, clamp(22px, 2.25vw, 34px));
       max-width: var(--scorecard-hole-width, clamp(22px, 2.25vw, 34px));
-      box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.46);
       text-align: center !important;
       vertical-align: middle !important;
-      overflow: visible;
-    }
-
-    .scorecard-table th:nth-child(7),
-    .scorecard-table td:nth-child(7) {
-      border-left-width: 1px;
+      overflow: hidden;
     }
 
     .scorecard-total {
@@ -331,20 +333,14 @@
       font-weight: 950 !important;
     }
 
-
-
     .scorecard-mark {
       display: inline-grid;
       place-items: center;
       width: clamp(18px, 1.75vw, 28px);
-      min-width: clamp(18px, 1.75vw, 28px);
-      max-width: clamp(18px, 1.75vw, 28px);
       height: clamp(18px, 1.75vw, 28px);
-      min-height: clamp(18px, 1.75vw, 28px);
-      max-height: clamp(18px, 1.75vw, 28px);
       aspect-ratio: 1 / 1;
       margin: 0 auto;
-      border-radius: 999px;
+      border-radius: 50%;
       color: #ffffff;
       line-height: 1;
       font-weight: 950;
@@ -361,8 +357,8 @@
     .scorecard-mark-birdie { background: #6db7f2; }
     .scorecard-mark-bogey { background: #e3a17d; color: #111111; }
     .scorecard-mark-double { background: #d86431; color: #111111; }
-    .scorecard-mark-triple { background: #d10f0f; color: #111111; }
-    .scorecard-mark-quad { background: #b90000; color: #111111; }
+    .scorecard-mark-triple { background: #d00000; color: #111111; }
+    .scorecard-mark-quad { background: #aa0000; color: #111111; }
 
     .scorecard-empty-cell {
       color: rgba(255, 255, 255, 0.28);
@@ -392,6 +388,15 @@
         min-width: 84px;
         padding: 0 8px;
         font-size: 10px;
+      }
+
+      .helsinki-clock {
+        left: 8px;
+        bottom: calc(12px + var(--ticker-height, 44px) + 6px);
+        min-width: 84px;
+        padding: 7px 8px;
+        border-radius: 10px;
+        font-size: 11px;
       }
 
       .ticker-copy {
@@ -498,6 +503,8 @@
       </div>
     </section>
 
+    <div id="helsinkiClock" class="helsinki-clock hidden" aria-live="off">--:--:--</div>
+
     <section id="scorecardPop" class="scorecard-pop hidden" aria-live="polite">
       <div class="scorecard-header">
         <div id="scorecardTitle" class="scorecard-title">Peltola Open</div>
@@ -534,9 +541,13 @@
     const scorecardTitleEl = document.getElementById("scorecardTitle");
     const scorecardThroughEl = document.getElementById("scorecardThrough");
     const scorecardTableWrapEl = document.getElementById("scorecardTableWrap");
+    const helsinkiClockEl = document.getElementById("helsinkiClock");
 
     let lastFlashSequence = null;
     let scorecardHideTimer = null;
+    let scorecardPreviewActive = false;
+    let flashActive = false;
+    let clockTimer = null;
 
     onValue(ref(db, `events/${eventId}`), snapshot => renderOverlay(snapshot.val()));
 
@@ -544,10 +555,12 @@
       if (!event || event.showStandings === false) {
         compactBoxEl.classList.add("hidden");
         tickerEl.classList.add("hidden");
+        helsinkiClockEl.classList.add("hidden");
         return;
       }
 
       applyOverlayLayout(event);
+      updateClockVisibility(event);
       const mode = forcedMode || event.overlayMode || "compact";
       const completedThrough = getCompletedThrough(event);
       const label = formatPlayedLabel(completedThrough);
@@ -557,6 +570,7 @@
       else renderCompactBox(event, standings, completedThrough, label);
 
       maybeShowScorecardFlash(event);
+      updateScorecardPreview(event);
     }
 
     function applyOverlayLayout(event) {
@@ -619,15 +633,60 @@
       showScorecardPop(durationMs);
     }
 
-    function showScorecardPop(durationMs = 10000) {
+    function showScorecardPop(durationMs = 10000, persistent = false) {
       window.clearTimeout(scorecardHideTimer);
       scorecardPopEl.classList.remove("hidden");
       requestAnimationFrame(() => scorecardPopEl.classList.add("show"));
 
+      if (persistent) return;
+      flashActive = true;
       scorecardHideTimer = window.setTimeout(() => {
-        scorecardPopEl.classList.remove("show");
-        window.setTimeout(() => scorecardPopEl.classList.add("hidden"), 320);
+        flashActive = false;
+        if (!scorecardPreviewActive) hideScorecardPop();
       }, durationMs);
+    }
+
+    function hideScorecardPop() {
+      scorecardPopEl.classList.remove("show");
+      window.setTimeout(() => {
+        if (!scorecardPreviewActive && !flashActive) scorecardPopEl.classList.add("hidden");
+      }, 320);
+    }
+
+    function updateScorecardPreview(event) {
+      const previewEnabled = event.showScorecardPreview === true;
+      scorecardPreviewActive = previewEnabled;
+      if (previewEnabled) {
+        const holeCount = clampInt(event.holeCount || 18, 1, 36);
+        const previewThrough = getCompletedThrough(event) || clampInt((event.currentHole || 1) - 1, 0, holeCount) || holeCount;
+        renderScorecardPop(event, previewThrough);
+        showScorecardPop(0, true);
+      } else if (!flashActive) {
+        hideScorecardPop();
+      }
+    }
+
+    function updateClockVisibility(event) {
+      const showClock = event.showHelsinkiClock !== false;
+      helsinkiClockEl.classList.toggle("hidden", !showClock);
+      if (showClock && !clockTimer) {
+        updateHelsinkiClock();
+        clockTimer = window.setInterval(updateHelsinkiClock, 1000);
+      }
+      if (!showClock && clockTimer) {
+        window.clearInterval(clockTimer);
+        clockTimer = null;
+      }
+    }
+
+    function updateHelsinkiClock() {
+      helsinkiClockEl.textContent = new Intl.DateTimeFormat("fi-FI", {
+        timeZone: "Europe/Helsinki",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false
+      }).format(new Date());
     }
 
     function renderScorecardPop(event, throughHole) {

@@ -347,6 +347,12 @@
           <p class="muted" style="margin-top: 10px; margin-bottom: 0;">Save event settings after changing these values. X/Y are based on the overlay screen, where 50/50 is the center. Width/height scale changes the popup scorecard aspect ratio without stretching the text.</p>
           <div class="row" style="margin-top: 12px;">
             <button id="resetOverlayLayoutBtn" type="button">Reset overlay adjustments</button>
+            <label class="row" style="display:flex; gap:8px;">
+              <input id="showScorecardPreview" type="checkbox" /> Keep popup scorecard visible
+            </label>
+            <label class="row" style="display:flex; gap:8px;">
+              <input id="showHelsinkiClock" type="checkbox" /> Show Helsinki 24h clock
+            </label>
           </div>
         </section>
 
@@ -434,6 +440,8 @@
       scorecardWidthScale: document.getElementById("scorecardWidthScale"),
       scorecardHeightScale: document.getElementById("scorecardHeightScale"),
       resetOverlayLayoutBtn: document.getElementById("resetOverlayLayoutBtn"),
+      showScorecardPreview: document.getElementById("showScorecardPreview"),
+      showHelsinkiClock: document.getElementById("showHelsinkiClock"),
       saveEventBtn: document.getElementById("saveEventBtn"),
       applyTeamCountBtn: document.getElementById("applyTeamCountBtn"),
       resetScoringPositionBtn: document.getElementById("resetScoringPositionBtn"),
@@ -476,6 +484,8 @@
     els.scoringTabBtn.addEventListener("click", () => setActiveTab("scoring"));
     els.saveEventBtn.addEventListener("click", saveEventSettings);
     els.resetOverlayLayoutBtn.addEventListener("click", resetOverlayLayout);
+    els.showScorecardPreview.addEventListener("change", () => quickUpdate({ showScorecardPreview: els.showScorecardPreview.checked }));
+    els.showHelsinkiClock.addEventListener("change", () => quickUpdate({ showHelsinkiClock: els.showHelsinkiClock.checked }));
     els.applyTeamCountBtn.addEventListener("click", applyTeamCount);
     els.resetScoringPositionBtn.addEventListener("click", resetScoringPosition);
     els.overlayMode.addEventListener("change", () => quickUpdate({ overlayMode: els.overlayMode.value }));
@@ -515,6 +525,8 @@
         overlayMode: "compact",
         scorecardColorMode: "circle",
         overlayLayout: getDefaultOverlayLayout(),
+        showScorecardPreview: false,
+        showHelsinkiClock: true,
         showHoleBug: false,
         showStandings: true,
         holes: initialHoles,
@@ -551,6 +563,8 @@
       els.scorecardScale.value = overlayLayout.scorecardScale;
       els.scorecardWidthScale.value = overlayLayout.scorecardWidthScale;
       els.scorecardHeightScale.value = overlayLayout.scorecardHeightScale;
+      els.showScorecardPreview.checked = eventState.showScorecardPreview === true;
+      els.showHelsinkiClock.checked = eventState.showHelsinkiClock !== false;
       els.showStandings.checked = eventState.showStandings !== false;
 
       renderTeams(setupTeams);
@@ -707,6 +721,8 @@
         overlayMode: els.overlayMode.value,
         scorecardColorMode: els.scorecardColorMode.value,
         overlayLayout: readOverlayLayoutInputs(),
+        showScorecardPreview: els.showScorecardPreview.checked,
+        showHelsinkiClock: els.showHelsinkiClock.checked,
         showStandings: els.showStandings.checked,
         updatedAt: Date.now()
       };
