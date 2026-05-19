@@ -475,6 +475,15 @@
     let latestEvent = null;
     let firebaseLoaded = false;
     let firebaseError = null;
+    const loadingMessage = "Loading event data... Refresh the page if nothing shows up within 5 sec.";
+    const autoRetryKey = `peltolaAutoRetry:${location.pathname}:${eventId}:scorecard`;
+
+    window.setTimeout(() => {
+      if (!hasUsableEventData(latestEvent) && !firebaseError && canAutoRetryLoad()) {
+        sessionStorage.setItem(autoRetryKey, String(Date.now()));
+        location.reload();
+      }
+    }, 500);
 
     window.addEventListener("error", event => showRuntimeError(event.error || event.message));
     window.addEventListener("unhandledrejection", event => showRuntimeError(event.reason));
@@ -522,8 +531,8 @@
         if (!firebaseLoaded) {
           titleEl.textContent = "Peltola Open";
           subtitleEl.textContent = "Loading";
-          tableWrapEl.innerHTML = `<p class="status">Loading event data...</p>`;
-          pickemsWrapEl.innerHTML = `<p class="status">Loading event data...</p>`;
+          tableWrapEl.innerHTML = `<p class="status">${escapeHtml(loadingMessage)}</p>`;
+          pickemsWrapEl.innerHTML = `<p class="status">${escapeHtml(loadingMessage)}</p>`;
           statusEl.textContent = "Connecting to Firebase...";
           return;
         }
@@ -544,6 +553,15 @@
           tableWrapEl.innerHTML = "";
           pickemsWrapEl.innerHTML = "";
           statusEl.textContent = "Event data is not in the expected format.";
+          return;
+        }
+
+        if (!hasUsableEventData(event)) {
+          titleEl.textContent = event.name || "Peltola Open";
+          subtitleEl.textContent = "Loading";
+          tableWrapEl.innerHTML = `<p class="status">${escapeHtml(loadingMessage)}</p>`;
+          pickemsWrapEl.innerHTML = `<p class="status">${escapeHtml(loadingMessage)}</p>`;
+          statusEl.textContent = "Waiting for complete event data...";
           return;
         }
 
@@ -915,6 +933,15 @@
 
     function isPlainObject(value) {
       return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+    }
+
+    function hasUsableEventData(event) {
+      return isPlainObject(event) && isPlainObject(event.holes) && Object.keys(event.holes).length > 0;
+    }
+
+    function canAutoRetryLoad() {
+      const lastRetryAt = Number(sessionStorage.getItem(autoRetryKey) || 0);
+      return !lastRetryAt || Date.now() - lastRetryAt > 3000;
     }
   </script>
 </body>
