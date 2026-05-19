@@ -552,14 +552,6 @@
     let latestEvent = null;
     let firebaseLoaded = false;
     let firebaseError = null;
-    const autoRetryKey = `peltolaAutoRetry:${location.pathname}:${eventId}:overlay`;
-
-    window.setTimeout(() => {
-      if (!hasUsableEventData(latestEvent) && !firebaseError && canAutoRetryLoad()) {
-        sessionStorage.setItem(autoRetryKey, String(Date.now()));
-        location.reload();
-      }
-    }, 500);
 
     onValue(
       ref(db, `events/${eventId}`),
@@ -579,7 +571,7 @@
     );
 
     function renderOverlay() {
-      if (firebaseError || !firebaseLoaded || !isPlainObject(latestEvent) || !hasUsableEventData(latestEvent) || latestEvent.showStandings === false) {
+      if (firebaseError || !firebaseLoaded || !isPlainObject(latestEvent) || latestEvent.showStandings === false) {
         hideAllOverlay();
         return;
       }
@@ -613,15 +605,6 @@
 
     function isPlainObject(value) {
       return Boolean(value) && typeof value === "object" && !Array.isArray(value);
-    }
-
-    function hasUsableEventData(event) {
-      return isPlainObject(event) && isPlainObject(event.holes) && Object.keys(event.holes).length > 0;
-    }
-
-    function canAutoRetryLoad() {
-      const lastRetryAt = Number(sessionStorage.getItem(autoRetryKey) || 0);
-      return !lastRetryAt || Date.now() - lastRetryAt > 3000;
     }
 
     function applyOverlayLayout(event) {

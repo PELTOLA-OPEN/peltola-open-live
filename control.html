@@ -475,14 +475,6 @@
     let signedIn = false;
     let activeTab = "setup";
     let overlayLayoutSaveTimer = null;
-    const autoRetryKey = `peltolaAutoRetry:${location.pathname}:${eventId}:control`;
-
-    window.setTimeout(() => {
-      if (signedIn && !hasUsableEventData(eventState) && !firebaseError && canAutoRetryLoad()) {
-        sessionStorage.setItem(autoRetryKey, String(Date.now()));
-        location.reload();
-      }
-    }, 500);
 
     const els = {
       authState: document.getElementById("authState"),
@@ -681,10 +673,6 @@
         showDataUnavailableState("Event data is not in the expected format.");
         return;
       }
-      if (!hasUsableEventData(eventState)) {
-        showDataUnavailableState("Loading event data...");
-        return;
-      }
 
       const holeCount = clampInt(eventState.holeCount || 18, 1, 36);
       const currentHole = clampInt(eventState.currentHole ?? 0, 0, holeCount + 1);
@@ -725,15 +713,6 @@
 
     function isPlainObject(value) {
       return Boolean(value) && typeof value === "object" && !Array.isArray(value);
-    }
-
-    function hasUsableEventData(event) {
-      return isPlainObject(event) && isPlainObject(event.holes) && Object.keys(event.holes).length > 0;
-    }
-
-    function canAutoRetryLoad() {
-      const lastRetryAt = Number(sessionStorage.getItem(autoRetryKey) || 0);
-      return !lastRetryAt || Date.now() - lastRetryAt > 3000;
     }
 
     function renderTeams(teams) {
