@@ -123,7 +123,7 @@
 
     .tabs {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(3, 1fr);
       gap: 8px;
       margin: 14px 0;
     }
@@ -229,6 +229,56 @@
       background: var(--input);
     }
 
+
+
+    .pickems { display: grid; gap: 12px; }
+
+    .pickem-card {
+      display: grid;
+      gap: 12px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--panel-2);
+    }
+
+    .pickem-top {
+      display: grid;
+      grid-template-columns: minmax(180px, 1fr) minmax(140px, 210px) auto;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .pickem-picks {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 8px;
+    }
+
+    .pickem-position {
+      display: grid;
+      grid-template-columns: 44px 1fr;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .pickem-position span {
+      display: grid;
+      place-items: center;
+      height: 42px;
+      border-radius: 12px;
+      background: var(--input);
+      color: var(--muted);
+      font-weight: 950;
+      font-variant-numeric: tabular-nums;
+    }
+
+    @media (max-width: 760px) {
+      .tabs { grid-template-columns: 1fr; }
+      .pickem-top { grid-template-columns: 1fr; }
+      .pickem-picks { grid-template-columns: 1fr; }
+    }
+
     .hide { display: none !important; }
 
     @media (max-width: 760px) {
@@ -282,6 +332,7 @@
       <nav class="tabs" aria-label="Control panel tabs">
         <button id="setupTabBtn" class="tab-btn active" type="button">Setup</button>
         <button id="scoringTabBtn" class="tab-btn" type="button">Scoring</button>
+        <button id="pickemsTabBtn" class="tab-btn" type="button">Pickems</button>
       </nav>
 
       <section id="setupTab">
@@ -391,6 +442,19 @@
           <div id="scoreStatus" class="status"></div>
         </section>
       </section>
+
+      <section id="pickemsTab" class="hide">
+        <section class="card">
+          <div class="row between">
+            <h2>Pickems</h2>
+            <button id="addPickemBtn" type="button">Add participant</button>
+          </div>
+          <p class="muted">Enter each person's predicted final team order and their prediction for total birdies made by all teams over all 18 holes.</p>
+          <div id="pickems" class="pickems"></div>
+          <div id="pickemStatus" class="status"></div>
+        </section>
+      </section>
+
     </section>
   </main>
 
@@ -427,8 +491,10 @@
       scorecardUrl: document.getElementById("scorecardUrl"),
       setupTabBtn: document.getElementById("setupTabBtn"),
       scoringTabBtn: document.getElementById("scoringTabBtn"),
+      pickemsTabBtn: document.getElementById("pickemsTabBtn"),
       setupTab: document.getElementById("setupTab"),
       scoringTab: document.getElementById("scoringTab"),
+      pickemsTab: document.getElementById("pickemsTab"),
       eventName: document.getElementById("eventName"),
       holeCount: document.getElementById("holeCount"),
       teamCount: document.getElementById("teamCount"),
@@ -458,7 +524,10 @@
       scoreHoleTitle: document.getElementById("scoreHoleTitle"),
       scoreHoleSub: document.getElementById("scoreHoleSub"),
       scoreList: document.getElementById("scoreList"),
-      scoreStatus: document.getElementById("scoreStatus")
+      scoreStatus: document.getElementById("scoreStatus"),
+      addPickemBtn: document.getElementById("addPickemBtn"),
+      pickems: document.getElementById("pickems"),
+      pickemStatus: document.getElementById("pickemStatus")
     };
 
     const overlayUrl = new URL("overlay.html", location.href);
@@ -483,6 +552,7 @@
     els.logoutBtn.addEventListener("click", () => signOut(auth));
     els.setupTabBtn.addEventListener("click", () => setActiveTab("setup"));
     els.scoringTabBtn.addEventListener("click", () => setActiveTab("scoring"));
+    els.pickemsTabBtn.addEventListener("click", () => setActiveTab("pickems"));
     els.saveEventBtn.addEventListener("click", saveEventSettings);
     els.resetOverlayLayoutBtn.addEventListener("click", resetOverlayLayout);
     [
@@ -508,6 +578,7 @@
     els.prevHoleBtn.addEventListener("click", () => moveScoringHole(-1));
     els.nextHoleBtn.addEventListener("click", () => moveScoringHole(1));
     els.showScorecardBtn.addEventListener("click", showScorecardNow);
+    els.addPickemBtn.addEventListener("click", addPickem);
 
     onAuthStateChanged(auth, async user => {
       signedIn = Boolean(user);
@@ -543,6 +614,7 @@
         showStandings: true,
         holes: initialHoles,
         teams: {},
+        pickems: {},
         updatedAt: Date.now()
       });
     }
@@ -551,8 +623,10 @@
       activeTab = tab;
       els.setupTab.classList.toggle("hide", tab !== "setup");
       els.scoringTab.classList.toggle("hide", tab !== "scoring");
+      els.pickemsTab.classList.toggle("hide", tab !== "pickems");
       els.setupTabBtn.classList.toggle("active", tab === "setup");
       els.scoringTabBtn.classList.toggle("active", tab === "scoring");
+      els.pickemsTabBtn.classList.toggle("active", tab === "pickems");
       render();
     }
 
@@ -582,6 +656,7 @@
       renderTeams(setupTeams);
       renderParGrid(holeCount);
       renderScoring(currentHole, holeCount);
+      renderPickems(setupTeams);
     }
 
     function renderTeams(teams) {
@@ -722,6 +797,136 @@
         card.querySelector(".score-plus").addEventListener("click", () => setHoleRelative(team.id, currentHole, relative + 1));
         els.scoreList.appendChild(card);
       }
+    }
+
+
+    function renderPickems(teams) {
+      els.pickems.innerHTML = "";
+      const pickems = getPickems();
+
+      if (!teams.length) {
+        const empty = document.createElement("p");
+        empty.className = "muted";
+        empty.textContent = "Add teams in the Setup tab before entering pickems.";
+        els.pickems.appendChild(empty);
+        return;
+      }
+
+      if (!pickems.length) {
+        const empty = document.createElement("p");
+        empty.className = "muted";
+        empty.textContent = "No pickems yet. Tap Add participant.";
+        els.pickems.appendChild(empty);
+      }
+
+      for (const [index, pickem] of pickems.entries()) {
+        const picks = normalizePickemPicks(pickem.picks, teams);
+        const card = document.createElement("article");
+        card.className = "pickem-card";
+        card.innerHTML = `
+          <div class="pickem-top">
+            <label>Participant name
+              <input class="pickem-name" type="text" value="${escapeAttribute(pickem.name || `Participant ${index + 1}`)}" />
+            </label>
+            <label>Total birdies prediction
+              <input class="pickem-birdies" type="number" min="0" max="999" step="1" value="${Number.isFinite(Number(pickem.birdiesPrediction)) ? Number(pickem.birdiesPrediction) : 0}" />
+            </label>
+            <button class="danger pickem-delete" type="button">Delete</button>
+          </div>
+          <div class="pickem-picks">
+            ${picks.map((teamId, pickIndex) => `
+              <label class="pickem-position">
+                <span>${pickIndex + 1}</span>
+                <select class="pickem-pick-select" data-index="${pickIndex}">
+                  ${renderPickemOptions(teams, teamId)}
+                </select>
+              </label>
+            `).join("")}
+          </div>
+          <div class="row">
+            <button class="primary pickem-save" type="button">Save pickem</button>
+          </div>
+        `;
+
+        card.querySelector(".pickem-save").addEventListener("click", () => savePickem(pickem.id, card, index));
+        card.querySelector(".pickem-delete").addEventListener("click", () => deletePickem(pickem.id, pickem.name));
+        els.pickems.appendChild(card);
+      }
+    }
+
+    function renderPickemOptions(teams, selectedId) {
+      return teams.map(team => `<option value="${escapeAttribute(team.id)}" ${team.id === selectedId ? "selected" : ""}>${escapeHtml(team.name)}</option>`).join("");
+    }
+
+    function normalizePickemPicks(picks, teams) {
+      const validIds = new Set(teams.map(team => team.id));
+      const normalized = Array.isArray(picks) ? picks.filter(teamId => validIds.has(teamId)) : [];
+      for (const team of teams) {
+        if (!normalized.includes(team.id)) normalized.push(team.id);
+      }
+      return normalized.slice(0, teams.length);
+    }
+
+    function getPickems() {
+      return Object.entries(eventState?.pickems || {})
+        .map(([id, pickem], index) => ({
+          id,
+          name: pickem.name || `Participant ${index + 1}`,
+          order: Number(pickem.order || index + 1),
+          birdiesPrediction: Number(pickem.birdiesPrediction || 0),
+          picks: Array.isArray(pickem.picks) ? pickem.picks : Object.values(pickem.picks || {})
+        }))
+        .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name));
+    }
+
+    async function addPickem() {
+      if (!signedIn || !eventState) return;
+      const teams = getSetupTeams();
+      if (!teams.length) {
+        els.pickemStatus.textContent = "Add teams before adding pickems.";
+        return;
+      }
+      const pickems = getPickems();
+      const newPickemRef = push(ref(db, `events/${eventId}/pickems`));
+      await set(newPickemRef, {
+        name: `Participant ${pickems.length + 1}`,
+        order: pickems.length + 1,
+        birdiesPrediction: 0,
+        picks: teams.map(team => team.id),
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      });
+      els.pickemStatus.textContent = "Pickem participant added.";
+    }
+
+    async function savePickem(pickemId, card, fallbackIndex) {
+      if (!signedIn || !pickemId) return;
+      const teams = getSetupTeams();
+      const teamIds = new Set(teams.map(team => team.id));
+      const name = card.querySelector(".pickem-name").value.trim() || `Participant ${fallbackIndex + 1}`;
+      const birdiesPrediction = clampInt(card.querySelector(".pickem-birdies").value, 0, 999);
+      const picks = Array.from(card.querySelectorAll(".pickem-pick-select")).map(select => select.value).filter(teamId => teamIds.has(teamId));
+      const uniquePicks = new Set(picks);
+
+      if (picks.length !== teams.length || uniquePicks.size !== teams.length) {
+        els.pickemStatus.textContent = "Each team must be selected exactly once for this pickem.";
+        return;
+      }
+
+      await update(ref(db, `events/${eventId}/pickems/${pickemId}`), {
+        name,
+        birdiesPrediction,
+        picks,
+        updatedAt: Date.now()
+      });
+      els.pickemStatus.textContent = `Saved pickem for ${name}.`;
+    }
+
+    async function deletePickem(pickemId, name) {
+      if (!signedIn || !pickemId) return;
+      if (!window.confirm(`Delete pickem for ${name || "this participant"}?`)) return;
+      await remove(ref(db, `events/${eventId}/pickems/${pickemId}`));
+      els.pickemStatus.textContent = "Pickem deleted.";
     }
 
     async function saveEventSettings() {

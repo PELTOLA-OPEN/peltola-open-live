@@ -79,6 +79,32 @@
       white-space: nowrap;
     }
 
+    .view-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .view-tab {
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--muted);
+      font: inherit;
+      font-weight: 950;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    .view-tab.active {
+      border-color: rgba(216, 241, 90, 0.7);
+      color: var(--accent);
+      background: rgba(216, 241, 90, 0.1);
+    }
+
     .table-wrap {
       width: max-content;
       max-width: 100%;
@@ -162,8 +188,6 @@
       font-weight: 900;
     }
 
-
-
     .score-mark {
       display: inline-grid;
       place-items: center;
@@ -184,10 +208,7 @@
       white-space: nowrap;
     }
 
-    .score-cell-fill {
-      font-weight: 950 !important;
-    }
-
+    .score-cell-fill { font-weight: 950 !important; }
     .mark-albatross { background: #245f9e; }
     .mark-birdie { background: #6db7f2; }
     .mark-bogey { background: #e3a17d; color: #111111; }
@@ -195,8 +216,66 @@
     .mark-triple { background: #d10f0f; color: #111111; }
     .mark-quad { background: #b90000; color: #111111; }
 
-    .empty-cell {
-      color: rgba(255, 255, 255, 0.32);
+    .empty-cell { color: rgba(255, 255, 255, 0.32); }
+    .hide { display: none !important; }
+
+    .pickem-wrap {
+      display: grid;
+      gap: 14px;
+      width: min(960px, calc(100vw - 72px));
+      max-width: 100%;
+    }
+
+    .pickem-summary {
+      width: 100%;
+      min-width: 620px;
+    }
+
+    .pickem-summary .name-cell { text-align: left; }
+
+    .pickem-detail-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 12px;
+    }
+
+    .pickem-card {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.07);
+    }
+
+    .pickem-card h3 {
+      margin: 0 0 8px;
+      font-size: 16px;
+      text-transform: uppercase;
+    }
+
+    .pickem-card table {
+      width: 100%;
+      min-width: 0;
+    }
+
+    .pickem-card th,
+    .pickem-card td {
+      height: 27px;
+      font-size: 12px;
+    }
+
+    .pickem-card .team-cell {
+      text-align: left;
+      max-width: 160px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .pickem-meta {
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
     }
 
     .status {
@@ -224,14 +303,8 @@
         gap: 2px;
       }
 
-      .title {
-        width: 100%;
-        font-size: 20px;
-      }
-
-      .subtitle {
-        font-size: 12px;
-      }
+      .title { width: 100%; font-size: 20px; }
+      .subtitle { font-size: 12px; }
 
       th,
       td {
@@ -264,12 +337,12 @@
       }
 
       .score-mark {
-        width: 21px;
-        min-width: 21px;
-        max-width: 21px;
-        height: 21px;
-        min-height: 21px;
-        max-height: 21px;
+        width: 20px;
+        min-width: 20px;
+        max-width: 20px;
+        height: 20px;
+        min-height: 20px;
+        max-height: 20px;
       }
 
       .total {
@@ -278,10 +351,8 @@
         max-width: 44px;
       }
 
-      .score-mark {
-        width: 20px;
-        height: 20px;
-      }
+      .view-tabs { grid-template-columns: 1fr; }
+      .pickem-wrap { width: 100%; }
     }
   </style>
 </head>
@@ -292,7 +363,16 @@
         <div id="title" class="title">Peltola Open</div>
         <div id="subtitle" class="subtitle">Loading</div>
       </div>
-      <div id="tableWrap" class="table-wrap"></div>
+      <nav class="view-tabs" aria-label="Scorecard views">
+        <button id="scorecardTabBtn" class="view-tab active" type="button">Scorecard</button>
+        <button id="pickemsTabBtn" class="view-tab" type="button">Pickems</button>
+      </nav>
+      <section id="scorecardPanel">
+        <div id="tableWrap" class="table-wrap"></div>
+      </section>
+      <section id="pickemsPanel" class="hide">
+        <div id="pickemsWrap" class="pickem-wrap"></div>
+      </section>
     </section>
     <div id="status" class="status"></div>
   </main>
@@ -311,19 +391,44 @@
     const titleEl = document.getElementById("title");
     const subtitleEl = document.getElementById("subtitle");
     const tableWrapEl = document.getElementById("tableWrap");
+    const pickemsWrapEl = document.getElementById("pickemsWrap");
     const statusEl = document.getElementById("status");
+    const scorecardTabBtn = document.getElementById("scorecardTabBtn");
+    const pickemsTabBtn = document.getElementById("pickemsTabBtn");
+    const scorecardPanel = document.getElementById("scorecardPanel");
+    const pickemsPanel = document.getElementById("pickemsPanel");
 
-    onValue(ref(db, `events/${eventId}`), snapshot => renderScorecard(snapshot.val()));
+    let activeView = location.hash === "#pickems" ? "pickems" : "scorecard";
 
-    function renderScorecard(event) {
+    scorecardTabBtn.addEventListener("click", () => setActiveView("scorecard"));
+    pickemsTabBtn.addEventListener("click", () => setActiveView("pickems"));
+    setActiveView(activeView, false);
+
+    onValue(ref(db, `events/${eventId}`), snapshot => renderEvent(snapshot.val()));
+
+    function setActiveView(view, updateHash = true) {
+      activeView = view;
+      scorecardPanel.classList.toggle("hide", view !== "scorecard");
+      pickemsPanel.classList.toggle("hide", view !== "pickems");
+      scorecardTabBtn.classList.toggle("active", view === "scorecard");
+      pickemsTabBtn.classList.toggle("active", view === "pickems");
+      if (updateHash) history.replaceState(null, "", view === "pickems" ? "#pickems" : location.pathname + location.search);
+    }
+
+    function renderEvent(event) {
       if (!event) {
         titleEl.textContent = "Peltola Open";
         subtitleEl.textContent = "No event data";
         tableWrapEl.innerHTML = "";
+        pickemsWrapEl.innerHTML = "";
         statusEl.textContent = "Open the control panel first to create this event.";
         return;
       }
+      renderScorecard(event);
+      renderPickems(event);
+    }
 
+    function renderScorecard(event) {
       const holeCount = clampInt(event.holeCount || 18, 1, 36);
       const completedThrough = getCompletedThrough(event);
       const standings = assignPositions(calculateStandings(event, completedThrough));
@@ -377,6 +482,180 @@
           </tbody>
         </table>
       `;
+    }
+
+    function renderPickems(event) {
+      const teams = getTeams(event);
+      const pickems = getPickems(event, teams);
+      const completedThrough = getCompletedThrough(event);
+      const actualStandings = assignPositions(calculateStandings(event, completedThrough));
+      const actualRanges = buildActualRanges(actualStandings);
+      const actualBirdies = countBirdies(event, completedThrough);
+
+      if (!teams.length) {
+        pickemsWrapEl.innerHTML = `<p class="status">Add teams before using pickems.</p>`;
+        return;
+      }
+      if (!pickems.length) {
+        pickemsWrapEl.innerHTML = `<p class="status">No pickems entered yet.</p>`;
+        return;
+      }
+
+      const rows = assignPickemPositions(pickems.map(pickem => scorePickem(pickem, teams, actualRanges, actualBirdies)));
+
+      const summaryRows = rows.map(row => `
+        <tr>
+          <td>${escapeHtml(row.positionLabel)}</td>
+          <td class="name-cell">${escapeHtml(row.name)}</td>
+          <td>${row.placementPenalty}</td>
+          <td>${row.birdiesPrediction}</td>
+          <td>${actualBirdies}</td>
+          <td>${row.birdieDiff}</td>
+        </tr>
+      `).join("");
+
+      const detailCards = rows.map(row => `
+        <article class="pickem-card">
+          <h3>${escapeHtml(row.positionLabel)} - ${escapeHtml(row.name)}</h3>
+          <div class="pickem-meta">Placement penalty ${row.placementPenalty} · Birdies ${row.birdiesPrediction} / ${actualBirdies} · Diff ${row.birdieDiff}</div>
+          <table>
+            <thead>
+              <tr><th>Pick</th><th>Team</th><th>Live</th><th>Penalty</th></tr>
+            </thead>
+            <tbody>
+              ${row.details.map(detail => `
+                <tr>
+                  <td>${detail.predictedPosition}</td>
+                  <td class="team-cell">${escapeHtml(detail.teamName)}</td>
+                  <td>${escapeHtml(detail.livePositionLabel)}</td>
+                  <td>${detail.penalty}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </article>
+      `).join("");
+
+      pickemsWrapEl.innerHTML = `
+        <div class="table-wrap">
+          <table class="pickem-summary">
+            <thead>
+              <tr>
+                <th>Pos</th>
+                <th class="name-cell">Participant</th>
+                <th>Pickem score</th>
+                <th>Birdie pick</th>
+                <th>Birdies now</th>
+                <th>Diff</th>
+              </tr>
+            </thead>
+            <tbody>${summaryRows}</tbody>
+          </table>
+        </div>
+        <div class="pickem-detail-grid">${detailCards}</div>
+      `;
+    }
+
+    function getTeams(event) {
+      return Object.entries(event.teams || {})
+        .map(([id, team], index) => ({ id, name: team.name || `Team ${index + 1}`, order: Number(team.order || index + 1) }))
+        .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name));
+    }
+
+    function getPickems(event, teams) {
+      return Object.entries(event.pickems || {})
+        .map(([id, pickem], index) => ({
+          id,
+          name: pickem.name || `Participant ${index + 1}`,
+          order: Number(pickem.order || index + 1),
+          birdiesPrediction: clampInt(pickem.birdiesPrediction || 0, 0, 999),
+          picks: normalizePickemPicks(pickem.picks, teams)
+        }))
+        .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name));
+    }
+
+    function normalizePickemPicks(picks, teams) {
+      const validIds = new Set(teams.map(team => team.id));
+      const normalized = Array.isArray(picks) ? picks.filter(teamId => validIds.has(teamId)) : [];
+      for (const team of teams) {
+        if (!normalized.includes(team.id)) normalized.push(team.id);
+      }
+      return normalized.slice(0, teams.length);
+    }
+
+    function scorePickem(pickem, teams, actualRanges, actualBirdies) {
+      const teamNames = new Map(teams.map(team => [team.id, team.name]));
+      let placementPenalty = 0;
+      let exactCorrect = 0;
+      const details = pickem.picks.map((teamId, index) => {
+        const predictedPosition = index + 1;
+        const range = actualRanges.get(teamId);
+        let penalty = teams.length;
+        let livePositionLabel = "--";
+        if (range) {
+          livePositionLabel = range.start === range.end ? formatOrdinal(range.start) : `${formatOrdinal(range.start)}-${formatOrdinal(range.end)}`;
+          if (predictedPosition < range.start) penalty = range.start - predictedPosition;
+          else if (predictedPosition > range.end) penalty = predictedPosition - range.end;
+          else penalty = 0;
+        }
+        if (penalty === 0) exactCorrect += 1;
+        placementPenalty += penalty;
+        return {
+          predictedPosition,
+          teamName: teamNames.get(teamId) || "Unknown team",
+          livePositionLabel,
+          penalty
+        };
+      });
+
+      const birdieDiff = Math.abs(pickem.birdiesPrediction - actualBirdies);
+      return { ...pickem, placementPenalty, birdieDiff, exactCorrect, details };
+    }
+
+    function buildActualRanges(standings) {
+      const ranges = new Map();
+      let index = 0;
+      while (index < standings.length) {
+        const start = index + 1;
+        const key = `${standings[index].toPar}|${standings[index].strokes}`;
+        let endIndex = index;
+        while (endIndex + 1 < standings.length && `${standings[endIndex + 1].toPar}|${standings[endIndex + 1].strokes}` === key) endIndex += 1;
+        const end = endIndex + 1;
+        for (let i = index; i <= endIndex; i += 1) ranges.set(standings[i].id, { start, end });
+        index = endIndex + 1;
+      }
+      return ranges;
+    }
+
+    function assignPickemPositions(rows) {
+      const sorted = [...rows].sort((a, b) =>
+        a.placementPenalty - b.placementPenalty ||
+        a.birdieDiff - b.birdieDiff ||
+        b.exactCorrect - a.exactCorrect ||
+        a.name.localeCompare(b.name)
+      );
+      let previousKey = null;
+      let previousRank = 0;
+      return sorted.map((row, index) => {
+        const key = `${row.placementPenalty}|${row.birdieDiff}`;
+        const rank = previousKey !== null && key === previousKey ? previousRank : index + 1;
+        previousKey = key;
+        previousRank = rank;
+        return { ...row, rank, positionLabel: formatOrdinal(rank) };
+      });
+    }
+
+    function countBirdies(event, completedThrough) {
+      let birdies = 0;
+      for (const team of Object.values(event.teams || {})) {
+        for (let hole = 1; hole <= completedThrough; hole += 1) {
+          const holeKey = String(hole);
+          const score = Number(team.scores?.[holeKey]);
+          const par = Number(event.holes?.[holeKey]?.par || 0);
+          if (Number.isFinite(score) && Number.isFinite(par) && score - par === -1) birdies += 1;
+        }
+      }
+      return birdies;
     }
 
     function getCompletedThrough(event) {
@@ -454,7 +733,6 @@
         default: return `${v}th`;
       }
     }
-
 
     function renderScoreHoleCell(score, par, colorMode) {
       const relative = score - par;
