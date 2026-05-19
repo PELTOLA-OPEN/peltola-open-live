@@ -221,11 +221,42 @@
     }
 
     .pickem-summary {
-      width: 100%;
-      min-width: 620px;
+      width: max-content;
+      min-width: 0;
+      table-layout: auto;
     }
 
-    .pickem-summary .name-cell { text-align: left; }
+    .pickem-summary th,
+    .pickem-summary td {
+      height: 28px;
+      padding: 2px 5px;
+      font-size: clamp(10px, 1.6vw, 13px);
+      line-height: 1.05;
+      white-space: nowrap;
+    }
+
+    .pickem-summary .name-cell {
+      width: 1%;
+      max-width: min(240px, 42vw);
+      padding-left: 7px;
+      padding-right: 9px;
+      overflow: hidden;
+      text-align: left;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .pickem-summary .metric-cell {
+      width: 38px;
+      min-width: 38px;
+      max-width: 44px;
+      padding-left: 3px;
+      padding-right: 3px;
+    }
+
+    .pickem-detail-spacer {
+      height: 108px;
+    }
 
     .pickem-detail-grid {
       display: grid;
@@ -263,6 +294,10 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+
+    .pickem-card th.team-cell {
+      text-align: left;
     }
 
     .pickem-meta {
@@ -346,6 +381,22 @@
       }
 
       .pickem-wrap { width: 100%; }
+      .pickem-summary th,
+      .pickem-summary td {
+        height: 26px;
+        padding: 1px 3px;
+        font-size: 10px;
+      }
+      .pickem-summary .name-cell {
+        max-width: 34vw;
+        padding-right: 6px;
+      }
+      .pickem-summary .metric-cell {
+        width: 32px;
+        min-width: 32px;
+        max-width: 36px;
+      }
+      .pickem-detail-spacer { height: 104px; }
     }
   </style>
 </head>
@@ -529,7 +580,7 @@
           <div class="pickem-meta">Placement penalty ${row.placementPenalty} · Birdies ${row.birdiesPrediction} / ${actualBirdies} · Diff ${row.birdieDiff}</div>
           <table>
             <thead>
-              <tr><th>Pick</th><th>Team</th><th>Live</th><th>Penalty</th></tr>
+              <tr><th>Pick</th><th class="team-cell">Team</th><th>Live</th><th>Penalty</th></tr>
             </thead>
             <tbody>
               ${row.details.map(detail => `
@@ -550,17 +601,18 @@
           <table class="pickem-summary">
             <thead>
               <tr>
-                <th>Pos</th>
+                <th class="metric-cell">Pos</th>
                 <th class="name-cell">Participant</th>
-                <th>Pickem score</th>
-                <th>Birdie pick</th>
-                <th>Birdies now</th>
-                <th>Diff</th>
+                <th class="metric-cell">Score</th>
+                <th class="metric-cell">Pick</th>
+                <th class="metric-cell">Now</th>
+                <th class="metric-cell">Diff</th>
               </tr>
             </thead>
             <tbody>${summaryRows}</tbody>
           </table>
         </div>
+        <div class="pickem-detail-spacer" aria-hidden="true"></div>
         <div class="pickem-detail-grid">${detailCards}</div>
       `;
     }
