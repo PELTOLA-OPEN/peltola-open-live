@@ -549,16 +549,34 @@
     let scorecardPreviewActive = false;
     let flashActive = false;
     let clockTimer = null;
+    let latestEvent = null;
+    let firebaseLoaded = false;
+    let firebaseError = null;
 
-    onValue(ref(db, `events/${eventId}`), snapshot => renderOverlay(snapshot.val()));
+    onValue(
+      ref(db, `events/${eventId}`),
+      snapshot => {
+        firebaseLoaded = true;
+        firebaseError = null;
+        latestEvent = snapshot.val();
+        renderOverlay();
+      },
+      error => {
+        firebaseLoaded = true;
+        firebaseError = error;
+        latestEvent = null;
+        console.error(error);
+        renderOverlay();
+      }
+    );
 
-    function renderOverlay(event) {
-      if (!event || event.showStandings === false) {
-        compactBoxEl.classList.add("hidden");
-        tickerEl.classList.add("hidden");
-        helsinkiClockEl.classList.add("hidden");
+    function renderOverlay() {
+      if (firebaseError || !firebaseLoaded || !isPlainObject(latestEvent) || latestEvent.showStandings === false) {
+        hideAllOverlay();
         return;
       }
+
+      const event = latestEvent;
 
       applyOverlayLayout(event);
       updateClockVisibility(event);
@@ -572,6 +590,21 @@
 
       maybeShowScorecardFlash(event);
       updateScorecardPreview(event);
+    }
+
+    function hideAllOverlay() {
+      compactBoxEl.classList.add("hidden");
+      tickerEl.classList.add("hidden");
+      helsinkiClockEl.classList.add("hidden");
+      if (!scorecardPreviewActive && !flashActive) scorecardPopEl.classList.add("hidden");
+      if (clockTimer) {
+        window.clearInterval(clockTimer);
+        clockTimer = null;
+      }
+    }
+
+    function isPlainObject(value) {
+      return Boolean(value) && typeof value === "object" && !Array.isArray(value);
     }
 
     function applyOverlayLayout(event) {

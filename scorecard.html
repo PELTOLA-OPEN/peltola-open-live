@@ -473,6 +473,8 @@
 
     let activeView = "scorecard";
     let latestEvent = null;
+    let firebaseLoaded = false;
+    let firebaseError = null;
 
     window.addEventListener("error", event => showRuntimeError(event.error || event.message));
     window.addEventListener("unhandledrejection", event => showRuntimeError(event.reason));
@@ -485,10 +487,16 @@
     onValue(
       ref(db, `events/${eventId}`),
       snapshot => {
+        firebaseLoaded = true;
+        firebaseError = null;
         latestEvent = snapshot.val();
-        renderEvent(latestEvent);
+        renderEvent();
       },
-      error => showRuntimeError(error)
+      error => {
+        firebaseLoaded = true;
+        firebaseError = error;
+        renderEvent();
+      }
     );
 
     function setActiveView(view) {
@@ -497,17 +505,45 @@
       pickemsPanel.classList.toggle("hide", activeView !== "pickems");
       viewScorecardBtn.classList.toggle("active", activeView === "scorecard");
       viewPickemsBtn.classList.toggle("active", activeView === "pickems");
-      if (latestEvent) renderEvent(latestEvent);
+      renderEvent();
     }
 
-    function renderEvent(event) {
+    function renderEvent() {
       try {
-        if (!event) {
+        if (firebaseError) {
+          titleEl.textContent = "Peltola Open";
+          subtitleEl.textContent = "Error";
+          tableWrapEl.innerHTML = "";
+          pickemsWrapEl.innerHTML = "";
+          statusEl.textContent = `Firebase error: ${getErrorMessage(firebaseError)}`;
+          return;
+        }
+
+        if (!firebaseLoaded) {
+          titleEl.textContent = "Peltola Open";
+          subtitleEl.textContent = "Loading";
+          tableWrapEl.innerHTML = `<p class="status">Loading event data...</p>`;
+          pickemsWrapEl.innerHTML = `<p class="status">Loading event data...</p>`;
+          statusEl.textContent = "Connecting to Firebase...";
+          return;
+        }
+
+        const event = latestEvent;
+        if (event === null) {
           titleEl.textContent = "Peltola Open";
           subtitleEl.textContent = "No event data";
           tableWrapEl.innerHTML = "";
           pickemsWrapEl.innerHTML = "";
           statusEl.textContent = "Open the control panel first to create this event.";
+          return;
+        }
+
+        if (!isPlainObject(event)) {
+          titleEl.textContent = "Peltola Open";
+          subtitleEl.textContent = "Error";
+          tableWrapEl.innerHTML = "";
+          pickemsWrapEl.innerHTML = "";
+          statusEl.textContent = "Event data is not in the expected format.";
           return;
         }
 
@@ -869,10 +905,16 @@
 
     function showRuntimeError(error) {
       console.error(error);
-      const message = error?.message || String(error || "Unknown error");
-      titleEl.textContent = "Peltola Open";
-      subtitleEl.textContent = "Error";
-      statusEl.textContent = `Scorecard error: ${message}`;
+      firebaseError = error;
+      renderEvent();
+    }
+
+    function getErrorMessage(error) {
+      return error?.message || String(error || "Unknown error");
+    }
+
+    function isPlainObject(value) {
+      return Boolean(value) && typeof value === "object" && !Array.isArray(value);
     }
   </script>
 </body>

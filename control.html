@@ -469,6 +469,9 @@
     const eventRef = ref(db, `events/${eventId}`);
 
     let eventState = null;
+    let firebaseLoaded = false;
+    let firebaseError = null;
+    let creatingEvent = false;
     let signedIn = false;
     let activeTab = "setup";
     let overlayLayoutSaveTimer = null;
@@ -573,43 +576,72 @@
     els.showScorecardBtn.addEventListener("click", showScorecardNow);
     els.addPickemBtn.addEventListener("click", addPickem);
 
-    onAuthStateChanged(auth, async user => {
+    onAuthStateChanged(auth, user => {
       signedIn = Boolean(user);
       els.authState.textContent = user ? `Signed in: ${user.email}` : "Not signed in";
       els.loginForm.classList.toggle("hide", Boolean(user));
       els.signedInTools.classList.toggle("hide", !user);
       els.controlSections.classList.toggle("hide", !user);
-      if (user) await initEventIfMissing();
-    });
-
-    onValue(eventRef, snapshot => {
-      eventState = snapshot.val();
+      if (user) maybeInitEventIfMissing();
       render();
     });
 
+    onValue(
+      eventRef,
+      snapshot => {
+        firebaseLoaded = true;
+        firebaseError = null;
+        eventState = snapshot.val();
+        maybeInitEventIfMissing();
+        render();
+      },
+      error => {
+        firebaseLoaded = true;
+        firebaseError = error;
+        render();
+      }
+    );
+
+    function maybeInitEventIfMissing() {
+      if (!signedIn || !firebaseLoaded || firebaseError || eventState !== null || creatingEvent) return;
+      initEventIfMissing();
+    }
+
     async function initEventIfMissing() {
-      const snapshot = await get(eventRef);
-      if (snapshot.exists()) return;
+      creatingEvent = true;
+      try {
+        showDataUnavailableState("Creating event data...");
+        const snapshot = await get(eventRef);
+        if (snapshot.exists()) {
+          eventState = snapshot.val();
+          return;
+        }
 
-      const initialHoles = {};
-      for (let i = 1; i <= 18; i += 1) initialHoles[String(i)] = { par: 3 };
+        const initialHoles = {};
+        for (let i = 1; i <= 18; i += 1) initialHoles[String(i)] = { par: 3 };
 
-      await set(eventRef, {
-        name: `Peltola Open ${new Date().getFullYear()}`,
-        currentHole: 0,
-        holeCount: 18,
-        overlayMode: "compact",
-        scorecardColorMode: "circle",
-        overlayLayout: getDefaultOverlayLayout(),
-        showScorecardPreview: false,
-        showHelsinkiClock: true,
-        showHoleBug: false,
-        showStandings: true,
-        holes: initialHoles,
-        teams: {},
-        pickems: {},
-        updatedAt: Date.now()
-      });
+        await set(eventRef, {
+          name: `Peltola Open ${new Date().getFullYear()}`,
+          currentHole: 0,
+          holeCount: 18,
+          overlayMode: "compact",
+          scorecardColorMode: "circle",
+          overlayLayout: getDefaultOverlayLayout(),
+          showScorecardPreview: false,
+          showHelsinkiClock: true,
+          showHoleBug: false,
+          showStandings: true,
+          holes: initialHoles,
+          teams: {},
+          pickems: {},
+          updatedAt: Date.now()
+        });
+      } catch (error) {
+        firebaseError = error;
+      } finally {
+        creatingEvent = false;
+        render();
+      }
     }
 
     function setActiveTab(tab) {
@@ -624,7 +656,23 @@
     }
 
     function render() {
-      if (!eventState) return;
+      if (!signedIn) return;
+      if (firebaseError) {
+        showDataUnavailableState(`Firebase error: ${readableFirebaseError(firebaseError)}`);
+        return;
+      }
+      if (!firebaseLoaded) {
+        showDataUnavailableState("Loading event data...");
+        return;
+      }
+      if (eventState === null) {
+        showDataUnavailableState(creatingEvent ? "Creating event data..." : "Waiting for event data...");
+        return;
+      }
+      if (!isPlainObject(eventState)) {
+        showDataUnavailableState("Event data is not in the expected format.");
+        return;
+      }
 
       const holeCount = clampInt(eventState.holeCount || 18, 1, 36);
       const currentHole = clampInt(eventState.currentHole ?? 0, 0, holeCount + 1);
@@ -649,6 +697,22 @@
       renderParGrid(holeCount);
       renderScoring(currentHole, holeCount);
       renderPickems(setupTeams);
+    }
+
+    function showDataUnavailableState(message) {
+      els.eventStatus.textContent = message;
+      els.teams.innerHTML = "";
+      els.parGrid.innerHTML = "";
+      els.scoreList.innerHTML = `<p class="muted">${escapeHtml(message)}</p>`;
+      els.pickems.innerHTML = `<p class="muted">${escapeHtml(message)}</p>`;
+      els.scoreHoleTitle.textContent = "Loading";
+      els.scoreHoleSub.textContent = "";
+      els.prevHoleBtn.disabled = true;
+      els.nextHoleBtn.disabled = true;
+    }
+
+    function isPlainObject(value) {
+      return Boolean(value) && typeof value === "object" && !Array.isArray(value);
     }
 
     function renderTeams(teams) {
