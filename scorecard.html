@@ -81,28 +81,22 @@
 
     .view-tabs {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr;
       gap: 8px;
       margin-bottom: 12px;
     }
 
     .view-tab {
       min-height: 40px;
-      border: 1px solid var(--line);
+      border: 1px solid rgba(216, 241, 90, 0.55);
       border-radius: 12px;
-      background: rgba(255, 255, 255, 0.08);
-      color: var(--muted);
+      background: rgba(216, 241, 90, 0.1);
+      color: var(--accent);
       font: inherit;
       font-weight: 950;
       letter-spacing: 0.05em;
       text-transform: uppercase;
       cursor: pointer;
-    }
-
-    .view-tab.active {
-      border-color: rgba(216, 241, 90, 0.7);
-      color: var(--accent);
-      background: rgba(216, 241, 90, 0.1);
     }
 
     .table-wrap {
@@ -351,7 +345,6 @@
         max-width: 44px;
       }
 
-      .view-tabs { grid-template-columns: 1fr; }
       .pickem-wrap { width: 100%; }
     }
   </style>
@@ -364,8 +357,7 @@
         <div id="subtitle" class="subtitle">Loading</div>
       </div>
       <nav class="view-tabs" aria-label="Scorecard views">
-        <button id="scorecardTabBtn" class="view-tab active" type="button">Scorecard</button>
-        <button id="pickemsTabBtn" class="view-tab" type="button">Pickems</button>
+        <button id="viewSwitchBtn" class="view-tab" type="button">View pickems</button>
       </nav>
       <section id="scorecardPanel">
         <div id="tableWrap" class="table-wrap"></div>
@@ -393,49 +385,66 @@
     const tableWrapEl = document.getElementById("tableWrap");
     const pickemsWrapEl = document.getElementById("pickemsWrap");
     const statusEl = document.getElementById("status");
-    const scorecardTabBtn = document.getElementById("scorecardTabBtn");
-    const pickemsTabBtn = document.getElementById("pickemsTabBtn");
+    const viewSwitchBtn = document.getElementById("viewSwitchBtn");
     const scorecardPanel = document.getElementById("scorecardPanel");
     const pickemsPanel = document.getElementById("pickemsPanel");
 
-    let activeView = location.hash === "#pickems" ? "pickems" : "scorecard";
+    let activeView = "scorecard";
+    let latestEvent = null;
 
-    scorecardTabBtn.addEventListener("click", () => setActiveView("scorecard"));
-    pickemsTabBtn.addEventListener("click", () => setActiveView("pickems"));
-    setActiveView(activeView, false);
+    window.addEventListener("error", event => showRuntimeError(event.error || event.message));
+    window.addEventListener("unhandledrejection", event => showRuntimeError(event.reason));
 
-    onValue(ref(db, `events/${eventId}`), snapshot => renderEvent(snapshot.val()));
+    viewSwitchBtn.addEventListener("click", () => {
+      setActiveView(activeView === "scorecard" ? "pickems" : "scorecard");
+    });
 
-    function setActiveView(view, updateHash = true) {
-      activeView = view;
-      scorecardPanel.classList.toggle("hide", view !== "scorecard");
-      pickemsPanel.classList.toggle("hide", view !== "pickems");
-      scorecardTabBtn.classList.toggle("active", view === "scorecard");
-      pickemsTabBtn.classList.toggle("active", view === "pickems");
-      if (updateHash) history.replaceState(null, "", view === "pickems" ? "#pickems" : location.pathname + location.search);
+    setActiveView("scorecard");
+
+    onValue(
+      ref(db, `events/${eventId}`),
+      snapshot => {
+        latestEvent = snapshot.val();
+        renderEvent(latestEvent);
+      },
+      error => showRuntimeError(error)
+    );
+
+    function setActiveView(view) {
+      activeView = view === "pickems" ? "pickems" : "scorecard";
+      scorecardPanel.classList.toggle("hide", activeView !== "scorecard");
+      pickemsPanel.classList.toggle("hide", activeView !== "pickems");
+      viewSwitchBtn.textContent = activeView === "scorecard" ? "View pickems" : "View scorecard";
+      if (latestEvent) renderEvent(latestEvent);
     }
 
     function renderEvent(event) {
-      if (!event) {
-        titleEl.textContent = "Peltola Open";
-        subtitleEl.textContent = "No event data";
-        tableWrapEl.innerHTML = "";
-        pickemsWrapEl.innerHTML = "";
-        statusEl.textContent = "Open the control panel first to create this event.";
-        return;
+      try {
+        if (!event) {
+          titleEl.textContent = "Peltola Open";
+          subtitleEl.textContent = "No event data";
+          tableWrapEl.innerHTML = "";
+          pickemsWrapEl.innerHTML = "";
+          statusEl.textContent = "Open the control panel first to create this event.";
+          return;
+        }
+
+        titleEl.textContent = event.name || "Peltola Open";
+        const completedThrough = getCompletedThrough(event);
+        subtitleEl.textContent = formatPlayedLabel(completedThrough);
+        statusEl.textContent = `Live data · Event ${eventId}`;
+
+        if (activeView === "pickems") renderPickems(event);
+        else renderScorecard(event);
+      } catch (error) {
+        showRuntimeError(error);
       }
-      renderScorecard(event);
-      renderPickems(event);
     }
 
     function renderScorecard(event) {
       const holeCount = clampInt(event.holeCount || 18, 1, 36);
       const completedThrough = getCompletedThrough(event);
       const standings = assignPositions(calculateStandings(event, completedThrough));
-
-      titleEl.textContent = event.name || "Peltola Open";
-      subtitleEl.textContent = formatPlayedLabel(completedThrough);
-      statusEl.textContent = `Live scorecard · Event ${eventId}`;
 
       const headerCells = Array.from({ length: holeCount }, (_, index) => `<th class="hole">${index + 1}</th>`).join("");
       const parCells = Array.from({ length: holeCount }, (_, index) => {
@@ -716,24 +725,6 @@
       });
     }
 
-    function formatPlayedLabel(completedThrough) {
-      if (!completedThrough) return "Before round";
-      if (completedThrough === 1) return "Through 1 hole";
-      return `Through ${completedThrough} holes`;
-    }
-
-    function formatOrdinal(value) {
-      const v = Math.abs(Number(value));
-      const mod100 = v % 100;
-      if (mod100 >= 11 && mod100 <= 13) return `${v}th`;
-      switch (v % 10) {
-        case 1: return `${v}st`;
-        case 2: return `${v}nd`;
-        case 3: return `${v}rd`;
-        default: return `${v}th`;
-      }
-    }
-
     function renderScoreHoleCell(score, par, colorMode) {
       const relative = score - par;
       const className = getScoreMarkClass(relative);
@@ -756,6 +747,24 @@
       return "";
     }
 
+    function formatPlayedLabel(completedThrough) {
+      if (!completedThrough) return "Before round";
+      if (completedThrough === 1) return "Through 1 hole";
+      return `Through ${completedThrough} holes`;
+    }
+
+    function formatOrdinal(value) {
+      const v = Math.abs(Number(value));
+      const mod100 = v % 100;
+      if (mod100 >= 11 && mod100 <= 13) return `${v}th`;
+      switch (v % 10) {
+        case 1: return `${v}st`;
+        case 2: return `${v}nd`;
+        case 3: return `${v}rd`;
+        default: return `${v}th`;
+      }
+    }
+
     function formatToPar(value) {
       if (value === 0) return "E";
       return value > 0 ? `+${value}` : String(value);
@@ -775,6 +784,14 @@
         '"': "&quot;",
         "'": "&#039;"
       }[char]));
+    }
+
+    function showRuntimeError(error) {
+      console.error(error);
+      const message = error?.message || String(error || "Unknown error");
+      titleEl.textContent = "Peltola Open";
+      subtitleEl.textContent = "Error";
+      statusEl.textContent = `Scorecard error: ${message}`;
     }
   </script>
 </body>
