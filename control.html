@@ -345,9 +345,6 @@
             <label>Number of holes
               <input id="holeCount" type="number" min="1" max="36" step="1" />
             </label>
-            <label>Team count
-              <input id="teamCount" type="number" min="0" max="40" step="1" />
-            </label>
             <label>Overlay style
               <select id="overlayMode">
                 <option value="compact">Compact box</option>
@@ -364,11 +361,7 @@
 
           <div class="row" style="margin-top: 12px;">
             <button id="saveEventBtn" type="button">Save event settings</button>
-            <button id="applyTeamCountBtn" type="button">Apply team count</button>
-            <button id="resetScoringPositionBtn" type="button">Reset scoring position</button>
-            <label class="row" style="display:flex; gap:8px;">
-              <input id="showStandings" type="checkbox" /> Show score overlay
-            </label>
+            <button id="resetScoringPositionBtn" class="danger" type="button">Reset scoring position</button>
           </div>
           <div id="eventStatus" class="status"></div>
         </section>
@@ -403,6 +396,9 @@
             </label>
             <label class="row" style="display:flex; gap:8px;">
               <input id="showHelsinkiClock" type="checkbox" /> Show Helsinki 24h clock
+            </label>
+            <label class="row" style="display:flex; gap:8px;">
+              <input id="showStandings" type="checkbox" /> Show score overlay
             </label>
           </div>
         </section>
@@ -497,7 +493,6 @@
       pickemsTab: document.getElementById("pickemsTab"),
       eventName: document.getElementById("eventName"),
       holeCount: document.getElementById("holeCount"),
-      teamCount: document.getElementById("teamCount"),
       overlayMode: document.getElementById("overlayMode"),
       scorecardColorMode: document.getElementById("scorecardColorMode"),
       tickerHeightPx: document.getElementById("tickerHeightPx"),
@@ -510,7 +505,6 @@
       showScorecardPreview: document.getElementById("showScorecardPreview"),
       showHelsinkiClock: document.getElementById("showHelsinkiClock"),
       saveEventBtn: document.getElementById("saveEventBtn"),
-      applyTeamCountBtn: document.getElementById("applyTeamCountBtn"),
       resetScoringPositionBtn: document.getElementById("resetScoringPositionBtn"),
       showStandings: document.getElementById("showStandings"),
       addTeamBtn: document.getElementById("addTeamBtn"),
@@ -568,7 +562,6 @@
     });
     els.showScorecardPreview.addEventListener("change", () => quickUpdate({ showScorecardPreview: els.showScorecardPreview.checked }));
     els.showHelsinkiClock.addEventListener("change", () => quickUpdate({ showHelsinkiClock: els.showHelsinkiClock.checked }));
-    els.applyTeamCountBtn.addEventListener("click", applyTeamCount);
     els.resetScoringPositionBtn.addEventListener("click", resetScoringPosition);
     els.overlayMode.addEventListener("change", () => quickUpdate({ overlayMode: els.overlayMode.value }));
     els.scorecardColorMode.addEventListener("change", () => quickUpdate({ scorecardColorMode: els.scorecardColorMode.value }));
@@ -639,7 +632,6 @@
 
       els.eventName.value = eventState.name || "";
       els.holeCount.value = holeCount;
-      els.teamCount.value = setupTeams.length;
       els.overlayMode.value = eventState.overlayMode || "compact";
       els.scorecardColorMode.value = eventState.scorecardColorMode === "cell" ? "cell" : "circle";
       const overlayLayout = getOverlayLayout();
@@ -1115,35 +1107,6 @@
         scorecardWidthScale: 100,
         scorecardHeightScale: 100
       };
-    }
-
-    async function applyTeamCount() {
-      if (!signedIn) return;
-      const targetCount = clampInt(els.teamCount.value, 0, 40);
-      const teams = getSetupTeams();
-      const currentCount = teams.length;
-
-      if (targetCount === currentCount) {
-        els.eventStatus.textContent = "Team count is already correct.";
-        return;
-      }
-
-      if (targetCount > currentCount) {
-        const additions = targetCount - currentCount;
-        for (let i = 0; i < additions; i += 1) await createTeam(`Team ${currentCount + i + 1}`, currentCount + i + 1);
-        els.eventStatus.textContent = `Added ${additions} team${additions === 1 ? "" : "s"}.`;
-        return;
-      }
-
-      const deleteCount = currentCount - targetCount;
-      const teamsToDelete = teams.slice(targetCount);
-      const names = teamsToDelete.map(team => team.name).join(", ");
-      if (!window.confirm(`This will delete ${deleteCount} team${deleteCount === 1 ? "" : "s"}: ${names}. Continue?`)) return;
-
-      const remainingTeams = teams.slice(0, targetCount);
-      for (const team of teamsToDelete) await remove(ref(db, `events/${eventId}/teams/${team.id}`));
-      await renumberTeamOrder(remainingTeams);
-      els.eventStatus.textContent = `Deleted ${deleteCount} team${deleteCount === 1 ? "" : "s"}.`;
     }
 
     async function addTeam() {
