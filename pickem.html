@@ -387,7 +387,9 @@
         buildPickSelectors();
         loadingEl.classList.add("hide");
         formEl.classList.remove("hide");
-        statusEl.textContent = `${teams.length} teams loaded.`;
+        statusEl.textContent = publicPickemsOpen()
+          ? `${teams.length} teams loaded.`
+          : "Public pickem entries are closed. Saving is disabled.";
 
         if (editIdFromUrl && eventData.pickems?.[editIdFromUrl]) {
           fillFromPickem(editIdFromUrl, eventData.pickems[editIdFromUrl], "Loaded pickem from edit link.");
@@ -455,6 +457,11 @@
 
     async function savePickem(event) {
       event.preventDefault();
+      if (!publicPickemsOpen()) {
+        statusEl.textContent = "Public pickem entries are closed. Ask the scorekeeper to make changes in the control panel.";
+        validateForm();
+        return;
+      }
       if (!validateForm()) return;
 
       const name = nameInput.value.trim();
@@ -537,6 +544,7 @@
     }
 
     function validateForm() {
+      const entriesOpen = publicPickemsOpen();
       const name = nameInput.value.trim();
       const pickemId = makePickemId(name);
       const birdies = Number(birdiesInput.value);
@@ -550,17 +558,23 @@
         birdies >= 0 &&
         birdies <= 999 &&
         hasAllPicks &&
-        uniquePicks.size === teams.length
+        uniquePicks.size === teams.length &&
+        entriesOpen
       );
 
       saveBtn.disabled = !valid;
-      if (!name) statusEl.textContent = "Select your name.";
+      if (!entriesOpen) statusEl.textContent = "Public pickem entries are closed. Ask the scorekeeper to make changes in the control panel.";
+      else if (!name) statusEl.textContent = "Select your name.";
       else if (!pickemId) statusEl.textContent = "Use at least one letter or number in the name.";
       else if (!Number.isFinite(birdies) || birdies < 0 || birdies > 999) statusEl.textContent = "Enter a birdie prediction from 0 to 999.";
       else if (!hasAllPicks) statusEl.textContent = "Select every team once.";
       else if (uniquePicks.size !== teams.length) statusEl.textContent = "The same team cannot be selected twice.";
       else statusEl.textContent = eventData?.pickems?.[pickemId] ? "Ready to update existing pickem." : "Ready to save new pickem.";
       return valid;
+    }
+
+    function publicPickemsOpen() {
+      return eventData?.allowPublicPickems !== false;
     }
 
     function getTeams(event) {

@@ -362,6 +362,7 @@
           <div class="row" style="margin-top: 12px;">
             <button id="saveEventBtn" type="button">Save event settings</button>
             <button id="resetScoringPositionBtn" class="danger" type="button">Reset scoring position</button>
+            <button id="togglePublicPickemsBtn" type="button">Loading pickem entry status...</button>
           </div>
           <div id="eventStatus" class="status"></div>
         </section>
@@ -509,6 +510,7 @@
       showHelsinkiClock: document.getElementById("showHelsinkiClock"),
       saveEventBtn: document.getElementById("saveEventBtn"),
       resetScoringPositionBtn: document.getElementById("resetScoringPositionBtn"),
+      togglePublicPickemsBtn: document.getElementById("togglePublicPickemsBtn"),
       showStandings: document.getElementById("showStandings"),
       addTeamBtn: document.getElementById("addTeamBtn"),
       eventStatus: document.getElementById("eventStatus"),
@@ -566,6 +568,7 @@
     els.showScorecardPreview.addEventListener("change", () => quickUpdate({ showScorecardPreview: els.showScorecardPreview.checked }));
     els.showHelsinkiClock.addEventListener("change", () => quickUpdate({ showHelsinkiClock: els.showHelsinkiClock.checked }));
     els.resetScoringPositionBtn.addEventListener("click", resetScoringPosition);
+    els.togglePublicPickemsBtn.addEventListener("click", togglePublicPickemEntries);
     els.overlayMode.addEventListener("change", () => quickUpdate({ overlayMode: els.overlayMode.value }));
     els.scorecardColorMode.addEventListener("change", () => quickUpdate({ scorecardColorMode: els.scorecardColorMode.value }));
     els.showStandings.addEventListener("change", () => quickUpdate({ showStandings: els.showStandings.checked }));
@@ -631,6 +634,7 @@
           showHelsinkiClock: true,
           showHoleBug: false,
           showStandings: true,
+          allowPublicPickems: true,
           holes: initialHoles,
           teams: {},
           pickems: {},
@@ -692,6 +696,7 @@
       els.showScorecardPreview.checked = eventState.showScorecardPreview === true;
       els.showHelsinkiClock.checked = eventState.showHelsinkiClock !== false;
       els.showStandings.checked = eventState.showStandings !== false;
+      updatePublicPickemButton();
 
       renderTeams(setupTeams);
       renderParGrid(holeCount);
@@ -1076,6 +1081,30 @@
       };
     }
 
+
+
+    function updatePublicPickemButton() {
+      const accepting = eventState?.allowPublicPickems !== false;
+      els.togglePublicPickemsBtn.textContent = accepting ? "Disable public pickem entries" : "Enable public pickem entries";
+      els.togglePublicPickemsBtn.classList.toggle("danger", accepting);
+      els.togglePublicPickemsBtn.classList.toggle("primary", !accepting);
+      els.togglePublicPickemsBtn.title = accepting
+        ? "Public pickem form is open. Click to close submissions and edits."
+        : "Public pickem form is closed. Click to reopen submissions and edits.";
+    }
+
+    async function togglePublicPickemEntries() {
+      if (!signedIn || !eventState) return;
+      const currentlyAccepting = eventState.allowPublicPickems !== false;
+      const nextValue = !currentlyAccepting;
+      await update(eventRef, {
+        allowPublicPickems: nextValue,
+        updatedAt: Date.now()
+      });
+      els.eventStatus.textContent = nextValue
+        ? "Public pickem entries enabled."
+        : "Public pickem entries disabled. Control panel editing still works.";
+    }
 
     async function resetScoringPosition() {
       if (!signedIn) return;
