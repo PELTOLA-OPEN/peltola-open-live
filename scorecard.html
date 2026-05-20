@@ -327,6 +327,28 @@
       font-weight: 800;
     }
 
+    .pickem-actions {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .pickem-actions a {
+      min-height: 38px;
+      display: inline-grid;
+      place-items: center;
+      border: 1px solid rgba(216, 241, 90, 0.68);
+      border-radius: 12px;
+      background: rgba(216, 241, 90, 0.16);
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 950;
+      letter-spacing: 0.05em;
+      text-align: center;
+      text-decoration: none;
+      text-transform: uppercase;
+    }
+
     .status {
       margin-top: 10px;
       color: var(--muted);
@@ -479,10 +501,16 @@
     window.addEventListener("error", event => showRuntimeError(event.error || event.message));
     window.addEventListener("unhandledrejection", event => showRuntimeError(event.reason));
 
-    viewScorecardBtn.addEventListener("click", () => setActiveView("scorecard"));
-    viewPickemsBtn.addEventListener("click", () => setActiveView("pickems"));
+    viewScorecardBtn.addEventListener("click", () => {
+      history.replaceState(null, "", `${location.pathname}${location.search}`);
+      setActiveView("scorecard");
+    });
+    viewPickemsBtn.addEventListener("click", () => {
+      history.replaceState(null, "", `${location.pathname}${location.search}#pickems`);
+      setActiveView("pickems");
+    });
 
-    setActiveView("scorecard");
+    setActiveView(location.hash === "#pickems" ? "pickems" : "scorecard");
 
     onValue(
       ref(db, `events/${eventId}`),
@@ -612,6 +640,8 @@
     }
 
     function renderPickems(event) {
+      const pickemFormLink = `pickem.html?event=${encodeURIComponent(eventId)}`;
+      const pickemActionHtml = `<div class="pickem-actions"><a href="${pickemFormLink}">Submit or edit your pickem</a></div>`;
       const teams = getTeams(event);
       const pickems = getPickems(event, teams);
       const completedThrough = getCompletedThrough(event);
@@ -620,11 +650,11 @@
       const actualBirdies = countBirdies(event, completedThrough);
 
       if (!teams.length) {
-        pickemsWrapEl.innerHTML = `<p class="status">Add teams before using pickems.</p>`;
+        pickemsWrapEl.innerHTML = `${pickemActionHtml}<p class="status">Add teams before using pickems.</p>`;
         return;
       }
       if (!pickems.length) {
-        pickemsWrapEl.innerHTML = `<p class="status">No pickems entered yet.</p>`;
+        pickemsWrapEl.innerHTML = `${pickemActionHtml}<p class="status">No pickems entered yet.</p>`;
         return;
       }
 
@@ -663,6 +693,7 @@
       `).join("");
 
       pickemsWrapEl.innerHTML = `
+        ${pickemActionHtml}
         <div class="table-wrap">
           <table class="pickem-summary">
             <thead>

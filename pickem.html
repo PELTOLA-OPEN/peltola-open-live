@@ -1,0 +1,621 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Peltola Open Pickem Form</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0e1412;
+      --panel: rgba(0, 0, 0, 0.70);
+      --panel-strong: rgba(0, 0, 0, 0.82);
+      --text: #ffffff;
+      --muted: rgba(255, 255, 255, 0.72);
+      --line: rgba(255, 255, 255, 0.26);
+      --accent: #d8f15a;
+      --danger: #ff5e57;
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background:
+        radial-gradient(circle at top left, rgba(216, 241, 90, 0.12), transparent 34vw),
+        linear-gradient(135deg, #102018, #101318);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+    }
+
+    .page {
+      width: min(760px, 100%);
+    }
+
+    .panel {
+      padding: 18px;
+      border: 2px solid rgba(255, 255, 255, 0.58);
+      border-radius: 18px;
+      background: var(--panel);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.38);
+    }
+
+    .header {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 14px;
+      text-transform: uppercase;
+    }
+
+    .title {
+      font-size: clamp(22px, 5vw, 38px);
+      font-weight: 950;
+      letter-spacing: 0.06em;
+      line-height: 1;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: 0.06em;
+    }
+
+    .nav-links {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin: 12px 0 16px;
+    }
+
+    .nav-links a,
+    button {
+      min-height: 42px;
+      display: inline-grid;
+      place-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.20);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      font: inherit;
+      font-size: 13px;
+      font-weight: 950;
+      letter-spacing: 0.04em;
+      text-align: center;
+      text-decoration: none;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    .nav-links a.primary,
+    button.primary {
+      border-color: rgba(216, 241, 90, 0.68);
+      background: rgba(216, 241, 90, 0.16);
+      color: var(--accent);
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    form {
+      display: grid;
+      gap: 14px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 11px;
+      background: rgba(0, 0, 0, 0.38);
+      color: var(--text);
+      font: inherit;
+      font-size: 16px;
+      font-weight: 800;
+      padding: 8px 10px;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: 2px solid rgba(216, 241, 90, 0.55);
+      outline-offset: 1px;
+    }
+
+    .pick-grid {
+      display: grid;
+      gap: 8px;
+    }
+
+    .pick-row {
+      display: grid;
+      grid-template-columns: 56px 1fr;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .rank {
+      display: grid;
+      place-items: center;
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: var(--panel-strong);
+      font-weight: 950;
+    }
+
+    .help {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 750;
+      line-height: 1.35;
+    }
+
+    .status {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .error {
+      color: var(--danger);
+    }
+
+    .success-box {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+      padding: 12px;
+      border: 1px solid rgba(216, 241, 90, 0.45);
+      border-radius: 14px;
+      background: rgba(216, 241, 90, 0.10);
+    }
+
+    .success-box h2 {
+      margin: 0;
+      color: var(--accent);
+      font-size: 16px;
+      text-transform: uppercase;
+    }
+
+    .summary-list {
+      margin: 0;
+      padding-left: 22px;
+      color: var(--text);
+      font-weight: 800;
+      line-height: 1.55;
+    }
+
+    .copy-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+    }
+
+    .copy-row input {
+      min-width: 0;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .copy-row button {
+      min-width: 82px;
+      min-height: 42px;
+    }
+
+    .hide { display: none !important; }
+
+    @media (max-width: 560px) {
+      body {
+        display: block;
+        padding: 10px;
+      }
+
+      .panel {
+        padding: 12px;
+        border-radius: 14px;
+      }
+
+      .nav-links {
+        grid-template-columns: 1fr;
+      }
+
+      .pick-row {
+        grid-template-columns: 48px 1fr;
+      }
+
+      .copy-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="panel" aria-live="polite">
+      <div class="header">
+        <div id="title" class="title">Peltola Open</div>
+        <div id="subtitle" class="subtitle">Pickem form</div>
+      </div>
+
+      <nav class="nav-links" aria-label="Links">
+        <a id="scorecardLink" href="#">Scorecard</a>
+        <a id="pickemsLink" class="primary" href="#">Pickems standings</a>
+      </nav>
+
+      <div id="loading" class="status">Loading teams...</div>
+
+      <form id="pickemForm" class="hide">
+        <div class="field">
+          <label for="nameInput">Your name</label>
+          <input id="nameInput" autocomplete="name" maxlength="40" placeholder="Example: Pete" required />
+          <div id="nameHelp" class="help">If this name already has a pickem, saving will update that pickem.</div>
+        </div>
+
+        <div class="field">
+          <label for="birdiesInput">Predicted total birdies</label>
+          <input id="birdiesInput" type="number" inputmode="numeric" min="0" max="999" step="1" placeholder="Example: 24" required />
+          <div class="help">Total birdies made by all teams over all 18 holes.</div>
+        </div>
+
+        <div class="field">
+          <label>Predicted team order</label>
+          <div id="pickGrid" class="pick-grid"></div>
+          <div class="help">Each team can be selected only once.</div>
+        </div>
+
+        <button id="saveBtn" class="primary" type="submit" disabled>Save pickem</button>
+      </form>
+
+      <div id="result" class="hide"></div>
+      <div id="status" class="status"></div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+    import { firebaseConfig } from "./firebase-config.js";
+
+    const params = new URLSearchParams(location.search);
+    const eventId = params.get("event") || "2026";
+    const editIdFromUrl = safeFirebaseKey(params.get("edit") || "");
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const titleEl = document.getElementById("title");
+    const subtitleEl = document.getElementById("subtitle");
+    const scorecardLinkEl = document.getElementById("scorecardLink");
+    const pickemsLinkEl = document.getElementById("pickemsLink");
+    const loadingEl = document.getElementById("loading");
+    const formEl = document.getElementById("pickemForm");
+    const nameInput = document.getElementById("nameInput");
+    const nameHelpEl = document.getElementById("nameHelp");
+    const birdiesInput = document.getElementById("birdiesInput");
+    const pickGridEl = document.getElementById("pickGrid");
+    const saveBtn = document.getElementById("saveBtn");
+    const resultEl = document.getElementById("result");
+    const statusEl = document.getElementById("status");
+
+    let eventData = null;
+    let teams = [];
+    let selectEls = [];
+    let loadedExistingId = "";
+
+    window.addEventListener("error", event => showError(event.error || event.message));
+    window.addEventListener("unhandledrejection", event => showError(event.reason));
+
+    scorecardLinkEl.href = `scorecard.html?event=${encodeURIComponent(eventId)}`;
+    pickemsLinkEl.href = `scorecard.html?event=${encodeURIComponent(eventId)}#pickems`;
+
+    nameInput.addEventListener("input", debounce(() => loadExistingForName(), 250));
+    nameInput.addEventListener("change", loadExistingForName);
+    birdiesInput.addEventListener("input", validateForm);
+    formEl.addEventListener("submit", savePickem);
+
+    loadEvent();
+
+    async function loadEvent() {
+      loadingEl.textContent = "Loading teams...";
+      try {
+        const snapshot = await get(ref(db, `events/${eventId}`));
+        if (!snapshot.exists()) {
+          loadingEl.textContent = "Event not found. Open the control panel first.";
+          return;
+        }
+
+        eventData = snapshot.val();
+        titleEl.textContent = eventData.name || "Peltola Open";
+        subtitleEl.textContent = `Pickem form · Event ${eventId}`;
+        teams = getTeams(eventData);
+
+        if (!teams.length) {
+          loadingEl.textContent = "No teams have been added yet.";
+          return;
+        }
+
+        buildPickSelectors();
+        loadingEl.classList.add("hide");
+        formEl.classList.remove("hide");
+        statusEl.textContent = `${teams.length} teams loaded.`;
+
+        if (editIdFromUrl && eventData.pickems?.[editIdFromUrl]) {
+          fillFromPickem(editIdFromUrl, eventData.pickems[editIdFromUrl], "Loaded pickem from edit link.");
+        } else if (editIdFromUrl) {
+          statusEl.textContent = "Edit link did not match an existing pickem. You can create a new one below.";
+        }
+
+        validateForm();
+      } catch (error) {
+        showError(error);
+      }
+    }
+
+    function buildPickSelectors() {
+      pickGridEl.innerHTML = teams.map((team, index) => `
+        <div class="pick-row">
+          <div class="rank">${formatOrdinal(index + 1)}</div>
+          <select data-index="${index}" aria-label="${formatOrdinal(index + 1)} place team" required>
+            <option value="">Select team</option>
+            ${teams.map(optionTeam => `<option value="${escapeHtml(optionTeam.id)}">${escapeHtml(optionTeam.name)}</option>`).join("")}
+          </select>
+        </div>
+      `).join("");
+
+      selectEls = Array.from(pickGridEl.querySelectorAll("select"));
+      for (const select of selectEls) {
+        select.addEventListener("change", () => {
+          updateDuplicatePrevention();
+          validateForm();
+        });
+      }
+    }
+
+    function loadExistingForName() {
+      if (!eventData) return;
+      const nameKey = makePickemId(nameInput.value);
+      if (!nameKey || nameKey === loadedExistingId) {
+        validateForm();
+        return;
+      }
+
+      const existing = eventData.pickems?.[nameKey];
+      if (existing) {
+        fillFromPickem(nameKey, existing, "Existing pickem found for this name. Saving will update it.");
+      } else {
+        loadedExistingId = "";
+        nameHelpEl.textContent = "If this name already has a pickem, saving will update that pickem.";
+      }
+      validateForm();
+    }
+
+    function fillFromPickem(id, pickem, message) {
+      loadedExistingId = id;
+      nameInput.value = pickem.name || nameInput.value || "";
+      birdiesInput.value = Number.isFinite(Number(pickem.birdiesPrediction)) ? String(Number(pickem.birdiesPrediction)) : "";
+      const picks = normalizePickemPicks(pickem.picks);
+      selectEls.forEach((select, index) => {
+        select.value = picks[index] || "";
+      });
+      nameHelpEl.textContent = message;
+      updateDuplicatePrevention();
+      validateForm();
+    }
+
+    async function savePickem(event) {
+      event.preventDefault();
+      if (!validateForm()) return;
+
+      const name = nameInput.value.trim();
+      const pickemId = makePickemId(name);
+      const now = Date.now();
+      const existing = eventData.pickems?.[pickemId] || null;
+      const picks = selectEls.map(select => select.value);
+      const payload = {
+        name,
+        nameKey: pickemId,
+        birdiesPrediction: clampInt(birdiesInput.value, 0, 999),
+        picks,
+        order: Number(existing?.order || getNextPickemOrder()),
+        createdAt: Number(existing?.createdAt || now),
+        updatedAt: now,
+        source: "public-form"
+      };
+
+      saveBtn.disabled = true;
+      saveBtn.textContent = "Saving...";
+      statusEl.textContent = "Saving pickem...";
+
+      try {
+        await set(ref(db, `events/${eventId}/pickems/${pickemId}`), payload);
+        eventData.pickems = { ...(eventData.pickems || {}), [pickemId]: payload };
+        loadedExistingId = pickemId;
+        showSuccess(payload);
+        statusEl.textContent = "Pickem saved.";
+      } catch (error) {
+        showError(error);
+      } finally {
+        saveBtn.textContent = "Save pickem";
+        validateForm();
+      }
+    }
+
+    function showSuccess(payload) {
+      const editLink = `${location.origin}${location.pathname}?event=${encodeURIComponent(eventId)}&edit=${encodeURIComponent(payload.nameKey)}`;
+      const teamNameById = new Map(teams.map(team => [team.id, team.name]));
+      resultEl.classList.remove("hide");
+      resultEl.innerHTML = `
+        <div class="success-box">
+          <h2>Pickem saved</h2>
+          <div class="help">Keep this edit link if you want to change your pickem later.</div>
+          <div class="copy-row">
+            <input id="editLinkOutput" value="${escapeHtml(editLink)}" readonly />
+            <button id="copyLinkBtn" type="button">Copy</button>
+          </div>
+          <div class="help"><strong>${escapeHtml(payload.name)}</strong> · Birdie prediction ${payload.birdiesPrediction}</div>
+          <ol class="summary-list">
+            ${payload.picks.map(teamId => `<li>${escapeHtml(teamNameById.get(teamId) || "Unknown team")}</li>`).join("")}
+          </ol>
+        </div>
+      `;
+
+      document.getElementById("copyLinkBtn").addEventListener("click", async () => {
+        const output = document.getElementById("editLinkOutput");
+        output.select();
+        try {
+          await navigator.clipboard.writeText(output.value);
+          statusEl.textContent = "Edit link copied.";
+        } catch {
+          document.execCommand("copy");
+          statusEl.textContent = "Edit link selected. Copy it manually if needed.";
+        }
+      });
+    }
+
+    function updateDuplicatePrevention() {
+      const selected = selectEls.map(select => select.value).filter(Boolean);
+      for (const select of selectEls) {
+        for (const option of Array.from(select.options)) {
+          if (!option.value) {
+            option.disabled = false;
+            continue;
+          }
+          option.disabled = selected.includes(option.value) && select.value !== option.value;
+        }
+      }
+    }
+
+    function validateForm() {
+      const name = nameInput.value.trim();
+      const pickemId = makePickemId(name);
+      const birdies = Number(birdiesInput.value);
+      const picks = selectEls.map(select => select.value);
+      const uniquePicks = new Set(picks.filter(Boolean));
+      const hasAllPicks = picks.length === teams.length && picks.every(Boolean);
+      const valid = Boolean(
+        name &&
+        pickemId &&
+        Number.isFinite(birdies) &&
+        birdies >= 0 &&
+        birdies <= 999 &&
+        hasAllPicks &&
+        uniquePicks.size === teams.length
+      );
+
+      saveBtn.disabled = !valid;
+      if (!name) statusEl.textContent = "Enter your name.";
+      else if (!pickemId) statusEl.textContent = "Use at least one letter or number in the name.";
+      else if (!Number.isFinite(birdies) || birdies < 0 || birdies > 999) statusEl.textContent = "Enter a birdie prediction from 0 to 999.";
+      else if (!hasAllPicks) statusEl.textContent = "Select every team once.";
+      else if (uniquePicks.size !== teams.length) statusEl.textContent = "The same team cannot be selected twice.";
+      else statusEl.textContent = eventData?.pickems?.[pickemId] ? "Ready to update existing pickem." : "Ready to save new pickem.";
+      return valid;
+    }
+
+    function getTeams(event) {
+      return Object.entries(event.teams || {})
+        .map(([id, team], index) => ({ id, name: team.name || `Team ${index + 1}`, order: Number(team.order || index + 1) }))
+        .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name));
+    }
+
+    function normalizePickemPicks(picks) {
+      const validIds = new Set(teams.map(team => team.id));
+      return (Array.isArray(picks) ? picks : []).filter(teamId => validIds.has(teamId));
+    }
+
+    function getNextPickemOrder() {
+      const values = Object.values(eventData.pickems || {});
+      const maxOrder = values.reduce((max, pickem, index) => Math.max(max, Number(pickem.order || index + 1)), 0);
+      return maxOrder + 1;
+    }
+
+    function makePickemId(name) {
+      return safeFirebaseKey(String(name || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .slice(0, 80));
+    }
+
+    function safeFirebaseKey(value) {
+      return String(value || "").replace(/[.#$\/[\]]/g, "-").slice(0, 80);
+    }
+
+    function formatOrdinal(value) {
+      const v = Math.abs(Number(value));
+      const mod100 = v % 100;
+      if (mod100 >= 11 && mod100 <= 13) return `${v}th`;
+      switch (v % 10) {
+        case 1: return `${v}st`;
+        case 2: return `${v}nd`;
+        case 3: return `${v}rd`;
+        default: return `${v}th`;
+      }
+    }
+
+    function clampInt(value, min, max) {
+      const number = Number.parseInt(value, 10);
+      if (!Number.isFinite(number)) return min;
+      return Math.max(min, Math.min(max, number));
+    }
+
+    function debounce(fn, delay) {
+      let handle = 0;
+      return (...args) => {
+        window.clearTimeout(handle);
+        handle = window.setTimeout(() => fn(...args), delay);
+      };
+    }
+
+    function showError(error) {
+      console.error(error);
+      loadingEl.classList.add("hide");
+      statusEl.innerHTML = `<span class="error">${escapeHtml(error?.message || String(error || "Unknown error"))}</span>`;
+      saveBtn.textContent = "Save pickem";
+      validateForm();
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, char => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      }[char]));
+    }
+  </script>
+</body>
+</html>
