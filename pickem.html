@@ -72,7 +72,7 @@
 
     .nav-links {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr;
       gap: 8px;
       margin: 12px 0 16px;
     }
@@ -101,6 +101,12 @@
       border-color: rgba(216, 241, 90, 0.68);
       background: rgba(216, 241, 90, 0.16);
       color: var(--accent);
+    }
+
+    .nav-links a.dark {
+      border-color: rgba(255, 255, 255, 0.28);
+      background: var(--panel-strong);
+      color: var(--text);
     }
 
     button:disabled {
@@ -267,8 +273,7 @@
       </div>
 
       <nav class="nav-links" aria-label="Links">
-        <a id="scorecardLink" href="#">Scorecard</a>
-        <a id="pickemsLink" class="primary" href="#">Pickems standings</a>
+        <a id="scorecardLink" class="dark" href="#" target="_blank" rel="noopener noreferrer">To scorecard</a>
       </nav>
 
       <div id="loading" class="status">Loading teams...</div>
@@ -276,7 +281,25 @@
       <form id="pickemForm" class="hide">
         <div class="field">
           <label for="nameInput">Your name</label>
-          <input id="nameInput" autocomplete="name" maxlength="40" placeholder="Example: Pete" required />
+          <select id="nameInput" required>
+            <option value="">Select name</option>
+            <option value="Topias">Topias</option>
+            <option value="Elias">Elias</option>
+            <option value="Maga">Maga</option>
+            <option value="Einari">Einari</option>
+            <option value="Roope">Roope</option>
+            <option value="Atte">Atte</option>
+            <option value="Ian">Ian</option>
+            <option value="Heke">Heke</option>
+            <option value="Teukka">Teukka</option>
+            <option value="Tatu">Tatu</option>
+            <option value="Väne">Väne</option>
+            <option value="Simo">Simo</option>
+            <option value="Joona">Joona</option>
+            <option value="Tupe">Tupe</option>
+            <option value="Ville">Ville</option>
+            <option value="Spine">Spine</option>
+          </select>
           <div id="nameHelp" class="help">If this name already has a pickem, saving will update that pickem.</div>
         </div>
 
@@ -315,7 +338,6 @@
     const titleEl = document.getElementById("title");
     const subtitleEl = document.getElementById("subtitle");
     const scorecardLinkEl = document.getElementById("scorecardLink");
-    const pickemsLinkEl = document.getElementById("pickemsLink");
     const loadingEl = document.getElementById("loading");
     const formEl = document.getElementById("pickemForm");
     const nameInput = document.getElementById("nameInput");
@@ -335,7 +357,6 @@
     window.addEventListener("unhandledrejection", event => showError(event.reason));
 
     scorecardLinkEl.href = `scorecard.html?event=${encodeURIComponent(eventId)}`;
-    pickemsLinkEl.href = `scorecard.html?event=${encodeURIComponent(eventId)}#pickems`;
 
     nameInput.addEventListener("input", debounce(() => loadExistingForName(), 250));
     nameInput.addEventListener("change", loadExistingForName);
@@ -420,6 +441,7 @@
 
     function fillFromPickem(id, pickem, message) {
       loadedExistingId = id;
+      ensureNameOption(pickem.name);
       nameInput.value = pickem.name || nameInput.value || "";
       birdiesInput.value = Number.isFinite(Number(pickem.birdiesPrediction)) ? String(Number(pickem.birdiesPrediction)) : "";
       const picks = normalizePickemPicks(pickem.picks);
@@ -532,7 +554,7 @@
       );
 
       saveBtn.disabled = !valid;
-      if (!name) statusEl.textContent = "Enter your name.";
+      if (!name) statusEl.textContent = "Select your name.";
       else if (!pickemId) statusEl.textContent = "Use at least one letter or number in the name.";
       else if (!Number.isFinite(birdies) || birdies < 0 || birdies > 999) statusEl.textContent = "Enter a birdie prediction from 0 to 999.";
       else if (!hasAllPicks) statusEl.textContent = "Select every team once.";
@@ -556,6 +578,17 @@
       const values = Object.values(eventData.pickems || {});
       const maxOrder = values.reduce((max, pickem, index) => Math.max(max, Number(pickem.order || index + 1)), 0);
       return maxOrder + 1;
+    }
+
+    function ensureNameOption(name) {
+      const cleanName = String(name || "").trim();
+      if (!cleanName) return;
+      const exists = Array.from(nameInput.options).some(option => option.value === cleanName);
+      if (exists) return;
+      const option = document.createElement("option");
+      option.value = cleanName;
+      option.textContent = cleanName;
+      nameInput.appendChild(option);
     }
 
     function makePickemId(name) {

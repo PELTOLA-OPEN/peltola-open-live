@@ -337,10 +337,10 @@
       min-height: 38px;
       display: inline-grid;
       place-items: center;
-      border: 1px solid rgba(216, 241, 90, 0.68);
+      border: 1px solid rgba(255, 255, 255, 0.28);
       border-radius: 12px;
-      background: rgba(216, 241, 90, 0.16);
-      color: var(--accent);
+      background: var(--panel-strong);
+      color: var(--text);
       font-size: 13px;
       font-weight: 950;
       letter-spacing: 0.05em;
@@ -641,7 +641,7 @@
 
     function renderPickems(event) {
       const pickemFormLink = `pickem.html?event=${encodeURIComponent(eventId)}`;
-      const pickemActionHtml = `<div class="pickem-actions"><a href="${pickemFormLink}">Submit or edit your pickem</a></div>`;
+      const pickemActionHtml = `<div class="pickem-actions"><a href="${pickemFormLink}" target="_blank" rel="noopener noreferrer">Submit or edit your pickem</a></div>`;
       const teams = getTeams(event);
       const pickems = getPickems(event, teams);
       const completedThrough = getCompletedThrough(event);
