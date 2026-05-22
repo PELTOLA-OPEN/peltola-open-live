@@ -854,9 +854,17 @@
 
       const baseTotal = Array.from(baseStrength.values()).reduce((sum, value) => sum + value, 0) || 1;
       const progress = Math.max(0, Math.min(0.999, completedThrough / Math.max(1, holeCount)));
-      const liveWeight = Math.pow(progress, 2.5);
+
+      // The odds start as 100% pickem-implied before the first hole.
+      // After play begins, live score should influence the market quickly.
+      // This curve is intentionally much stronger than the previous version:
+      // 1/18 ~= 13% live, 3/18 ~= 29%, 9/18 ~= 62%, 15/18 ~= 88%.
+      const liveWeight = completedThrough > 0 ? Math.min(0.98, Math.pow(progress, 0.7)) : 0;
       const leaderScore = standings.length ? standings[0].toPar : 0;
-      const gapPenalty = 0.4 + liveWeight * 1.7;
+
+      // Stroke gaps should matter more as the round progresses. A large lead
+      // at halfway should now clearly override weak pre-round pickem support.
+      const gapPenalty = 0.8 + liveWeight * 3.2;
 
       const liveStrength = new Map();
       for (const team of teams) {
@@ -866,7 +874,7 @@
           continue;
         }
         const scoreGap = Math.max(0, standing.toPar - leaderScore);
-        const rankBoost = Math.pow(teamCount - standing.rank + 1, 0.35);
+        const rankBoost = Math.pow(Math.max(1, teamCount - standing.rank + 1), 0.75);
         liveStrength.set(team.id, Math.max(0.000001, Math.exp(-scoreGap * gapPenalty) * rankBoost));
       }
       const liveTotal = Array.from(liveStrength.values()).reduce((sum, value) => sum + value, 0) || 1;
