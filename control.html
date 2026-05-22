@@ -370,6 +370,16 @@
         </section>
 
         <section class="card">
+          <h2>Overlay page scale</h2>
+          <div class="grid">
+            <label>Scale the overlay page, %
+              <input id="overlayPageScale" type="number" min="30" max="200" step="1" />
+            </label>
+          </div>
+          <p class="muted" style="margin-top: 10px; margin-bottom: 0;">Use this if the streaming app makes every overlay graphic too large or too small. This scales the whole overlay page at once and saves automatically.</p>
+        </section>
+
+        <section class="card">
           <h2>Scoring overlay adjustments</h2>
           <div class="grid">
             <label>Rolling bar height, px
@@ -527,6 +537,7 @@
       holeCount: document.getElementById("holeCount"),
       overlayMode: document.getElementById("overlayMode"),
       scorecardColorMode: document.getElementById("scorecardColorMode"),
+      overlayPageScale: document.getElementById("overlayPageScale"),
       tickerHeightPx: document.getElementById("tickerHeightPx"),
       scorecardCenterX: document.getElementById("scorecardCenterX"),
       scorecardCenterY: document.getElementById("scorecardCenterY"),
@@ -592,6 +603,7 @@
     els.resetOverlayLayoutBtn.addEventListener("click", resetOverlayLayout);
     els.resetOddsOverlayLayoutBtn.addEventListener("click", resetOddsOverlayLayout);
     [
+      els.overlayPageScale,
       els.tickerHeightPx,
       els.scorecardCenterX,
       els.scorecardCenterY,
@@ -738,6 +750,7 @@
       els.overlayMode.value = eventState.overlayMode || "compact";
       els.scorecardColorMode.value = eventState.scorecardColorMode === "cell" ? "cell" : "circle";
       const overlayLayout = getOverlayLayout();
+      els.overlayPageScale.value = overlayLayout.overlayPageScale;
       els.tickerHeightPx.value = overlayLayout.tickerHeightPx;
       els.scorecardCenterX.value = overlayLayout.scorecardCenterX;
       els.scorecardCenterY.value = overlayLayout.scorecardCenterY;
@@ -1302,6 +1315,7 @@
 
     function readOverlayLayoutInputs() {
       return {
+        overlayPageScale: clampInt(els.overlayPageScale.value, 30, 200),
         tickerHeightPx: clampInt(els.tickerHeightPx.value, 30, 120),
         scorecardCenterX: clampNumber(els.scorecardCenterX.value, 0, 100),
         scorecardCenterY: clampNumber(els.scorecardCenterY.value, 0, 100),
@@ -1317,6 +1331,7 @@
 
     function getDefaultOverlayLayout() {
       return {
+        overlayPageScale: 100,
         tickerHeightPx: 58,
         scorecardCenterX: 50,
         scorecardCenterY: 43,

@@ -34,6 +34,8 @@
       color: var(--text);
       pointer-events: none;
       text-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
+      transform: scale(var(--overlay-page-scale, 1));
+      transform-origin: center center;
     }
 
     .hidden { display: none !important; }
@@ -228,7 +230,7 @@
       transform: translate(-50%, -50%) translateY(24px) scale(var(--scorecard-hidden-scale, 0.96)) scaleX(var(--scorecard-width-factor, 1)) scaleY(var(--scorecard-height-factor, 1));
       transform-origin: center center;
       opacity: 0;
-      padding: 16px 16px 18px;
+      padding: 12px 12px 14px;
       border: 2px solid rgba(255, 255, 255, 0.72);
       border-radius: 16px;
       background: rgba(0, 0, 0, 0.5);
@@ -247,7 +249,7 @@
       left: var(--odds-center-x, 50%);
       top: var(--odds-center-y, 38%);
       width: auto;
-      max-width: 94vw;
+      max-width: 90vw;
       max-height: 76vh;
       transform: translate(-50%, -50%) translateY(24px) scale(var(--odds-hidden-scale, 0.96)) scaleX(var(--odds-width-factor, 1)) scaleY(var(--odds-height-factor, 1));
       transform-origin: center center;
@@ -269,9 +271,9 @@
     .odds-header {
       display: flex;
       align-items: baseline;
-      justify-content: space-between;
-      gap: 18px;
-      margin-bottom: 10px;
+      justify-content: flex-start;
+      gap: 10px;
+      margin-bottom: 8px;
       text-transform: uppercase;
     }
 
@@ -285,15 +287,11 @@
     }
 
     .odds-subtitle {
-      flex: none;
-      color: var(--muted);
-      font-size: clamp(12px, 1.15vw, 18px);
-      font-weight: 950;
-      letter-spacing: 0.06em;
-      white-space: nowrap;
+      display: none;
     }
 
     .odds-table-wrap {
+      display: inline-block;
       overflow: hidden;
       width: max-content;
       max-width: 100%;
@@ -312,7 +310,7 @@
     .odds-pop-table td {
       height: var(--odds-cell-height, clamp(28px, 2.6vw, 39px));
       border: 1px solid var(--odds-grid);
-      padding: 4px 8px;
+      padding: 3px 6px;
       vertical-align: middle;
       line-height: 1;
       background-clip: padding-box;
@@ -333,14 +331,14 @@
 
     .odds-pos-cell {
       width: 1%;
-      min-width: var(--odds-pos-width, 46px);
+      min-width: var(--odds-pos-width, 32px);
       text-align: center;
       font-weight: 950 !important;
     }
 
     .odds-team-cell {
-      width: 1%;
-      max-width: var(--odds-team-max, min(430px, 42vw));
+      width: var(--odds-team-width, auto);
+      max-width: var(--odds-team-max, min(260px, 32vw));
       overflow: hidden;
       text-align: left;
       text-overflow: ellipsis;
@@ -349,7 +347,7 @@
 
     .odds-value-cell {
       width: 1%;
-      min-width: var(--odds-value-width, 76px);
+      min-width: var(--odds-value-width, 54px);
       text-align: right;
       font-weight: 950 !important;
     }
@@ -596,18 +594,17 @@
         border-radius: 12px;
       }
 
-      .odds-title { font-size: 16px; }
-      .odds-subtitle { font-size: 11px; }
+      .odds-title { font-size: 15px; }
       .odds-pop-table th,
       .odds-pop-table td {
         height: 25px;
-        padding: 2px 5px;
+        padding: 2px 4px;
       }
       .odds-pop-table th { font-size: 9px; }
       .odds-pop-table td { font-size: 11px; }
-      .odds-team-cell { max-width: var(--odds-team-mobile-max, 156px); }
-      .odds-pos-cell { min-width: 34px; }
-      .odds-value-cell { min-width: 58px; }
+      .odds-team-cell { max-width: var(--odds-team-mobile-max, 136px); }
+      .odds-pos-cell { min-width: 28px; }
+      .odds-value-cell { min-width: 46px; }
     }
 
     @keyframes ticker-scroll {
@@ -760,6 +757,7 @@
 
     function applyOverlayLayout(event) {
       const layout = {
+        overlayPageScale: 100,
         tickerHeightPx: 58,
         scorecardCenterX: 50,
         scorecardCenterY: 43,
@@ -777,6 +775,7 @@
         ...(event.oddsOverlayLayout || {})
       };
 
+      const overlayPageScale = clampNumber(layout.overlayPageScale, 30, 200) / 100;
       const tickerHeight = clampNumber(layout.tickerHeightPx, 30, 120);
       const centerX = clampNumber(layout.scorecardCenterX, 0, 100);
       const centerY = clampNumber(layout.scorecardCenterY, 0, 100);
@@ -797,6 +796,7 @@
       const mobileBaseTotalWidth = 38;
       const mobileBasePlayerMax = 116;
 
+      document.documentElement.style.setProperty("--overlay-page-scale", String(overlayPageScale));
       document.documentElement.style.setProperty("--ticker-height", `${tickerHeight}px`);
       document.documentElement.style.setProperty("--scorecard-center-x", `${centerX}%`);
       document.documentElement.style.setProperty("--scorecard-center-y", `${centerY}%`);
@@ -818,8 +818,8 @@
       document.documentElement.style.setProperty("--odds-width-factor", String(oddsWidthFactor));
       document.documentElement.style.setProperty("--odds-height-factor", String(oddsHeightFactor));
       document.documentElement.style.setProperty("--odds-cell-height", `${Math.max(28, Math.min(39, viewportWidth * 0.026))}px`);
-      document.documentElement.style.setProperty("--odds-team-max", `${Math.min(430, viewportWidth * 0.42)}px`);
-      document.documentElement.style.setProperty("--odds-team-mobile-max", "156px");
+      document.documentElement.style.setProperty("--odds-team-max", `${Math.min(260, viewportWidth * 0.32)}px`);
+      document.documentElement.style.setProperty("--odds-team-mobile-max", "136px");
     }
 
     function maybeShowScorecardFlash(event) {
@@ -1002,7 +1002,13 @@
       const oddsRows = calculateWinnerOdds(event, teams, completedThrough, holeCount);
 
       oddsTitleEl.textContent = "Live odds";
-      oddsSubtitleEl.textContent = `${completedThrough || 0}/${holeCount} holes`;
+      oddsSubtitleEl.textContent = "";
+
+      const viewportWidth = Math.max(320, window.innerWidth || 720);
+      const longestNameLength = Math.max(4, ...oddsRows.map(row => String(row.name || "").length));
+      const approximateCharWidth = viewportWidth <= 700 ? 6.2 : 9.5;
+      const teamWidthCap = viewportWidth <= 700 ? Math.min(136, viewportWidth * 0.36) : Math.min(260, viewportWidth * 0.28);
+      const oddsTeamWidth = Math.round(Math.max(58, Math.min(longestNameLength * approximateCharWidth + 14, teamWidthCap)));
 
       const rows = oddsRows.map((row, index) => `
         <tr>
@@ -1013,7 +1019,7 @@
       `).join("");
 
       oddsTableWrapEl.innerHTML = `
-        <table class="odds-pop-table">
+        <table class="odds-pop-table" style="--odds-team-width: ${oddsTeamWidth}px;">
           <thead>
             <tr>
               <th class="odds-pos-cell">Pos</th>
