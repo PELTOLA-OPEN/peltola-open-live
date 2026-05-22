@@ -88,6 +88,13 @@
     }
 
     input[type="checkbox"] { width: 22px; min-height: 22px; }
+    input[type="range"].slider {
+      padding: 0;
+      height: 26px;
+      border: 0;
+      accent-color: var(--accent);
+      background: transparent;
+    }
 
     button {
       padding: 9px 13px;
@@ -374,9 +381,9 @@
           <div class="grid">
             <label>Scale the overlay page, %
               <input id="overlayPageScale" type="number" min="30" max="200" step="1" />
+              <input id="overlayPageScaleRange" class="slider" type="range" min="30" max="200" step="1" />
             </label>
           </div>
-          <p class="muted" style="margin-top: 10px; margin-bottom: 0;">Use this if the streaming app makes every overlay graphic too large or too small. This scales the whole overlay page at once and saves automatically.</p>
         </section>
 
         <section class="card">
@@ -384,6 +391,7 @@
           <div class="grid">
             <label>Rolling bar height, px
               <input id="tickerHeightPx" type="number" min="30" max="120" step="1" />
+              <input id="tickerHeightPxRange" class="slider" type="range" min="30" max="120" step="1" />
             </label>
           </div>
           <div class="row" style="margin-top: 12px;">
@@ -391,6 +399,7 @@
             <button id="tickerRightBtn" type="button">Move ticker right</button>
             <button id="tickerUpBtn" type="button">Move ticker up</button>
             <button id="tickerDownBtn" type="button">Move ticker down</button>
+            <button id="resetTickerLayoutBtn" type="button">Reset rolling ticker</button>
             <span id="tickerPositionLabel" class="muted">X 0 px · Y 0 px</span>
           </div>
           <div class="row" style="margin-top: 12px;">
@@ -401,7 +410,6 @@
               <input id="showStandings" type="checkbox" /> Show score overlay
             </label>
           </div>
-          <p class="muted" style="margin-top: 10px; margin-bottom: 0;">Ticker height and position save automatically. Position buttons move the ticker and the clock together.</p>
         </section>
 
         <section class="card">
@@ -409,21 +417,25 @@
           <div class="grid">
             <label>Popup scorecard center X, %
               <input id="scorecardCenterX" type="number" min="0" max="100" step="1" />
+              <input id="scorecardCenterXRange" class="slider" type="range" min="0" max="100" step="1" />
             </label>
             <label>Popup scorecard center Y, %
               <input id="scorecardCenterY" type="number" min="0" max="100" step="1" />
+              <input id="scorecardCenterYRange" class="slider" type="range" min="0" max="100" step="1" />
             </label>
             <label>Popup scorecard size, %
               <input id="scorecardScale" type="number" min="50" max="150" step="1" />
+              <input id="scorecardScaleRange" class="slider" type="range" min="50" max="150" step="1" />
             </label>
             <label>Popup width scale, %
               <input id="scorecardWidthScale" type="number" min="50" max="180" step="1" />
+              <input id="scorecardWidthScaleRange" class="slider" type="range" min="50" max="180" step="1" />
             </label>
             <label>Popup height scale, %
               <input id="scorecardHeightScale" type="number" min="50" max="180" step="1" />
+              <input id="scorecardHeightScaleRange" class="slider" type="range" min="50" max="180" step="1" />
             </label>
           </div>
-          <p class="muted" style="margin-top: 10px; margin-bottom: 0;">These scoring overlay adjustments save automatically while you edit them. X/Y are based on the overlay screen, where 50/50 is the center. Width/height scale changes the popup scorecard aspect ratio in the stream overlay.</p>
           <div class="row" style="margin-top: 12px;">
             <button id="resetOverlayLayoutBtn" type="button">Reset scoring overlay adjustments</button>
             <button id="toggleScorecardPreviewBtn" class="toggle-off" type="button">Scorecard popup preview: OFF</button>
@@ -435,21 +447,25 @@
           <div class="grid">
             <label>Popup odds center X, %
               <input id="oddsCenterX" type="number" min="0" max="100" step="1" />
+              <input id="oddsCenterXRange" class="slider" type="range" min="0" max="100" step="1" />
             </label>
             <label>Popup odds center Y, %
               <input id="oddsCenterY" type="number" min="0" max="100" step="1" />
+              <input id="oddsCenterYRange" class="slider" type="range" min="0" max="100" step="1" />
             </label>
             <label>Popup odds size, %
               <input id="oddsScale" type="number" min="50" max="150" step="1" />
+              <input id="oddsScaleRange" class="slider" type="range" min="50" max="150" step="1" />
             </label>
             <label>Popup odds width scale, %
               <input id="oddsWidthScale" type="number" min="50" max="180" step="1" />
+              <input id="oddsWidthScaleRange" class="slider" type="range" min="50" max="180" step="1" />
             </label>
             <label>Popup odds height scale, %
               <input id="oddsHeightScale" type="number" min="50" max="180" step="1" />
+              <input id="oddsHeightScaleRange" class="slider" type="range" min="50" max="180" step="1" />
             </label>
           </div>
-          <p class="muted" style="margin-top: 10px; margin-bottom: 0;">These odds overlay adjustments save automatically while you edit them.</p>
           <div class="row" style="margin-top: 12px;">
             <button id="resetOddsOverlayLayoutBtn" type="button">Reset odds overlay adjustments</button>
             <button id="toggleOddsPreviewBtn" class="toggle-off" type="button">Odds popup preview: OFF</button>
@@ -461,7 +477,6 @@
             <h2>Teams</h2>
             <button id="addTeamBtn" type="button">Add team</button>
           </div>
-          <p class="muted">Edit team names here. Score entry is in the Scoring tab.</p>
           <div id="teams" class="teams"></div>
         </section>
 
@@ -499,7 +514,6 @@
             <h2>Pickems</h2>
             <button id="addPickemBtn" type="button">Add participant</button>
           </div>
-          <p class="muted">Enter each person's predicted final team order and their prediction for total birdies made by all teams over all 18 holes.</p>
           <div id="pickems" class="pickems"></div>
           <div id="pickemStatus" class="status"></div>
         </section>
@@ -554,24 +568,37 @@
       overlayMode: document.getElementById("overlayMode"),
       scorecardColorMode: document.getElementById("scorecardColorMode"),
       overlayPageScale: document.getElementById("overlayPageScale"),
+      overlayPageScaleRange: document.getElementById("overlayPageScaleRange"),
       tickerHeightPx: document.getElementById("tickerHeightPx"),
+      tickerHeightPxRange: document.getElementById("tickerHeightPxRange"),
       tickerLeftBtn: document.getElementById("tickerLeftBtn"),
       tickerRightBtn: document.getElementById("tickerRightBtn"),
       tickerUpBtn: document.getElementById("tickerUpBtn"),
       tickerDownBtn: document.getElementById("tickerDownBtn"),
+      resetTickerLayoutBtn: document.getElementById("resetTickerLayoutBtn"),
       tickerPositionLabel: document.getElementById("tickerPositionLabel"),
       scorecardCenterX: document.getElementById("scorecardCenterX"),
+      scorecardCenterXRange: document.getElementById("scorecardCenterXRange"),
       scorecardCenterY: document.getElementById("scorecardCenterY"),
+      scorecardCenterYRange: document.getElementById("scorecardCenterYRange"),
       scorecardScale: document.getElementById("scorecardScale"),
+      scorecardScaleRange: document.getElementById("scorecardScaleRange"),
       scorecardWidthScale: document.getElementById("scorecardWidthScale"),
+      scorecardWidthScaleRange: document.getElementById("scorecardWidthScaleRange"),
       scorecardHeightScale: document.getElementById("scorecardHeightScale"),
+      scorecardHeightScaleRange: document.getElementById("scorecardHeightScaleRange"),
       resetOverlayLayoutBtn: document.getElementById("resetOverlayLayoutBtn"),
       toggleScorecardPreviewBtn: document.getElementById("toggleScorecardPreviewBtn"),
       oddsCenterX: document.getElementById("oddsCenterX"),
+      oddsCenterXRange: document.getElementById("oddsCenterXRange"),
       oddsCenterY: document.getElementById("oddsCenterY"),
+      oddsCenterYRange: document.getElementById("oddsCenterYRange"),
       oddsScale: document.getElementById("oddsScale"),
+      oddsScaleRange: document.getElementById("oddsScaleRange"),
       oddsWidthScale: document.getElementById("oddsWidthScale"),
+      oddsWidthScaleRange: document.getElementById("oddsWidthScaleRange"),
       oddsHeightScale: document.getElementById("oddsHeightScale"),
+      oddsHeightScaleRange: document.getElementById("oddsHeightScaleRange"),
       resetOddsOverlayLayoutBtn: document.getElementById("resetOddsOverlayLayoutBtn"),
       toggleOddsPreviewBtn: document.getElementById("toggleOddsPreviewBtn"),
       showHelsinkiClock: document.getElementById("showHelsinkiClock"),
@@ -624,33 +651,28 @@
     els.resetOverlayLayoutBtn.addEventListener("click", resetOverlayLayout);
     els.resetOddsOverlayLayoutBtn.addEventListener("click", resetOddsOverlayLayout);
     [
-      els.overlayPageScale,
-      els.tickerHeightPx,
-      els.scorecardCenterX,
-      els.scorecardCenterY,
-      els.scorecardScale,
-      els.scorecardWidthScale,
-      els.scorecardHeightScale
-    ].forEach(input => {
-      input.addEventListener("input", saveOverlayLayoutLive);
-      input.addEventListener("change", saveOverlayLayoutLive);
-    });
+      [els.overlayPageScale, els.overlayPageScaleRange],
+      [els.tickerHeightPx, els.tickerHeightPxRange],
+      [els.scorecardCenterX, els.scorecardCenterXRange],
+      [els.scorecardCenterY, els.scorecardCenterYRange],
+      [els.scorecardScale, els.scorecardScaleRange],
+      [els.scorecardWidthScale, els.scorecardWidthScaleRange],
+      [els.scorecardHeightScale, els.scorecardHeightScaleRange]
+    ].forEach(([numberInput, rangeInput]) => bindSyncedOverlayInput(numberInput, rangeInput, saveOverlayLayoutLive));
     [
-      els.oddsCenterX,
-      els.oddsCenterY,
-      els.oddsScale,
-      els.oddsWidthScale,
-      els.oddsHeightScale
-    ].forEach(input => {
-      input.addEventListener("input", saveOddsOverlayLayoutLive);
-      input.addEventListener("change", saveOddsOverlayLayoutLive);
-    });
+      [els.oddsCenterX, els.oddsCenterXRange],
+      [els.oddsCenterY, els.oddsCenterYRange],
+      [els.oddsScale, els.oddsScaleRange],
+      [els.oddsWidthScale, els.oddsWidthScaleRange],
+      [els.oddsHeightScale, els.oddsHeightScaleRange]
+    ].forEach(([numberInput, rangeInput]) => bindSyncedOverlayInput(numberInput, rangeInput, saveOddsOverlayLayoutLive));
     els.toggleScorecardPreviewBtn.addEventListener("click", toggleScorecardPreview);
     els.toggleOddsPreviewBtn.addEventListener("click", toggleOddsPreview);
     els.tickerLeftBtn.addEventListener("click", () => nudgeTickerPosition(-10, 0));
     els.tickerRightBtn.addEventListener("click", () => nudgeTickerPosition(10, 0));
     els.tickerUpBtn.addEventListener("click", () => nudgeTickerPosition(0, 10));
     els.tickerDownBtn.addEventListener("click", () => nudgeTickerPosition(0, -10));
+    els.resetTickerLayoutBtn.addEventListener("click", resetTickerLayout);
     els.showHelsinkiClock.addEventListener("change", () => quickUpdate({ showHelsinkiClock: els.showHelsinkiClock.checked }));
     els.resetScoringPositionBtn.addEventListener("click", resetScoringPosition);
     els.togglePublicPickemsBtn.addEventListener("click", togglePublicPickemEntries);
@@ -776,19 +798,31 @@
       els.scorecardColorMode.value = eventState.scorecardColorMode === "cell" ? "cell" : "circle";
       const overlayLayout = getOverlayLayout();
       els.overlayPageScale.value = overlayLayout.overlayPageScale;
+      els.overlayPageScaleRange.value = overlayLayout.overlayPageScale;
       els.tickerHeightPx.value = overlayLayout.tickerHeightPx;
+      els.tickerHeightPxRange.value = overlayLayout.tickerHeightPx;
       els.tickerPositionLabel.textContent = `X ${overlayLayout.tickerOffsetX || 0} px · Y ${overlayLayout.tickerOffsetY || 0} px`;
       els.scorecardCenterX.value = overlayLayout.scorecardCenterX;
+      els.scorecardCenterXRange.value = overlayLayout.scorecardCenterX;
       els.scorecardCenterY.value = overlayLayout.scorecardCenterY;
+      els.scorecardCenterYRange.value = overlayLayout.scorecardCenterY;
       els.scorecardScale.value = overlayLayout.scorecardScale;
+      els.scorecardScaleRange.value = overlayLayout.scorecardScale;
       els.scorecardWidthScale.value = overlayLayout.scorecardWidthScale;
+      els.scorecardWidthScaleRange.value = overlayLayout.scorecardWidthScale;
       els.scorecardHeightScale.value = overlayLayout.scorecardHeightScale;
+      els.scorecardHeightScaleRange.value = overlayLayout.scorecardHeightScale;
       const oddsOverlayLayout = getOddsOverlayLayout();
       els.oddsCenterX.value = oddsOverlayLayout.oddsCenterX;
+      els.oddsCenterXRange.value = oddsOverlayLayout.oddsCenterX;
       els.oddsCenterY.value = oddsOverlayLayout.oddsCenterY;
+      els.oddsCenterYRange.value = oddsOverlayLayout.oddsCenterY;
       els.oddsScale.value = oddsOverlayLayout.oddsScale;
+      els.oddsScaleRange.value = oddsOverlayLayout.oddsScale;
       els.oddsWidthScale.value = oddsOverlayLayout.oddsWidthScale;
+      els.oddsWidthScaleRange.value = oddsOverlayLayout.oddsWidthScale;
       els.oddsHeightScale.value = oddsOverlayLayout.oddsHeightScale;
+      els.oddsHeightScaleRange.value = oddsOverlayLayout.oddsHeightScale;
       updatePopupToggleButtons();
       els.showHelsinkiClock.checked = eventState.showHelsinkiClock !== false;
       els.showStandings.checked = eventState.showStandings !== false;
@@ -1293,6 +1327,30 @@
       await update(eventRef, { updatedAt: Date.now() });
     }
 
+
+    function bindSyncedOverlayInput(numberInput, rangeInput, saveFn) {
+      if (!numberInput || !rangeInput) return;
+      const syncFromNumber = () => {
+        if (numberInput.value === "") return;
+        rangeInput.value = numberInput.value;
+        saveFn();
+      };
+      numberInput.addEventListener("input", syncFromNumber);
+      numberInput.addEventListener("change", () => {
+        if (numberInput.value === "") numberInput.value = rangeInput.value;
+        rangeInput.value = numberInput.value;
+        saveFn();
+      });
+      rangeInput.addEventListener("input", () => {
+        numberInput.value = rangeInput.value;
+        saveFn();
+      });
+      rangeInput.addEventListener("change", () => {
+        numberInput.value = rangeInput.value;
+        saveFn();
+      });
+    }
+
     function saveOverlayLayoutLive() {
       if (!signedIn || !eventState) return;
       window.clearTimeout(overlayLayoutSaveTimer);
@@ -1320,6 +1378,24 @@
       try {
         await update(eventRef, { overlayLayout: nextLayout, updatedAt: Date.now() });
         els.eventStatus.textContent = `Ticker position saved: X ${nextLayout.tickerOffsetX} px, Y ${nextLayout.tickerOffsetY} px.`;
+      } catch (error) {
+        els.eventStatus.textContent = readableFirebaseError(error);
+      }
+    }
+
+    async function resetTickerLayout() {
+      if (!signedIn) return;
+      const current = getOverlayLayout();
+      const defaults = getDefaultOverlayLayout();
+      const nextLayout = {
+        ...current,
+        tickerHeightPx: defaults.tickerHeightPx,
+        tickerOffsetX: defaults.tickerOffsetX,
+        tickerOffsetY: defaults.tickerOffsetY
+      };
+      try {
+        await update(eventRef, { overlayLayout: nextLayout, updatedAt: Date.now() });
+        els.eventStatus.textContent = "Rolling ticker adjustments reset.";
       } catch (error) {
         els.eventStatus.textContent = readableFirebaseError(error);
       }
