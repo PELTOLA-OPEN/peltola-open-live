@@ -820,8 +820,27 @@
     function calculateWinnerOdds(event, teams, completedThrough, holeCount) {
       const teamCount = teams.length;
       const pickems = getPickems(event, teams);
-      const baseStrength = new Map(teams.map(team => [team.id, 1]));
+      const standings = assignPositions(calculateStandings(event, completedThrough));
+      const standingById = new Map(standings.map(team => [team.id, team]));
 
+      if (completedThrough >= holeCount && completedThrough > 0 && standings.length) {
+        const winningScore = standings[0].toPar;
+        return teams
+          .map(team => {
+            const standing = standingById.get(team.id);
+            const isWinner = standing && standing.toPar === winningScore;
+            return {
+              id: team.id,
+              name: team.name,
+              probability: isWinner ? 1 : 0,
+              decimalOdds: isWinner ? 1 : Number.POSITIVE_INFINITY,
+              odds: isWinner ? "1.00" : "—"
+            };
+          })
+          .sort((a, b) => a.decimalOdds - b.decimalOdds || a.name.localeCompare(b.name));
+      }
+
+      const baseStrength = new Map(teams.map(team => [team.id, 1]));
       if (pickems.length) {
         for (const team of teams) baseStrength.set(team.id, 0);
         for (const pickem of pickems) {
@@ -833,31 +852,34 @@
         }
       }
 
-      const standings = assignPositions(calculateStandings(event, completedThrough));
-      const liveMultiplier = Math.max(1, pickems.length || 1);
-      const liveStrength = new Map();
-      for (const team of standings) {
-        const rankPoints = Math.pow(teamCount - team.rank + 1, 2);
-        const scoreGapBoost = completedThrough ? Math.max(0.25, 1 + (-team.toPar * 0.08)) : 1;
-        liveStrength.set(team.id, Math.max(0.25, rankPoints * scoreGapBoost) * liveMultiplier);
-      }
+      const baseTotal = Array.from(baseStrength.values()).reduce((sum, value) => sum + value, 0) || 1;
+      const progress = Math.max(0, Math.min(0.999, completedThrough / Math.max(1, holeCount)));
+      const liveWeight = Math.pow(progress, 2.5);
+      const leaderScore = standings.length ? standings[0].toPar : 0;
+      const gapPenalty = 0.4 + liveWeight * 1.7;
 
-      const liveWeight = Math.min(0.72, Math.max(0, completedThrough / Math.max(1, holeCount)) * 0.72);
+      const liveStrength = new Map();
+      for (const team of teams) {
+        const standing = standingById.get(team.id);
+        if (!standing || !completedThrough) {
+          liveStrength.set(team.id, 1);
+          continue;
+        }
+        const scoreGap = Math.max(0, standing.toPar - leaderScore);
+        const rankBoost = Math.pow(teamCount - standing.rank + 1, 0.35);
+        liveStrength.set(team.id, Math.max(0.000001, Math.exp(-scoreGap * gapPenalty) * rankBoost));
+      }
+      const liveTotal = Array.from(liveStrength.values()).reduce((sum, value) => sum + value, 0) || 1;
+
       const rows = teams.map(team => {
-        const pickemPart = baseStrength.get(team.id) || 0;
-        const livePart = liveStrength.get(team.id) || 1;
-        const strength = Math.max(0.0001, pickemPart * (1 - liveWeight) + livePart * liveWeight);
-        return { id: team.id, name: team.name, strength };
+        const baseProbability = (baseStrength.get(team.id) || 0) / baseTotal;
+        const liveProbability = (liveStrength.get(team.id) || 0) / liveTotal;
+        const probability = Math.max(0.000001, baseProbability * (1 - liveWeight) + liveProbability * liveWeight);
+        const decimalOdds = Math.min(99.99, Math.max(1.01, 1 / probability));
+        return { id: team.id, name: team.name, probability, decimalOdds, odds: decimalOdds.toFixed(2) };
       });
 
-      const totalStrength = rows.reduce((sum, row) => sum + row.strength, 0) || 1;
-      return rows
-        .map(row => {
-          const probability = Math.max(0.0001, row.strength / totalStrength);
-          const decimalOdds = Math.min(99.99, Math.max(1.01, 1 / probability));
-          return { ...row, probability, decimalOdds, odds: decimalOdds.toFixed(2) };
-        })
-        .sort((a, b) => a.decimalOdds - b.decimalOdds || a.name.localeCompare(b.name));
+      return rows.sort((a, b) => a.decimalOdds - b.decimalOdds || a.name.localeCompare(b.name));
     }
 
 
