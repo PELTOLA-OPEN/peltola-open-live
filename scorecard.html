@@ -349,6 +349,22 @@
       text-transform: uppercase;
     }
 
+    .pickem-actions a::after {
+      content: " -->";
+      letter-spacing: 0.02em;
+    }
+
+    .pickem-wrap > .table-wrap {
+      width: 50%;
+      max-width: 50%;
+    }
+
+    .odds-wrap > .table-wrap {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+
 
     .odds-wrap {
       display: grid;
@@ -466,6 +482,13 @@
       }
 
       .pickem-wrap { width: 100%; }
+      .pickem-wrap > .table-wrap {
+        width: 100%;
+        max-width: 100%;
+      }
+      .odds-wrap > .table-wrap {
+        overflow-x: hidden;
+      }
       .pickem-summary th,
       .pickem-summary td {
         height: 26px;
