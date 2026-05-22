@@ -101,6 +101,8 @@
     button:disabled { cursor: not-allowed; opacity: 0.45; }
     button.danger { border-color: var(--danger-border); background: var(--danger); }
     button.primary { border-color: rgba(216, 241, 90, 0.42); color: var(--accent); }
+    button.toggle-on { border-color: rgba(216, 241, 90, 0.7); background: rgba(216, 241, 90, 0.16); color: var(--accent); }
+    button.toggle-off { border-color: rgba(255, 255, 255, 0.18); background: #11161d; color: var(--muted); }
 
     .status {
       min-height: 22px;
@@ -368,7 +370,7 @@
         </section>
 
         <section class="card">
-          <h2>Overlay adjustments</h2>
+          <h2>Scoring overlay adjustments</h2>
           <div class="grid">
             <label>Rolling bar height, px
               <input id="tickerHeightPx" type="number" min="30" max="120" step="1" />
@@ -389,18 +391,42 @@
               <input id="scorecardHeightScale" type="number" min="50" max="180" step="1" />
             </label>
           </div>
-          <p class="muted" style="margin-top: 10px; margin-bottom: 0;">These overlay adjustments save automatically while you edit them. X/Y are based on the overlay screen, where 50/50 is the center. Width/height scale changes the popup scorecard aspect ratio in the stream overlay.</p>
+          <p class="muted" style="margin-top: 10px; margin-bottom: 0;">These scoring overlay adjustments save automatically while you edit them. X/Y are based on the overlay screen, where 50/50 is the center. Width/height scale changes the popup scorecard aspect ratio in the stream overlay.</p>
           <div class="row" style="margin-top: 12px;">
-            <button id="resetOverlayLayoutBtn" type="button">Reset overlay adjustments</button>
-            <label class="row" style="display:flex; gap:8px;">
-              <input id="showScorecardPreview" type="checkbox" /> Keep popup scorecard visible
-            </label>
+            <button id="resetOverlayLayoutBtn" type="button">Reset scoring overlay adjustments</button>
+            <button id="toggleScorecardPreviewBtn" class="toggle-off" type="button">Scorecard popup preview: OFF</button>
             <label class="row" style="display:flex; gap:8px;">
               <input id="showHelsinkiClock" type="checkbox" /> Show Helsinki 24h clock
             </label>
             <label class="row" style="display:flex; gap:8px;">
               <input id="showStandings" type="checkbox" /> Show score overlay
             </label>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Odds overlay adjustments</h2>
+          <div class="grid">
+            <label>Popup odds center X, %
+              <input id="oddsCenterX" type="number" min="0" max="100" step="1" />
+            </label>
+            <label>Popup odds center Y, %
+              <input id="oddsCenterY" type="number" min="0" max="100" step="1" />
+            </label>
+            <label>Popup odds size, %
+              <input id="oddsScale" type="number" min="50" max="150" step="1" />
+            </label>
+            <label>Popup odds width scale, %
+              <input id="oddsWidthScale" type="number" min="50" max="180" step="1" />
+            </label>
+            <label>Popup odds height scale, %
+              <input id="oddsHeightScale" type="number" min="50" max="180" step="1" />
+            </label>
+          </div>
+          <p class="muted" style="margin-top: 10px; margin-bottom: 0;">These odds overlay adjustments save automatically while you edit them.</p>
+          <div class="row" style="margin-top: 12px;">
+            <button id="resetOddsOverlayLayoutBtn" type="button">Reset odds overlay adjustments</button>
+            <button id="toggleOddsPreviewBtn" class="toggle-off" type="button">Odds popup preview: OFF</button>
           </div>
         </section>
 
@@ -435,6 +461,7 @@
           <div id="scoreList" class="score-list"></div>
           <div class="row" style="margin-top: 12px;">
             <button id="showScorecardBtn" class="primary" type="button">Show scorecard now</button>
+            <button id="showOddsBtn" class="primary" type="button">Show odds</button>
           </div>
           <div id="scoreStatus" class="status"></div>
         </section>
@@ -476,6 +503,7 @@
     let signedIn = false;
     let activeTab = "setup";
     let overlayLayoutSaveTimer = null;
+    let oddsOverlayLayoutSaveTimer = null;
 
     const els = {
       authState: document.getElementById("authState"),
@@ -506,7 +534,14 @@
       scorecardWidthScale: document.getElementById("scorecardWidthScale"),
       scorecardHeightScale: document.getElementById("scorecardHeightScale"),
       resetOverlayLayoutBtn: document.getElementById("resetOverlayLayoutBtn"),
-      showScorecardPreview: document.getElementById("showScorecardPreview"),
+      toggleScorecardPreviewBtn: document.getElementById("toggleScorecardPreviewBtn"),
+      oddsCenterX: document.getElementById("oddsCenterX"),
+      oddsCenterY: document.getElementById("oddsCenterY"),
+      oddsScale: document.getElementById("oddsScale"),
+      oddsWidthScale: document.getElementById("oddsWidthScale"),
+      oddsHeightScale: document.getElementById("oddsHeightScale"),
+      resetOddsOverlayLayoutBtn: document.getElementById("resetOddsOverlayLayoutBtn"),
+      toggleOddsPreviewBtn: document.getElementById("toggleOddsPreviewBtn"),
       showHelsinkiClock: document.getElementById("showHelsinkiClock"),
       saveEventBtn: document.getElementById("saveEventBtn"),
       resetScoringPositionBtn: document.getElementById("resetScoringPositionBtn"),
@@ -520,6 +555,7 @@
       prevHoleBtn: document.getElementById("prevHoleBtn"),
       nextHoleBtn: document.getElementById("nextHoleBtn"),
       showScorecardBtn: document.getElementById("showScorecardBtn"),
+      showOddsBtn: document.getElementById("showOddsBtn"),
       scoreHoleTitle: document.getElementById("scoreHoleTitle"),
       scoreHoleSub: document.getElementById("scoreHoleSub"),
       scoreList: document.getElementById("scoreList"),
@@ -554,6 +590,7 @@
     els.pickemsTabBtn.addEventListener("click", () => setActiveTab("pickems"));
     els.saveEventBtn.addEventListener("click", saveEventSettings);
     els.resetOverlayLayoutBtn.addEventListener("click", resetOverlayLayout);
+    els.resetOddsOverlayLayoutBtn.addEventListener("click", resetOddsOverlayLayout);
     [
       els.tickerHeightPx,
       els.scorecardCenterX,
@@ -565,7 +602,18 @@
       input.addEventListener("input", saveOverlayLayoutLive);
       input.addEventListener("change", saveOverlayLayoutLive);
     });
-    els.showScorecardPreview.addEventListener("change", () => quickUpdate({ showScorecardPreview: els.showScorecardPreview.checked }));
+    [
+      els.oddsCenterX,
+      els.oddsCenterY,
+      els.oddsScale,
+      els.oddsWidthScale,
+      els.oddsHeightScale
+    ].forEach(input => {
+      input.addEventListener("input", saveOddsOverlayLayoutLive);
+      input.addEventListener("change", saveOddsOverlayLayoutLive);
+    });
+    els.toggleScorecardPreviewBtn.addEventListener("click", toggleScorecardPreview);
+    els.toggleOddsPreviewBtn.addEventListener("click", toggleOddsPreview);
     els.showHelsinkiClock.addEventListener("change", () => quickUpdate({ showHelsinkiClock: els.showHelsinkiClock.checked }));
     els.resetScoringPositionBtn.addEventListener("click", resetScoringPosition);
     els.togglePublicPickemsBtn.addEventListener("click", togglePublicPickemEntries);
@@ -577,6 +625,7 @@
     els.prevHoleBtn.addEventListener("click", () => moveScoringHole(-1));
     els.nextHoleBtn.addEventListener("click", () => moveScoringHole(1));
     els.showScorecardBtn.addEventListener("click", showScorecardNow);
+    els.showOddsBtn.addEventListener("click", showOddsNow);
     els.addPickemBtn.addEventListener("click", addPickem);
 
     onAuthStateChanged(auth, user => {
@@ -630,7 +679,9 @@
           overlayMode: "compact",
           scorecardColorMode: "circle",
           overlayLayout: getDefaultOverlayLayout(),
+          oddsOverlayLayout: getDefaultOddsOverlayLayout(),
           showScorecardPreview: false,
+          showOddsPreview: false,
           showHelsinkiClock: true,
           showHoleBug: false,
           showStandings: true,
@@ -693,7 +744,13 @@
       els.scorecardScale.value = overlayLayout.scorecardScale;
       els.scorecardWidthScale.value = overlayLayout.scorecardWidthScale;
       els.scorecardHeightScale.value = overlayLayout.scorecardHeightScale;
-      els.showScorecardPreview.checked = eventState.showScorecardPreview === true;
+      const oddsOverlayLayout = getOddsOverlayLayout();
+      els.oddsCenterX.value = oddsOverlayLayout.oddsCenterX;
+      els.oddsCenterY.value = oddsOverlayLayout.oddsCenterY;
+      els.oddsScale.value = oddsOverlayLayout.oddsScale;
+      els.oddsWidthScale.value = oddsOverlayLayout.oddsWidthScale;
+      els.oddsHeightScale.value = oddsOverlayLayout.oddsHeightScale;
+      updatePopupToggleButtons();
       els.showHelsinkiClock.checked = eventState.showHelsinkiClock !== false;
       els.showStandings.checked = eventState.showStandings !== false;
       updatePublicPickemButton();
@@ -999,7 +1056,9 @@
         overlayMode: els.overlayMode.value,
         scorecardColorMode: els.scorecardColorMode.value,
         overlayLayout: readOverlayLayoutInputs(),
-        showScorecardPreview: els.showScorecardPreview.checked,
+        oddsOverlayLayout: readOddsOverlayLayoutInputs(),
+        showScorecardPreview: eventState.showScorecardPreview === true,
+        showOddsPreview: eventState.showOddsPreview === true,
         showHelsinkiClock: els.showHelsinkiClock.checked,
         showStandings: els.showStandings.checked,
         updatedAt: Date.now()
@@ -1081,6 +1140,47 @@
       };
     }
 
+    async function showOddsNow() {
+      if (!signedIn || !eventState) return;
+      const now = Date.now();
+      await update(eventRef, {
+        overlayFlash: {
+          type: "odds",
+          sequence: now,
+          triggeredAt: now,
+          durationMs: 10000
+        },
+        updatedAt: now
+      });
+      els.scoreStatus.textContent = "Showing odds for 10 seconds.";
+    }
+
+    function updatePopupToggleButtons() {
+      updateToggleButton(els.toggleScorecardPreviewBtn, eventState?.showScorecardPreview === true, "Scorecard popup preview");
+      updateToggleButton(els.toggleOddsPreviewBtn, eventState?.showOddsPreview === true, "Odds popup preview");
+    }
+
+    function updateToggleButton(button, enabled, label) {
+      button.textContent = `${label}: ${enabled ? "ON" : "OFF"}`;
+      button.classList.toggle("toggle-on", enabled);
+      button.classList.toggle("toggle-off", !enabled);
+      button.title = enabled ? `${label} is currently visible. Click to hide it.` : `${label} is currently hidden. Click to show it.`;
+    }
+
+    async function toggleScorecardPreview() {
+      if (!signedIn || !eventState) return;
+      const nextValue = eventState.showScorecardPreview !== true;
+      await update(eventRef, { showScorecardPreview: nextValue, updatedAt: Date.now() });
+      els.eventStatus.textContent = nextValue ? "Scorecard popup preview enabled." : "Scorecard popup preview disabled.";
+    }
+
+    async function toggleOddsPreview() {
+      if (!signedIn || !eventState) return;
+      const nextValue = eventState.showOddsPreview !== true;
+      await update(eventRef, { showOddsPreview: nextValue, updatedAt: Date.now() });
+      els.eventStatus.textContent = nextValue ? "Odds popup preview enabled." : "Odds popup preview disabled.";
+    }
+
 
 
     function updatePublicPickemButton() {
@@ -1114,6 +1214,7 @@
         currentHole: 0,
         overlayFlash: null,
         overlayFlashShownHoles: null,
+        showOddsPreview: false,
         updatedAt: Date.now()
       };
 
@@ -1173,7 +1274,30 @@
       if (!signedIn) return;
       const defaults = getDefaultOverlayLayout();
       await update(eventRef, { overlayLayout: defaults, updatedAt: Date.now() });
-      els.eventStatus.textContent = "Overlay adjustments reset.";
+      els.eventStatus.textContent = "Scoring overlay adjustments reset.";
+    }
+
+    function saveOddsOverlayLayoutLive() {
+      if (!signedIn || !eventState) return;
+      window.clearTimeout(oddsOverlayLayoutSaveTimer);
+      oddsOverlayLayoutSaveTimer = window.setTimeout(async () => {
+        try {
+          await update(eventRef, {
+            oddsOverlayLayout: readOddsOverlayLayoutInputs(),
+            updatedAt: Date.now()
+          });
+          els.eventStatus.textContent = "Odds overlay adjustments saved.";
+        } catch (error) {
+          els.eventStatus.textContent = readableFirebaseError(error);
+        }
+      }, 180);
+    }
+
+    async function resetOddsOverlayLayout() {
+      if (!signedIn) return;
+      const defaults = getDefaultOddsOverlayLayout();
+      await update(eventRef, { oddsOverlayLayout: defaults, updatedAt: Date.now() });
+      els.eventStatus.textContent = "Odds overlay adjustments reset.";
     }
 
     function readOverlayLayoutInputs() {
@@ -1199,6 +1323,30 @@
         scorecardScale: 100,
         scorecardWidthScale: 100,
         scorecardHeightScale: 100
+      };
+    }
+
+    function readOddsOverlayLayoutInputs() {
+      return {
+        oddsCenterX: clampNumber(els.oddsCenterX.value, 0, 100),
+        oddsCenterY: clampNumber(els.oddsCenterY.value, 0, 100),
+        oddsScale: clampInt(els.oddsScale.value, 50, 150),
+        oddsWidthScale: clampInt(els.oddsWidthScale.value, 50, 180),
+        oddsHeightScale: clampInt(els.oddsHeightScale.value, 50, 180)
+      };
+    }
+
+    function getOddsOverlayLayout() {
+      return { ...getDefaultOddsOverlayLayout(), ...(eventState?.oddsOverlayLayout || {}) };
+    }
+
+    function getDefaultOddsOverlayLayout() {
+      return {
+        oddsCenterX: 50,
+        oddsCenterY: 38,
+        oddsScale: 100,
+        oddsWidthScale: 100,
+        oddsHeightScale: 100
       };
     }
 

@@ -335,8 +335,10 @@
 
     .pickem-actions a {
       min-height: 38px;
-      display: inline-grid;
-      place-items: center;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
       border: 1px solid rgba(255, 255, 255, 0.28);
       border-radius: 12px;
       background: var(--panel-strong);
@@ -347,11 +349,13 @@
       text-align: center;
       text-decoration: none;
       text-transform: uppercase;
+      white-space: nowrap;
     }
 
-    .pickem-actions a::after {
-      content: " -->";
+    .pickem-actions .arrow {
+      display: inline-block;
       letter-spacing: 0.02em;
+      white-space: nowrap;
     }
 
     .pickem-wrap > .table-wrap {
@@ -736,7 +740,7 @@
 
     function renderPickems(event) {
       const pickemFormLink = `pickem.html?event=${encodeURIComponent(eventId)}`;
-      const pickemActionHtml = `<div class="pickem-actions"><a href="${pickemFormLink}" target="_blank" rel="noopener noreferrer">Submit or edit your pickem</a></div>`;
+      const pickemActionHtml = `<div class="pickem-actions"><a href="${pickemFormLink}" target="_blank" rel="noopener noreferrer"><span>Submit or edit your pickem</span><span class="arrow" aria-hidden="true">--&gt;</span></a></div>`;
       const teams = getTeams(event);
       const pickems = getPickems(event, teams);
       const completedThrough = getCompletedThrough(event);

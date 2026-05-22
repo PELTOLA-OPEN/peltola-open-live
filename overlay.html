@@ -242,6 +242,118 @@
       opacity: 1;
     }
 
+    .odds-pop {
+      position: absolute;
+      left: var(--odds-center-x, 50%);
+      top: var(--odds-center-y, 38%);
+      width: auto;
+      max-width: 94vw;
+      max-height: 76vh;
+      transform: translate(-50%, -50%) translateY(24px) scale(var(--odds-hidden-scale, 0.96)) scaleX(var(--odds-width-factor, 1)) scaleY(var(--odds-height-factor, 1));
+      transform-origin: center center;
+      opacity: 0;
+      padding: 16px 16px 18px;
+      border: 2px solid rgba(255, 255, 255, 0.72);
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(3px);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.46);
+      transition: opacity 260ms ease, transform 260ms ease;
+    }
+
+    .odds-pop.show {
+      transform: translate(-50%, -50%) translateY(0) scale(var(--odds-show-scale, 1)) scaleX(var(--odds-width-factor, 1)) scaleY(var(--odds-height-factor, 1));
+      opacity: 1;
+    }
+
+    .odds-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+    }
+
+    .odds-title {
+      overflow: hidden;
+      font-size: clamp(17px, 2vw, 30px);
+      font-weight: 950;
+      letter-spacing: 0.06em;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .odds-subtitle {
+      flex: none;
+      color: var(--muted);
+      font-size: clamp(12px, 1.15vw, 18px);
+      font-weight: 950;
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+    }
+
+    .odds-table-wrap {
+      overflow: hidden;
+      width: max-content;
+      max-width: 100%;
+    }
+
+    .odds-pop-table {
+      width: auto;
+      border-collapse: collapse;
+      table-layout: auto;
+      color: white;
+      font-variant-numeric: tabular-nums;
+      --odds-grid: rgba(255, 255, 255, 0.46);
+    }
+
+    .odds-pop-table th,
+    .odds-pop-table td {
+      height: var(--odds-cell-height, clamp(28px, 2.6vw, 39px));
+      border: 1px solid var(--odds-grid);
+      padding: 4px 8px;
+      vertical-align: middle;
+      line-height: 1;
+      background-clip: padding-box;
+      white-space: nowrap;
+    }
+
+    .odds-pop-table th {
+      background: rgba(255, 255, 255, 0.1);
+      font-size: clamp(10px, 0.9vw, 14px);
+      font-weight: 950;
+      text-transform: uppercase;
+    }
+
+    .odds-pop-table td {
+      font-size: clamp(12px, 1.2vw, 19px);
+      font-weight: 850;
+    }
+
+    .odds-pos-cell {
+      width: 1%;
+      min-width: var(--odds-pos-width, 46px);
+      text-align: center;
+      font-weight: 950 !important;
+    }
+
+    .odds-team-cell {
+      width: 1%;
+      max-width: var(--odds-team-max, min(430px, 42vw));
+      overflow: hidden;
+      text-align: left;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .odds-value-cell {
+      width: 1%;
+      min-width: var(--odds-value-width, 76px);
+      text-align: right;
+      font-weight: 950 !important;
+    }
+
     .scorecard-header {
       display: flex;
       align-items: baseline;
@@ -475,6 +587,27 @@
         width: 16px;
         height: 16px;
       }
+      .odds-pop {
+        left: var(--odds-center-x, 50%);
+        top: var(--odds-center-y, 38%);
+        max-width: calc(100vw - 16px);
+        max-height: calc(100vh - 76px);
+        padding: 10px;
+        border-radius: 12px;
+      }
+
+      .odds-title { font-size: 16px; }
+      .odds-subtitle { font-size: 11px; }
+      .odds-pop-table th,
+      .odds-pop-table td {
+        height: 25px;
+        padding: 2px 5px;
+      }
+      .odds-pop-table th { font-size: 9px; }
+      .odds-pop-table td { font-size: 11px; }
+      .odds-team-cell { max-width: var(--odds-team-mobile-max, 156px); }
+      .odds-pos-cell { min-width: 34px; }
+      .odds-value-cell { min-width: 58px; }
     }
 
     @keyframes ticker-scroll {
@@ -513,6 +646,13 @@
       </div>
       <div id="scorecardTableWrap" class="scorecard-table-wrap"></div>
     </section>
+    <section id="oddsPop" class="odds-pop hidden" aria-live="polite">
+      <div class="odds-header">
+        <div id="oddsTitle" class="odds-title">Live odds</div>
+        <div id="oddsSubtitle" class="odds-subtitle">Before round</div>
+      </div>
+      <div id="oddsTableWrap" class="odds-table-wrap"></div>
+    </section>
   </main>
 
   <script type="module">
@@ -542,12 +682,20 @@
     const scorecardTitleEl = document.getElementById("scorecardTitle");
     const scorecardThroughEl = document.getElementById("scorecardThrough");
     const scorecardTableWrapEl = document.getElementById("scorecardTableWrap");
+    const oddsPopEl = document.getElementById("oddsPop");
+    const oddsTitleEl = document.getElementById("oddsTitle");
+    const oddsSubtitleEl = document.getElementById("oddsSubtitle");
+    const oddsTableWrapEl = document.getElementById("oddsTableWrap");
     const helsinkiClockEl = document.getElementById("helsinkiClock");
 
     let lastFlashSequence = null;
     let scorecardHideTimer = null;
+    let oddsHideTimer = null;
     let scorecardPreviewActive = false;
+    let oddsPreviewActive = false;
     let flashActive = false;
+    let oddsFlashActive = false;
+    let lastOddsFlashSequence = null;
     let clockTimer = null;
     let latestEvent = null;
     let firebaseLoaded = false;
@@ -589,7 +737,9 @@
       else renderCompactBox(event, standings, completedThrough, label);
 
       maybeShowScorecardFlash(event);
+      maybeShowOddsFlash(event);
       updateScorecardPreview(event);
+      updateOddsPreview(event);
     }
 
     function hideAllOverlay() {
@@ -597,6 +747,7 @@
       tickerEl.classList.add("hidden");
       helsinkiClockEl.classList.add("hidden");
       if (!scorecardPreviewActive && !flashActive) scorecardPopEl.classList.add("hidden");
+      if (!oddsPreviewActive && !oddsFlashActive) oddsPopEl.classList.add("hidden");
       if (clockTimer) {
         window.clearInterval(clockTimer);
         clockTimer = null;
@@ -617,6 +768,14 @@
         scorecardHeightScale: 100,
         ...(event.overlayLayout || {})
       };
+      const oddsLayout = {
+        oddsCenterX: 50,
+        oddsCenterY: 38,
+        oddsScale: 100,
+        oddsWidthScale: 100,
+        oddsHeightScale: 100,
+        ...(event.oddsOverlayLayout || {})
+      };
 
       const tickerHeight = clampNumber(layout.tickerHeightPx, 30, 120);
       const centerX = clampNumber(layout.scorecardCenterX, 0, 100);
@@ -624,6 +783,11 @@
       const scale = clampNumber(layout.scorecardScale, 50, 150) / 100;
       const widthFactor = clampNumber(layout.scorecardWidthScale, 50, 180) / 100;
       const heightFactor = clampNumber(layout.scorecardHeightScale, 50, 180) / 100;
+      const oddsCenterX = clampNumber(oddsLayout.oddsCenterX, 0, 100);
+      const oddsCenterY = clampNumber(oddsLayout.oddsCenterY, 0, 100);
+      const oddsScale = clampNumber(oddsLayout.oddsScale, 50, 150) / 100;
+      const oddsWidthFactor = clampNumber(oddsLayout.oddsWidthScale, 50, 180) / 100;
+      const oddsHeightFactor = clampNumber(oddsLayout.oddsHeightScale, 50, 180) / 100;
       const viewportWidth = Math.max(320, window.innerWidth || 1920);
       const baseHoleWidth = Math.max(22, Math.min(34, viewportWidth * 0.0225));
       const baseTotalWidth = Math.max(42, Math.min(66, viewportWidth * 0.042));
@@ -647,6 +811,15 @@
       document.documentElement.style.setProperty("--scorecard-hole-mobile-width", `${mobileBaseHoleWidth}px`);
       document.documentElement.style.setProperty("--scorecard-total-mobile-width", `${mobileBaseTotalWidth}px`);
       document.documentElement.style.setProperty("--scorecard-player-mobile-max", `${mobileBasePlayerMax}px`);
+      document.documentElement.style.setProperty("--odds-center-x", `${oddsCenterX}%`);
+      document.documentElement.style.setProperty("--odds-center-y", `${oddsCenterY}%`);
+      document.documentElement.style.setProperty("--odds-show-scale", String(oddsScale));
+      document.documentElement.style.setProperty("--odds-hidden-scale", String(oddsScale * 0.96));
+      document.documentElement.style.setProperty("--odds-width-factor", String(oddsWidthFactor));
+      document.documentElement.style.setProperty("--odds-height-factor", String(oddsHeightFactor));
+      document.documentElement.style.setProperty("--odds-cell-height", `${Math.max(28, Math.min(39, viewportWidth * 0.026))}px`);
+      document.documentElement.style.setProperty("--odds-team-max", `${Math.min(430, viewportWidth * 0.42)}px`);
+      document.documentElement.style.setProperty("--odds-team-mobile-max", "156px");
     }
 
     function maybeShowScorecardFlash(event) {
@@ -669,6 +842,23 @@
       showScorecardPop(durationMs);
     }
 
+    function maybeShowOddsFlash(event) {
+      const flash = event.overlayFlash;
+      if (!flash || flash.type !== "odds" || !flash.sequence) return;
+      if (flash.sequence === lastOddsFlashSequence) return;
+
+      const durationMs = Number(flash.durationMs || 10000);
+      const triggeredAt = Number(flash.triggeredAt || 0);
+      if (triggeredAt && Date.now() - triggeredAt > durationMs + 1500) {
+        lastOddsFlashSequence = flash.sequence;
+        return;
+      }
+
+      lastOddsFlashSequence = flash.sequence;
+      renderOddsPop(event);
+      showOddsPop(durationMs);
+    }
+
     function showScorecardPop(durationMs = 10000, persistent = false) {
       window.clearTimeout(scorecardHideTimer);
       scorecardPopEl.classList.remove("hidden");
@@ -689,6 +879,26 @@
       }, 320);
     }
 
+    function showOddsPop(durationMs = 10000, persistent = false) {
+      window.clearTimeout(oddsHideTimer);
+      oddsPopEl.classList.remove("hidden");
+      requestAnimationFrame(() => oddsPopEl.classList.add("show"));
+
+      if (persistent) return;
+      oddsFlashActive = true;
+      oddsHideTimer = window.setTimeout(() => {
+        oddsFlashActive = false;
+        if (!oddsPreviewActive) hideOddsPop();
+      }, durationMs);
+    }
+
+    function hideOddsPop() {
+      oddsPopEl.classList.remove("show");
+      window.setTimeout(() => {
+        if (!oddsPreviewActive && !oddsFlashActive) oddsPopEl.classList.add("hidden");
+      }, 320);
+    }
+
     function updateScorecardPreview(event) {
       const previewEnabled = event.showScorecardPreview === true;
       scorecardPreviewActive = previewEnabled;
@@ -699,6 +909,17 @@
         showScorecardPop(0, true);
       } else if (!flashActive) {
         hideScorecardPop();
+      }
+    }
+
+    function updateOddsPreview(event) {
+      const previewEnabled = event.showOddsPreview === true;
+      oddsPreviewActive = previewEnabled;
+      if (previewEnabled) {
+        renderOddsPop(event);
+        showOddsPop(0, true);
+      } else if (!oddsFlashActive) {
+        hideOddsPop();
       }
     }
 
@@ -770,6 +991,37 @@
           <tbody>
             ${rows || `<tr><td class="scorecard-player">Add teams in the control panel.</td><td colspan="${holeCount + 1}"></td></tr>`}
           </tbody>
+        </table>
+      `;
+    }
+
+    function renderOddsPop(event) {
+      const teams = getTeams(event);
+      const completedThrough = getCompletedThrough(event);
+      const holeCount = clampInt(event.holeCount || 18, 1, 36);
+      const oddsRows = calculateWinnerOdds(event, teams, completedThrough, holeCount);
+
+      oddsTitleEl.textContent = "Live odds";
+      oddsSubtitleEl.textContent = `${completedThrough || 0}/${holeCount} holes`;
+
+      const rows = oddsRows.map((row, index) => `
+        <tr>
+          <td class="odds-pos-cell">${index + 1}</td>
+          <td class="odds-team-cell">${escapeHtml(row.name)}</td>
+          <td class="odds-value-cell">${row.odds}</td>
+        </tr>
+      `).join("");
+
+      oddsTableWrapEl.innerHTML = `
+        <table class="odds-pop-table">
+          <thead>
+            <tr>
+              <th class="odds-pos-cell">Pos</th>
+              <th class="odds-team-cell">Team</th>
+              <th class="odds-value-cell">Odds</th>
+            </tr>
+          </thead>
+          <tbody>${rows || `<tr><td class="odds-pos-cell">--</td><td class="odds-team-cell">Add teams</td><td class="odds-value-cell">--</td></tr>`}</tbody>
         </table>
       `;
     }
@@ -927,6 +1179,97 @@
       if (relative === 3) return "scorecard-mark-triple";
       if (relative >= 4) return "scorecard-mark-quad";
       return "";
+    }
+
+    function calculateWinnerOdds(event, teams, completedThrough, holeCount) {
+      const teamCount = teams.length;
+      const pickems = getPickems(event, teams);
+      const standings = assignPositions(calculateStandings(event, completedThrough));
+      const standingById = new Map(standings.map(team => [team.id, team]));
+
+      if (completedThrough >= holeCount && completedThrough > 0 && standings.length) {
+        const winningScore = standings[0].toPar;
+        return teams
+          .map(team => {
+            const standing = standingById.get(team.id);
+            const isWinner = standing && standing.toPar === winningScore;
+            return {
+              id: team.id,
+              name: team.name,
+              probability: isWinner ? 1 : 0,
+              decimalOdds: isWinner ? 1 : Number.POSITIVE_INFINITY,
+              odds: isWinner ? "1.00" : "—"
+            };
+          })
+          .sort((a, b) => a.decimalOdds - b.decimalOdds || a.name.localeCompare(b.name));
+      }
+
+      const baseStrength = new Map(teams.map(team => [team.id, 1]));
+      if (pickems.length) {
+        for (const team of teams) baseStrength.set(team.id, 0);
+        for (const pickem of pickems) {
+          pickem.picks.forEach((teamId, index) => {
+            const predictedPosition = index + 1;
+            const points = Math.pow(teamCount - predictedPosition + 1, 2);
+            baseStrength.set(teamId, (baseStrength.get(teamId) || 0) + points);
+          });
+        }
+      }
+
+      const baseTotal = Array.from(baseStrength.values()).reduce((sum, value) => sum + value, 0) || 1;
+      const progress = Math.max(0, Math.min(0.999, completedThrough / Math.max(1, holeCount)));
+      const liveWeight = completedThrough > 0 ? Math.min(0.98, Math.pow(progress, 0.7)) : 0;
+      const leaderScore = standings.length ? standings[0].toPar : 0;
+      const gapPenalty = 0.8 + liveWeight * 3.2;
+
+      const liveStrength = new Map();
+      for (const team of teams) {
+        const standing = standingById.get(team.id);
+        if (!standing || !completedThrough) {
+          liveStrength.set(team.id, 1);
+          continue;
+        }
+        const scoreGap = Math.max(0, standing.toPar - leaderScore);
+        const rankBoost = Math.pow(Math.max(1, teamCount - standing.rank + 1), 0.75);
+        liveStrength.set(team.id, Math.max(0.000001, Math.exp(-scoreGap * gapPenalty) * rankBoost));
+      }
+      const liveTotal = Array.from(liveStrength.values()).reduce((sum, value) => sum + value, 0) || 1;
+
+      const rows = teams.map(team => {
+        const baseProbability = (baseStrength.get(team.id) || 0) / baseTotal;
+        const liveProbability = (liveStrength.get(team.id) || 0) / liveTotal;
+        const probability = Math.max(0.000001, baseProbability * (1 - liveWeight) + liveProbability * liveWeight);
+        const decimalOdds = Math.min(99.99, Math.max(1.01, 1 / probability));
+        return { id: team.id, name: team.name, probability, decimalOdds, odds: decimalOdds.toFixed(2) };
+      });
+
+      return rows.sort((a, b) => a.decimalOdds - b.decimalOdds || a.name.localeCompare(b.name));
+    }
+
+    function getTeams(event) {
+      return Object.entries(event.teams || {})
+        .map(([id, team], index) => ({ id, name: team.name || `Team ${index + 1}`, order: Number(team.order || index + 1) }))
+        .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name));
+    }
+
+    function getPickems(event, teams) {
+      return Object.entries(event.pickems || {})
+        .map(([id, pickem], index) => ({
+          id,
+          name: pickem.name || `Participant ${index + 1}`,
+          order: Number(pickem.order || index + 1),
+          picks: normalizePickemPicks(pickem.picks, teams)
+        }))
+        .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name));
+    }
+
+    function normalizePickemPicks(picks, teams) {
+      const validIds = new Set(teams.map(team => team.id));
+      const normalized = Array.isArray(picks) ? picks.filter(teamId => validIds.has(teamId)) : [];
+      for (const team of teams) {
+        if (!normalized.includes(team.id)) normalized.push(team.id);
+      }
+      return normalized;
     }
 
     function formatToPar(value) {
