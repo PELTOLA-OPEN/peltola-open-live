@@ -34,8 +34,6 @@
       color: var(--text);
       pointer-events: none;
       text-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
-      transform: scale(var(--overlay-page-scale, 1));
-      transform-origin: center center;
     }
 
     .hidden { display: none !important; }
@@ -52,12 +50,14 @@
       background: var(--panel);
       backdrop-filter: blur(2px);
       box-shadow: 0 18px 42px rgba(0, 0, 0, 0.38);
+      transform: scale(var(--overlay-page-scale, 1));
+      transform-origin: bottom right;
     }
 
     .box-title {
       max-width: 100%;
       overflow: hidden;
-      font-size: clamp(12px, 1.05vw, 16px);
+      font-size: calc(clamp(12px, 1.05vw, 16px) * var(--overlay-page-scale, 1));
       font-weight: 950;
       letter-spacing: 0.06em;
       text-overflow: ellipsis;
@@ -71,7 +71,7 @@
       padding-bottom: 8px;
       border-bottom: 1px solid var(--line);
       color: var(--muted);
-      font-size: clamp(10px, 0.9vw, 13px);
+      font-size: calc(clamp(10px, 0.9vw, 13px) * var(--overlay-page-scale, 1));
       font-weight: 850;
       letter-spacing: 0.06em;
       text-transform: uppercase;
@@ -91,7 +91,7 @@
     .table-head div {
       padding-bottom: 5px;
       color: var(--muted);
-      font-size: clamp(9px, 0.8vw, 11px);
+      font-size: calc(clamp(9px, 0.8vw, 11px) * var(--overlay-page-scale, 1));
       font-weight: 900;
       letter-spacing: 0.08em;
       text-transform: uppercase;
@@ -103,7 +103,7 @@
     .score {
       padding: 4px 0;
       border-top: 1px solid rgba(255, 255, 255, 0.08);
-      font-size: clamp(13px, 1.25vw, 18px);
+      font-size: calc(clamp(13px, 1.25vw, 18px) * var(--overlay-page-scale, 1));
       line-height: 1.12;
     }
 
@@ -124,7 +124,7 @@
 
     .empty {
       color: var(--muted);
-      font-size: clamp(13px, 1.2vw, 18px);
+      font-size: calc(clamp(13px, 1.2vw, 18px) * var(--overlay-page-scale, 1));
       font-weight: 750;
     }
 
@@ -166,7 +166,7 @@
       display: inline-flex;
       align-items: baseline;
       gap: 10px;
-      font-size: clamp(15px, 1.6vw, 23px);
+      font-size: calc(clamp(15px, 1.6vw, 23px) * var(--overlay-page-scale, 1));
       line-height: 1;
     }
 
@@ -193,7 +193,7 @@
       padding: 0 12px;
       border-right: 1px solid var(--line);
       background: var(--panel-strong);
-      font-size: clamp(11px, 1vw, 15px);
+      font-size: calc(clamp(11px, 1vw, 15px) * var(--overlay-page-scale, 1));
       font-weight: 950;
       letter-spacing: 0.06em;
       text-align: center;
@@ -210,7 +210,7 @@
       border-radius: 12px;
       background: var(--panel-strong);
       color: var(--text);
-      font-size: clamp(12px, 1.1vw, 17px);
+      font-size: calc(clamp(12px, 1.1vw, 17px) * var(--overlay-page-scale, 1));
       font-weight: 950;
       letter-spacing: 0.06em;
       line-height: 1;
@@ -248,8 +248,9 @@
       position: absolute;
       left: var(--odds-center-x, 50%);
       top: var(--odds-center-y, 38%);
-      width: auto;
-      max-width: 90vw;
+      display: inline-block;
+      width: max-content;
+      max-width: 94vw;
       max-height: 76vh;
       transform: translate(-50%, -50%) translateY(24px) scale(var(--odds-hidden-scale, 0.96)) scaleX(var(--odds-width-factor, 1)) scaleY(var(--odds-height-factor, 1));
       transform-origin: center center;
@@ -293,14 +294,14 @@
     .odds-table-wrap {
       display: inline-block;
       overflow: hidden;
-      width: max-content;
-      max-width: 100%;
+      width: var(--odds-table-width, max-content);
+      max-width: calc(94vw - 32px);
     }
 
     .odds-pop-table {
-      width: auto;
+      width: var(--odds-table-width, auto);
       border-collapse: collapse;
-      table-layout: auto;
+      table-layout: fixed;
       color: white;
       font-variant-numeric: tabular-nums;
       --odds-grid: rgba(255, 255, 255, 0.46);
@@ -330,7 +331,7 @@
     }
 
     .odds-pos-cell {
-      width: 1%;
+      width: var(--odds-pos-width, 32px);
       min-width: var(--odds-pos-width, 32px);
       text-align: center;
       font-weight: 950 !important;
@@ -338,7 +339,8 @@
 
     .odds-team-cell {
       width: var(--odds-team-width, auto);
-      max-width: var(--odds-team-max, min(260px, 32vw));
+      min-width: var(--odds-team-width, auto);
+      max-width: var(--odds-team-width, var(--odds-team-max, min(260px, 32vw)));
       overflow: hidden;
       text-align: left;
       text-overflow: ellipsis;
@@ -346,7 +348,7 @@
     }
 
     .odds-value-cell {
-      width: 1%;
+      width: var(--odds-value-width, 54px);
       min-width: var(--odds-value-width, 54px);
       text-align: right;
       font-weight: 950 !important;
@@ -491,32 +493,32 @@
         left: 8px;
         right: 8px;
         bottom: 12px;
-        height: 44px;
+        height: var(--ticker-height, 44px);
         border-radius: 12px;
       }
 
       .ticker-info {
-        min-width: 84px;
-        padding: 0 8px;
-        font-size: 10px;
+        min-width: calc(84px * var(--overlay-page-scale, 1));
+        padding: 0 calc(8px * var(--overlay-page-scale, 1));
+        font-size: calc(10px * var(--overlay-page-scale, 1));
       }
 
       .helsinki-clock {
         left: 8px;
         bottom: calc(12px + var(--ticker-height, 44px) + 6px);
-        min-width: 84px;
-        padding: 7px 8px;
+        min-width: calc(84px * var(--overlay-page-scale, 1));
+        padding: calc(7px * var(--overlay-page-scale, 1)) calc(8px * var(--overlay-page-scale, 1));
         border-radius: 10px;
-        font-size: 11px;
+        font-size: calc(11px * var(--overlay-page-scale, 1));
       }
 
       .ticker-copy {
-        gap: 24px;
-        padding: 0 12px;
+        gap: calc(24px * var(--overlay-page-scale, 1));
+        padding: 0 calc(12px * var(--overlay-page-scale, 1));
       }
 
       .ticker-item {
-        font-size: 14px;
+        font-size: calc(14px * var(--overlay-page-scale, 1));
       }
 
       .scorecard-pop {
@@ -588,10 +590,15 @@
       .odds-pop {
         left: var(--odds-center-x, 50%);
         top: var(--odds-center-y, 38%);
+        width: max-content;
         max-width: calc(100vw - 16px);
         max-height: calc(100vh - 76px);
         padding: 10px;
         border-radius: 12px;
+      }
+
+      .odds-table-wrap {
+        max-width: calc(100vw - 36px);
       }
 
       .odds-title { font-size: 15px; }
@@ -602,9 +609,13 @@
       }
       .odds-pop-table th { font-size: 9px; }
       .odds-pop-table td { font-size: 11px; }
-      .odds-team-cell { max-width: var(--odds-team-mobile-max, 136px); }
-      .odds-pos-cell { min-width: 28px; }
-      .odds-value-cell { min-width: 46px; }
+      .odds-team-cell {
+        width: var(--odds-team-width, auto);
+        min-width: var(--odds-team-width, auto);
+        max-width: var(--odds-team-width, var(--odds-team-mobile-max, 136px));
+      }
+      .odds-pos-cell { min-width: var(--odds-pos-width, 28px); }
+      .odds-value-cell { min-width: var(--odds-value-width, 46px); }
     }
 
     @keyframes ticker-scroll {
@@ -776,15 +787,15 @@
       };
 
       const overlayPageScale = clampNumber(layout.overlayPageScale, 30, 200) / 100;
-      const tickerHeight = clampNumber(layout.tickerHeightPx, 30, 120);
+      const tickerHeight = clampNumber(layout.tickerHeightPx, 30, 120) * overlayPageScale;
       const centerX = clampNumber(layout.scorecardCenterX, 0, 100);
       const centerY = clampNumber(layout.scorecardCenterY, 0, 100);
-      const scale = clampNumber(layout.scorecardScale, 50, 150) / 100;
+      const scale = (clampNumber(layout.scorecardScale, 50, 150) / 100) * overlayPageScale;
       const widthFactor = clampNumber(layout.scorecardWidthScale, 50, 180) / 100;
       const heightFactor = clampNumber(layout.scorecardHeightScale, 50, 180) / 100;
       const oddsCenterX = clampNumber(oddsLayout.oddsCenterX, 0, 100);
       const oddsCenterY = clampNumber(oddsLayout.oddsCenterY, 0, 100);
-      const oddsScale = clampNumber(oddsLayout.oddsScale, 50, 150) / 100;
+      const oddsScale = (clampNumber(oddsLayout.oddsScale, 50, 150) / 100) * overlayPageScale;
       const oddsWidthFactor = clampNumber(oddsLayout.oddsWidthScale, 50, 180) / 100;
       const oddsHeightFactor = clampNumber(oddsLayout.oddsHeightScale, 50, 180) / 100;
       const viewportWidth = Math.max(320, window.innerWidth || 1920);
@@ -1005,10 +1016,32 @@
       oddsSubtitleEl.textContent = "";
 
       const viewportWidth = Math.max(320, window.innerWidth || 720);
-      const longestNameLength = Math.max(4, ...oddsRows.map(row => String(row.name || "").length));
-      const approximateCharWidth = viewportWidth <= 700 ? 6.2 : 9.5;
-      const teamWidthCap = viewportWidth <= 700 ? Math.min(136, viewportWidth * 0.36) : Math.min(260, viewportWidth * 0.28);
-      const oddsTeamWidth = Math.round(Math.max(58, Math.min(longestNameLength * approximateCharWidth + 14, teamWidthCap)));
+      const mobile = viewportWidth <= 700;
+      const textFontSize = mobile ? 11 : Math.max(12, Math.min(19, viewportWidth * 0.012));
+      const headerFontSize = mobile ? 9 : Math.max(10, Math.min(14, viewportWidth * 0.009));
+      const namesToMeasure = oddsRows.length ? oddsRows.map(row => String(row.name || "")) : ["Add teams"];
+      namesToMeasure.push("Team");
+      let measuredNameWidth = 0;
+      try {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.font = `850 ${textFontSize}px system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif`;
+          measuredNameWidth = Math.max(measuredNameWidth, ...namesToMeasure.map(name => ctx.measureText(name).width));
+          ctx.font = `950 ${headerFontSize}px system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif`;
+          measuredNameWidth = Math.max(measuredNameWidth, ctx.measureText("Team").width);
+        }
+      } catch (_) {}
+      if (!measuredNameWidth) {
+        const longestNameLength = Math.max(4, ...namesToMeasure.map(name => name.length));
+        measuredNameWidth = longestNameLength * (mobile ? 5.9 : 8.6);
+      }
+      const teamPadding = mobile ? 12 : 16;
+      const teamWidthCap = mobile ? Math.min(170, viewportWidth * 0.48) : Math.min(300, viewportWidth * 0.26);
+      const oddsTeamWidth = Math.round(Math.max(52, Math.min(measuredNameWidth + teamPadding, teamWidthCap)));
+      const oddsPosWidth = mobile ? 32 : 42;
+      const oddsValueWidth = mobile ? 50 : 64;
+      const oddsTableWidth = oddsPosWidth + oddsTeamWidth + oddsValueWidth + 3;
 
       const rows = oddsRows.map((row, index) => `
         <tr>
@@ -1019,7 +1052,12 @@
       `).join("");
 
       oddsTableWrapEl.innerHTML = `
-        <table class="odds-pop-table" style="--odds-team-width: ${oddsTeamWidth}px;">
+        <table class="odds-pop-table" style="--odds-table-width: ${oddsTableWidth}px; --odds-pos-width: ${oddsPosWidth}px; --odds-team-width: ${oddsTeamWidth}px; --odds-value-width: ${oddsValueWidth}px;">
+          <colgroup>
+            <col style="width: ${oddsPosWidth}px;" />
+            <col style="width: ${oddsTeamWidth}px;" />
+            <col style="width: ${oddsValueWidth}px;" />
+          </colgroup>
           <thead>
             <tr>
               <th class="odds-pos-cell">Pos</th>
