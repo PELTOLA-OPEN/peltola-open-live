@@ -130,9 +130,9 @@
 
     .ticker {
       position: absolute;
-      left: 3vw;
-      right: 3vw;
-      bottom: 4vh;
+      left: calc(3vw + var(--ticker-offset-x, 0px));
+      right: calc(3vw - var(--ticker-offset-x, 0px));
+      bottom: calc(4vh + var(--ticker-offset-y, 0px));
       height: var(--ticker-height, clamp(42px, 4.8vw, 58px));
       display: flex;
       overflow: hidden;
@@ -203,8 +203,8 @@
 
     .helsinki-clock {
       position: absolute;
-      left: 3vw;
-      bottom: calc(4vh + var(--ticker-height, 58px) + 8px);
+      left: calc(3vw + var(--ticker-offset-x, 0px));
+      bottom: calc(4vh + var(--ticker-height, 58px) + 8px + var(--ticker-offset-y, 0px));
       min-width: clamp(104px, 10vw, 150px);
       padding: 8px 12px;
       border-radius: 12px;
@@ -234,7 +234,6 @@
       border: 2px solid rgba(255, 255, 255, 0.72);
       border-radius: 16px;
       background: rgba(0, 0, 0, 0.5);
-      backdrop-filter: blur(3px);
       box-shadow: 0 24px 70px rgba(0, 0, 0, 0.46);
       transition: opacity 260ms ease, transform 260ms ease;
     }
@@ -259,7 +258,6 @@
       border: 2px solid rgba(255, 255, 255, 0.72);
       border-radius: 16px;
       background: rgba(0, 0, 0, 0.5);
-      backdrop-filter: blur(3px);
       box-shadow: 0 24px 70px rgba(0, 0, 0, 0.46);
       transition: opacity 260ms ease, transform 260ms ease;
     }
@@ -490,9 +488,9 @@
       }
 
       .ticker {
-        left: 8px;
-        right: 8px;
-        bottom: 12px;
+        left: calc(8px + var(--ticker-offset-x, 0px));
+        right: calc(8px - var(--ticker-offset-x, 0px));
+        bottom: calc(12px + var(--ticker-offset-y, 0px));
         height: var(--ticker-height, 44px);
         border-radius: 12px;
       }
@@ -504,8 +502,8 @@
       }
 
       .helsinki-clock {
-        left: 8px;
-        bottom: calc(12px + var(--ticker-height, 44px) + 6px);
+        left: calc(8px + var(--ticker-offset-x, 0px));
+        bottom: calc(12px + var(--ticker-height, 44px) + 6px + var(--ticker-offset-y, 0px));
         min-width: calc(84px * var(--overlay-page-scale, 1));
         padding: calc(7px * var(--overlay-page-scale, 1)) calc(8px * var(--overlay-page-scale, 1));
         border-radius: 10px;
@@ -770,6 +768,8 @@
       const layout = {
         overlayPageScale: 100,
         tickerHeightPx: 58,
+        tickerOffsetX: 0,
+        tickerOffsetY: 0,
         scorecardCenterX: 50,
         scorecardCenterY: 43,
         scorecardScale: 100,
@@ -788,6 +788,8 @@
 
       const overlayPageScale = clampNumber(layout.overlayPageScale, 30, 200) / 100;
       const tickerHeight = clampNumber(layout.tickerHeightPx, 30, 120) * overlayPageScale;
+      const tickerOffsetX = clampNumber(layout.tickerOffsetX || 0, -300, 300);
+      const tickerOffsetY = clampNumber(layout.tickerOffsetY || 0, -300, 300);
       const centerX = clampNumber(layout.scorecardCenterX, 0, 100);
       const centerY = clampNumber(layout.scorecardCenterY, 0, 100);
       const scale = (clampNumber(layout.scorecardScale, 50, 150) / 100) * overlayPageScale;
@@ -809,6 +811,8 @@
 
       document.documentElement.style.setProperty("--overlay-page-scale", String(overlayPageScale));
       document.documentElement.style.setProperty("--ticker-height", `${tickerHeight}px`);
+      document.documentElement.style.setProperty("--ticker-offset-x", `${tickerOffsetX}px`);
+      document.documentElement.style.setProperty("--ticker-offset-y", `${tickerOffsetY}px`);
       document.documentElement.style.setProperty("--scorecard-center-x", `${centerX}%`);
       document.documentElement.style.setProperty("--scorecard-center-y", `${centerY}%`);
       document.documentElement.style.setProperty("--scorecard-show-scale", String(scale));

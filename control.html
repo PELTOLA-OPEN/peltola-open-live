@@ -380,11 +380,33 @@
         </section>
 
         <section class="card">
-          <h2>Scoring overlay adjustments</h2>
+          <h2>Rolling ticker adjustment</h2>
           <div class="grid">
             <label>Rolling bar height, px
               <input id="tickerHeightPx" type="number" min="30" max="120" step="1" />
             </label>
+          </div>
+          <div class="row" style="margin-top: 12px;">
+            <button id="tickerLeftBtn" type="button">Move ticker left</button>
+            <button id="tickerRightBtn" type="button">Move ticker right</button>
+            <button id="tickerUpBtn" type="button">Move ticker up</button>
+            <button id="tickerDownBtn" type="button">Move ticker down</button>
+            <span id="tickerPositionLabel" class="muted">X 0 px · Y 0 px</span>
+          </div>
+          <div class="row" style="margin-top: 12px;">
+            <label class="row" style="display:flex; gap:8px;">
+              <input id="showHelsinkiClock" type="checkbox" /> Show Helsinki 24h clock
+            </label>
+            <label class="row" style="display:flex; gap:8px;">
+              <input id="showStandings" type="checkbox" /> Show score overlay
+            </label>
+          </div>
+          <p class="muted" style="margin-top: 10px; margin-bottom: 0;">Ticker height and position save automatically. Position buttons move the ticker and the clock together.</p>
+        </section>
+
+        <section class="card">
+          <h2>Scoring overlay adjustments</h2>
+          <div class="grid">
             <label>Popup scorecard center X, %
               <input id="scorecardCenterX" type="number" min="0" max="100" step="1" />
             </label>
@@ -405,12 +427,6 @@
           <div class="row" style="margin-top: 12px;">
             <button id="resetOverlayLayoutBtn" type="button">Reset scoring overlay adjustments</button>
             <button id="toggleScorecardPreviewBtn" class="toggle-off" type="button">Scorecard popup preview: OFF</button>
-            <label class="row" style="display:flex; gap:8px;">
-              <input id="showHelsinkiClock" type="checkbox" /> Show Helsinki 24h clock
-            </label>
-            <label class="row" style="display:flex; gap:8px;">
-              <input id="showStandings" type="checkbox" /> Show score overlay
-            </label>
           </div>
         </section>
 
@@ -469,9 +485,9 @@
             <button id="nextHoleBtn" type="button">→</button>
           </div>
           <div id="scoreList" class="score-list"></div>
-          <div class="row" style="margin-top: 12px;">
-            <button id="showScorecardBtn" class="primary" type="button">Show scorecard now</button>
-            <button id="showOddsBtn" class="primary" type="button">Show odds</button>
+          <div class="row between" style="margin-top: 12px;">
+            <button id="showScorecardBtn" class="primary" type="button">Show scorecard 10s</button>
+            <button id="showOddsBtn" class="primary" type="button">Show odds 10s</button>
           </div>
           <div id="scoreStatus" class="status"></div>
         </section>
@@ -539,6 +555,11 @@
       scorecardColorMode: document.getElementById("scorecardColorMode"),
       overlayPageScale: document.getElementById("overlayPageScale"),
       tickerHeightPx: document.getElementById("tickerHeightPx"),
+      tickerLeftBtn: document.getElementById("tickerLeftBtn"),
+      tickerRightBtn: document.getElementById("tickerRightBtn"),
+      tickerUpBtn: document.getElementById("tickerUpBtn"),
+      tickerDownBtn: document.getElementById("tickerDownBtn"),
+      tickerPositionLabel: document.getElementById("tickerPositionLabel"),
       scorecardCenterX: document.getElementById("scorecardCenterX"),
       scorecardCenterY: document.getElementById("scorecardCenterY"),
       scorecardScale: document.getElementById("scorecardScale"),
@@ -626,6 +647,10 @@
     });
     els.toggleScorecardPreviewBtn.addEventListener("click", toggleScorecardPreview);
     els.toggleOddsPreviewBtn.addEventListener("click", toggleOddsPreview);
+    els.tickerLeftBtn.addEventListener("click", () => nudgeTickerPosition(-10, 0));
+    els.tickerRightBtn.addEventListener("click", () => nudgeTickerPosition(10, 0));
+    els.tickerUpBtn.addEventListener("click", () => nudgeTickerPosition(0, 10));
+    els.tickerDownBtn.addEventListener("click", () => nudgeTickerPosition(0, -10));
     els.showHelsinkiClock.addEventListener("change", () => quickUpdate({ showHelsinkiClock: els.showHelsinkiClock.checked }));
     els.resetScoringPositionBtn.addEventListener("click", resetScoringPosition);
     els.togglePublicPickemsBtn.addEventListener("click", togglePublicPickemEntries);
@@ -752,6 +777,7 @@
       const overlayLayout = getOverlayLayout();
       els.overlayPageScale.value = overlayLayout.overlayPageScale;
       els.tickerHeightPx.value = overlayLayout.tickerHeightPx;
+      els.tickerPositionLabel.textContent = `X ${overlayLayout.tickerOffsetX || 0} px · Y ${overlayLayout.tickerOffsetY || 0} px`;
       els.scorecardCenterX.value = overlayLayout.scorecardCenterX;
       els.scorecardCenterY.value = overlayLayout.scorecardCenterY;
       els.scorecardScale.value = overlayLayout.scorecardScale;
@@ -1283,10 +1309,35 @@
       }, 180);
     }
 
+    async function nudgeTickerPosition(dx, dy) {
+      if (!signedIn || !eventState) return;
+      const layout = getOverlayLayout();
+      const nextLayout = {
+        ...layout,
+        tickerOffsetX: clampInt((layout.tickerOffsetX || 0) + dx, -300, 300),
+        tickerOffsetY: clampInt((layout.tickerOffsetY || 0) + dy, -300, 300)
+      };
+      try {
+        await update(eventRef, { overlayLayout: nextLayout, updatedAt: Date.now() });
+        els.eventStatus.textContent = `Ticker position saved: X ${nextLayout.tickerOffsetX} px, Y ${nextLayout.tickerOffsetY} px.`;
+      } catch (error) {
+        els.eventStatus.textContent = readableFirebaseError(error);
+      }
+    }
+
     async function resetOverlayLayout() {
       if (!signedIn) return;
+      const current = getOverlayLayout();
       const defaults = getDefaultOverlayLayout();
-      await update(eventRef, { overlayLayout: defaults, updatedAt: Date.now() });
+      const nextLayout = {
+        ...current,
+        scorecardCenterX: defaults.scorecardCenterX,
+        scorecardCenterY: defaults.scorecardCenterY,
+        scorecardScale: defaults.scorecardScale,
+        scorecardWidthScale: defaults.scorecardWidthScale,
+        scorecardHeightScale: defaults.scorecardHeightScale
+      };
+      await update(eventRef, { overlayLayout: nextLayout, updatedAt: Date.now() });
       els.eventStatus.textContent = "Scoring overlay adjustments reset.";
     }
 
@@ -1314,9 +1365,12 @@
     }
 
     function readOverlayLayoutInputs() {
+      const currentLayout = getOverlayLayout();
       return {
         overlayPageScale: clampInt(els.overlayPageScale.value, 30, 200),
         tickerHeightPx: clampInt(els.tickerHeightPx.value, 30, 120),
+        tickerOffsetX: clampInt(currentLayout.tickerOffsetX || 0, -300, 300),
+        tickerOffsetY: clampInt(currentLayout.tickerOffsetY || 0, -300, 300),
         scorecardCenterX: clampNumber(els.scorecardCenterX.value, 0, 100),
         scorecardCenterY: clampNumber(els.scorecardCenterY.value, 0, 100),
         scorecardScale: clampInt(els.scorecardScale.value, 50, 150),
@@ -1333,6 +1387,8 @@
       return {
         overlayPageScale: 100,
         tickerHeightPx: 58,
+        tickerOffsetX: 0,
+        tickerOffsetY: 0,
         scorecardCenterX: 50,
         scorecardCenterY: 43,
         scorecardScale: 100,
