@@ -349,6 +349,49 @@
       text-transform: uppercase;
     }
 
+
+    .odds-wrap {
+      display: grid;
+      gap: 12px;
+      width: min(520px, calc(100vw - 72px));
+      max-width: 100%;
+    }
+
+    .odds-table {
+      width: 100%;
+      min-width: 0;
+      table-layout: fixed;
+    }
+
+    .odds-table th,
+    .odds-table td {
+      height: 34px;
+      padding: 4px 8px;
+      font-size: clamp(12px, 2vw, 16px);
+      white-space: nowrap;
+    }
+
+    .odds-table .team-cell {
+      width: auto;
+      text-align: left;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .odds-table .odds-cell {
+      width: 96px;
+      text-align: right;
+      font-weight: 950;
+    }
+
+    .odds-note {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.35;
+      text-align: center;
+    }
+
     .status {
       margin-top: 10px;
       color: var(--muted);
@@ -447,6 +490,17 @@
         padding-left: 2px;
         padding-right: 2px;
       }
+
+      .odds-wrap { width: 100%; }
+      .odds-table th,
+      .odds-table td {
+        height: 30px;
+        font-size: 12px;
+        padding: 3px 6px;
+      }
+      .odds-table .odds-cell {
+        width: 76px;
+      }
       .pickem-detail-spacer { height: 104px; }
     }
   </style>
@@ -461,12 +515,16 @@
       <nav class="view-tabs" aria-label="Scorecard views">
         <button id="viewScorecardBtn" class="view-tab active" type="button">Scorecard</button>
         <button id="viewPickemsBtn" class="view-tab" type="button">Pickems</button>
+        <button id="viewOddsBtn" class="view-tab" type="button">Odds</button>
       </nav>
       <section id="scorecardPanel">
         <div id="tableWrap" class="table-wrap"></div>
       </section>
       <section id="pickemsPanel" class="hide">
         <div id="pickemsWrap" class="pickem-wrap"></div>
+      </section>
+      <section id="oddsPanel" class="hide">
+        <div id="oddsWrap" class="odds-wrap"></div>
       </section>
     </section>
     <div id="status" class="status"></div>
@@ -487,11 +545,14 @@
     const subtitleEl = document.getElementById("subtitle");
     const tableWrapEl = document.getElementById("tableWrap");
     const pickemsWrapEl = document.getElementById("pickemsWrap");
+    const oddsWrapEl = document.getElementById("oddsWrap");
     const statusEl = document.getElementById("status");
     const viewScorecardBtn = document.getElementById("viewScorecardBtn");
     const viewPickemsBtn = document.getElementById("viewPickemsBtn");
+    const viewOddsBtn = document.getElementById("viewOddsBtn");
     const scorecardPanel = document.getElementById("scorecardPanel");
     const pickemsPanel = document.getElementById("pickemsPanel");
+    const oddsPanel = document.getElementById("oddsPanel");
 
     let activeView = "scorecard";
     let latestEvent = null;
@@ -509,8 +570,12 @@
       history.replaceState(null, "", `${location.pathname}${location.search}#pickems`);
       setActiveView("pickems");
     });
+    viewOddsBtn.addEventListener("click", () => {
+      history.replaceState(null, "", `${location.pathname}${location.search}#odds`);
+      setActiveView("odds");
+    });
 
-    setActiveView(location.hash === "#pickems" ? "pickems" : "scorecard");
+    setActiveView(location.hash === "#pickems" ? "pickems" : location.hash === "#odds" ? "odds" : "scorecard");
 
     onValue(
       ref(db, `events/${eventId}`),
@@ -528,11 +593,13 @@
     );
 
     function setActiveView(view) {
-      activeView = view === "pickems" ? "pickems" : "scorecard";
+      activeView = view === "pickems" || view === "odds" ? view : "scorecard";
       scorecardPanel.classList.toggle("hide", activeView !== "scorecard");
       pickemsPanel.classList.toggle("hide", activeView !== "pickems");
+      oddsPanel.classList.toggle("hide", activeView !== "odds");
       viewScorecardBtn.classList.toggle("active", activeView === "scorecard");
       viewPickemsBtn.classList.toggle("active", activeView === "pickems");
+      viewOddsBtn.classList.toggle("active", activeView === "odds");
       renderEvent();
     }
 
@@ -543,6 +610,7 @@
           subtitleEl.textContent = "Error";
           tableWrapEl.innerHTML = "";
           pickemsWrapEl.innerHTML = "";
+          oddsWrapEl.innerHTML = "";
           statusEl.textContent = `Firebase error: ${getErrorMessage(firebaseError)}`;
           return;
         }
@@ -552,6 +620,7 @@
           subtitleEl.textContent = "Loading";
           tableWrapEl.innerHTML = `<p class="status">Loading event data... Refresh the page if nothing shows up within 5 sec.</p>`;
           pickemsWrapEl.innerHTML = `<p class="status">Loading event data... Refresh the page if nothing shows up within 5 sec.</p>`;
+          oddsWrapEl.innerHTML = `<p class="status">Loading event data... Refresh the page if nothing shows up within 5 sec.</p>`;
           statusEl.textContent = "Connecting to Firebase...";
           return;
         }
@@ -562,6 +631,7 @@
           subtitleEl.textContent = "No event data";
           tableWrapEl.innerHTML = "";
           pickemsWrapEl.innerHTML = "";
+          oddsWrapEl.innerHTML = "";
           statusEl.textContent = "Open the control panel first to create this event.";
           return;
         }
@@ -571,6 +641,7 @@
           subtitleEl.textContent = "Error";
           tableWrapEl.innerHTML = "";
           pickemsWrapEl.innerHTML = "";
+          oddsWrapEl.innerHTML = "";
           statusEl.textContent = "Event data is not in the expected format.";
           return;
         }
@@ -581,6 +652,7 @@
         statusEl.textContent = `Live data · Event ${eventId}`;
 
         if (activeView === "pickems") renderPickems(event);
+        else if (activeView === "odds") renderOdds(event);
         else renderScorecard(event);
       } catch (error) {
         showRuntimeError(error);
@@ -712,6 +784,82 @@
         <div class="pickem-detail-grid">${detailCards}</div>
       `;
     }
+
+
+    function renderOdds(event) {
+      const teams = getTeams(event);
+      if (!teams.length) {
+        oddsWrapEl.innerHTML = `<p class="status">Add teams before showing odds.</p>`;
+        return;
+      }
+
+      const completedThrough = getCompletedThrough(event);
+      const holeCount = clampInt(event.holeCount || 18, 1, 36);
+      const oddsRows = calculateWinnerOdds(event, teams, completedThrough, holeCount);
+
+      oddsWrapEl.innerHTML = `
+        <div class="table-wrap">
+          <table class="odds-table">
+            <thead>
+              <tr><th class="team-cell">Team</th><th class="odds-cell">Odds</th></tr>
+            </thead>
+            <tbody>
+              ${oddsRows.map(row => `
+                <tr>
+                  <td class="team-cell">${escapeHtml(row.name)}</td>
+                  <td class="odds-cell">${row.odds}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
+        <div class="odds-note">Pickem-implied odds adjusted by live standings through ${completedThrough || 0}/${holeCount} holes.</div>
+      `;
+    }
+
+    function calculateWinnerOdds(event, teams, completedThrough, holeCount) {
+      const teamCount = teams.length;
+      const pickems = getPickems(event, teams);
+      const baseStrength = new Map(teams.map(team => [team.id, 1]));
+
+      if (pickems.length) {
+        for (const team of teams) baseStrength.set(team.id, 0);
+        for (const pickem of pickems) {
+          pickem.picks.forEach((teamId, index) => {
+            const predictedPosition = index + 1;
+            const points = Math.pow(teamCount - predictedPosition + 1, 2);
+            baseStrength.set(teamId, (baseStrength.get(teamId) || 0) + points);
+          });
+        }
+      }
+
+      const standings = assignPositions(calculateStandings(event, completedThrough));
+      const liveMultiplier = Math.max(1, pickems.length || 1);
+      const liveStrength = new Map();
+      for (const team of standings) {
+        const rankPoints = Math.pow(teamCount - team.rank + 1, 2);
+        const scoreGapBoost = completedThrough ? Math.max(0.25, 1 + (-team.toPar * 0.08)) : 1;
+        liveStrength.set(team.id, Math.max(0.25, rankPoints * scoreGapBoost) * liveMultiplier);
+      }
+
+      const liveWeight = Math.min(0.72, Math.max(0, completedThrough / Math.max(1, holeCount)) * 0.72);
+      const rows = teams.map(team => {
+        const pickemPart = baseStrength.get(team.id) || 0;
+        const livePart = liveStrength.get(team.id) || 1;
+        const strength = Math.max(0.0001, pickemPart * (1 - liveWeight) + livePart * liveWeight);
+        return { id: team.id, name: team.name, strength };
+      });
+
+      const totalStrength = rows.reduce((sum, row) => sum + row.strength, 0) || 1;
+      return rows
+        .map(row => {
+          const probability = Math.max(0.0001, row.strength / totalStrength);
+          const decimalOdds = Math.min(99.99, Math.max(1.01, 1 / probability));
+          return { ...row, probability, decimalOdds, odds: decimalOdds.toFixed(2) };
+        })
+        .sort((a, b) => a.decimalOdds - b.decimalOdds || a.name.localeCompare(b.name));
+    }
+
 
     function getTeams(event) {
       return Object.entries(event.teams || {})
