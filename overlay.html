@@ -716,6 +716,7 @@
     const oddsSubtitleEl = document.getElementById("oddsSubtitle");
     const oddsTableWrapEl = document.getElementById("oddsTableWrap");
     const helsinkiClockEl = document.getElementById("helsinkiClock");
+    const tickerLogoEl = document.getElementById("tickerLogo");
 
     let lastFlashSequence = null;
     let scorecardHideTimer = null;
@@ -775,6 +776,7 @@
       compactBoxEl.classList.add("hidden");
       tickerEl.classList.add("hidden");
       helsinkiClockEl.classList.add("hidden");
+      tickerLogoEl.classList.add("hidden");
       if (!scorecardPreviewActive && !flashActive) scorecardPopEl.classList.add("hidden");
       if (!oddsPreviewActive && !oddsFlashActive) oddsPopEl.classList.add("hidden");
       if (clockTimer) {
@@ -1037,7 +1039,7 @@
         hour12: false
       }).formatToParts(new Date());
       const value = Object.fromEntries(parts.filter(part => part.type !== "literal").map(part => [part.type, part.value]));
-      const showClock = eventState?.showHelsinkiClock !== false;
+      const showClock = latestEvent?.showHelsinkiClock !== false;
       const second = Number(value.second || 0);
       const showLogo = showClock && second >= 0 && second < 10;
       helsinkiClockEl.textContent = `${value.hour}:${value.minute}:${value.second}`;

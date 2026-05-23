@@ -96,6 +96,32 @@
       background: transparent;
     }
 
+    input[type="range"].slider:disabled {
+      opacity: 0.42;
+      cursor: not-allowed;
+    }
+
+    .slider-lock-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .slider-edit-btn {
+      min-height: 34px;
+      padding: 6px 10px;
+      border-radius: 10px;
+      font-size: 12px;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .slider-edit-btn.editing {
+      border-color: rgba(216, 241, 90, 0.55);
+      color: var(--accent);
+    }
+
     input[type="color"] {
       padding: 4px 6px;
       cursor: pointer;
@@ -671,6 +697,8 @@
     const scorecardUrl = new URL("scorecard.html", location.href);
     scorecardUrl.searchParams.set("event", eventId);
     els.scorecardUrl.textContent = scorecardUrl.href;
+
+    installSliderLocks();
 
     els.loginBtn.addEventListener("click", async () => {
       try {
@@ -1385,6 +1413,33 @@
       await update(eventRef, { updatedAt: Date.now() });
     }
 
+
+    function installSliderLocks() {
+      document.querySelectorAll('input[type="range"].slider').forEach(rangeInput => {
+        if (rangeInput.dataset.lockButtonInstalled === "1") return;
+        rangeInput.dataset.lockButtonInstalled = "1";
+        const wrapper = document.createElement("div");
+        wrapper.className = "slider-lock-row";
+        rangeInput.parentNode.insertBefore(wrapper, rangeInput);
+        wrapper.appendChild(rangeInput);
+
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "slider-edit-btn";
+        button.textContent = "Edit";
+        wrapper.appendChild(button);
+
+        const setEditable = editable => {
+          rangeInput.disabled = !editable;
+          button.textContent = editable ? "OK" : "Edit";
+          button.classList.toggle("editing", editable);
+          button.setAttribute("aria-pressed", editable ? "true" : "false");
+        };
+
+        setEditable(false);
+        button.addEventListener("click", () => setEditable(rangeInput.disabled));
+      });
+    }
 
     function bindSyncedOverlayInput(numberInput, rangeInput, saveFn) {
       if (!numberInput || !rangeInput) return;
