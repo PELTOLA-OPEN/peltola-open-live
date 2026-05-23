@@ -223,6 +223,24 @@
       white-space: nowrap;
     }
 
+    .ticker-logo {
+      position: absolute;
+      left: calc(3vw + var(--ticker-offset-x, 0px));
+      bottom: calc(4vh + var(--ticker-height, 58px) + 8px + var(--ticker-offset-y, 0px));
+      width: var(--ticker-logo-size, 72px);
+      height: var(--ticker-logo-size, 72px);
+      display: grid;
+      place-items: center;
+      transform-origin: left bottom;
+    }
+
+    .ticker-logo img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.45));
+    }
 
     .scorecard-pop {
       position: absolute;
@@ -648,6 +666,7 @@
     </section>
 
     <div id="helsinkiClock" class="helsinki-clock hidden" aria-live="off">--:--:--</div>
+    <div id="tickerLogo" class="ticker-logo hidden" aria-live="off"><img src="peltola-logo-round.png" alt="Peltola Sport logo" /></div>
 
     <section id="scorecardPop" class="scorecard-pop hidden" aria-live="polite">
       <div class="scorecard-header">
@@ -818,6 +837,7 @@
       const layout = {
         overlayPageScale: 100,
         tickerHeightPx: 58,
+        tickerLogoScale: 100,
         tickerOffsetX: 0,
         tickerOffsetY: 0,
         scorecardCenterX: 50,
@@ -838,6 +858,7 @@
 
       const overlayPageScale = clampNumber(layout.overlayPageScale, 30, 200) / 100;
       const tickerHeight = clampNumber(layout.tickerHeightPx, 30, 120) * overlayPageScale;
+      const tickerLogoScale = clampNumber(layout.tickerLogoScale || 100, 40, 220) / 100;
       const tickerOffsetX = clampNumber(layout.tickerOffsetX || 0, -300, 300);
       const tickerOffsetY = clampNumber(layout.tickerOffsetY || 0, -300, 300);
       const centerX = clampNumber(layout.scorecardCenterX, 0, 100);
@@ -858,9 +879,11 @@
       const mobileBaseHoleWidth = 20;
       const mobileBaseTotalWidth = 38;
       const mobileBasePlayerMax = 116;
+      const baseLogoSize = Math.max(64, Math.min(104, viewportWidth * 0.08)) * overlayPageScale * tickerLogoScale;
 
       document.documentElement.style.setProperty("--overlay-page-scale", String(overlayPageScale));
       document.documentElement.style.setProperty("--ticker-height", `${tickerHeight}px`);
+      document.documentElement.style.setProperty("--ticker-logo-size", `${baseLogoSize}px`);
       document.documentElement.style.setProperty("--ticker-offset-x", `${tickerOffsetX}px`);
       document.documentElement.style.setProperty("--ticker-offset-y", `${tickerOffsetY}px`);
       document.documentElement.style.setProperty("--scorecard-center-x", `${centerX}%`);
@@ -990,7 +1013,10 @@
 
     function updateClockVisibility(event) {
       const showClock = event.showHelsinkiClock !== false;
-      helsinkiClockEl.classList.toggle("hidden", !showClock);
+      if (!showClock) {
+        helsinkiClockEl.classList.add("hidden");
+        tickerLogoEl.classList.add("hidden");
+      }
       if (showClock && !clockTimer) {
         updateHelsinkiClock();
         clockTimer = window.setInterval(updateHelsinkiClock, 1000);
@@ -999,6 +1025,7 @@
         window.clearInterval(clockTimer);
         clockTimer = null;
       }
+      if (showClock) updateHelsinkiClock();
     }
 
     function updateHelsinkiClock() {
@@ -1010,7 +1037,12 @@
         hour12: false
       }).formatToParts(new Date());
       const value = Object.fromEntries(parts.filter(part => part.type !== "literal").map(part => [part.type, part.value]));
+      const showClock = eventState?.showHelsinkiClock !== false;
+      const second = Number(value.second || 0);
+      const showLogo = showClock && second >= 0 && second < 10;
       helsinkiClockEl.textContent = `${value.hour}:${value.minute}:${value.second}`;
+      helsinkiClockEl.classList.toggle("hidden", !showClock || showLogo);
+      tickerLogoEl.classList.toggle("hidden", !showLogo);
     }
 
     function renderScorecardPop(event, throughHole) {

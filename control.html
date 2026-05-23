@@ -398,6 +398,10 @@
               <input id="tickerHeightPx" type="number" min="30" max="120" step="1" />
               <input id="tickerHeightPxRange" class="slider" type="range" min="30" max="120" step="1" />
             </label>
+            <label>Logo size, %
+              <input id="tickerLogoScale" type="number" min="40" max="220" step="1" />
+              <input id="tickerLogoScaleRange" class="slider" type="range" min="40" max="220" step="1" />
+            </label>
           </div>
           <div class="row" style="margin-top: 12px;">
             <button id="tickerLeftBtn" type="button">Move ticker left</button>
@@ -599,6 +603,8 @@
       overlayPageScaleRange: document.getElementById("overlayPageScaleRange"),
       tickerHeightPx: document.getElementById("tickerHeightPx"),
       tickerHeightPxRange: document.getElementById("tickerHeightPxRange"),
+      tickerLogoScale: document.getElementById("tickerLogoScale"),
+      tickerLogoScaleRange: document.getElementById("tickerLogoScaleRange"),
       tickerLeftBtn: document.getElementById("tickerLeftBtn"),
       tickerRightBtn: document.getElementById("tickerRightBtn"),
       tickerUpBtn: document.getElementById("tickerUpBtn"),
@@ -687,6 +693,7 @@
     [
       [els.overlayPageScale, els.overlayPageScaleRange],
       [els.tickerHeightPx, els.tickerHeightPxRange],
+      [els.tickerLogoScale, els.tickerLogoScaleRange],
       [els.scorecardCenterX, els.scorecardCenterXRange],
       [els.scorecardCenterY, els.scorecardCenterYRange],
       [els.scorecardScale, els.scorecardScaleRange],
@@ -843,6 +850,8 @@
       els.overlayPageScaleRange.value = overlayLayout.overlayPageScale;
       els.tickerHeightPx.value = overlayLayout.tickerHeightPx;
       els.tickerHeightPxRange.value = overlayLayout.tickerHeightPx;
+      els.tickerLogoScale.value = overlayLayout.tickerLogoScale;
+      els.tickerLogoScaleRange.value = overlayLayout.tickerLogoScale;
       els.tickerPositionLabel.textContent = `X ${overlayLayout.tickerOffsetX || 0} px · Y ${overlayLayout.tickerOffsetY || 0} px`;
       els.scorecardCenterX.value = overlayLayout.scorecardCenterX;
       els.scorecardCenterXRange.value = overlayLayout.scorecardCenterX;
@@ -1439,6 +1448,7 @@
       const nextLayout = {
         ...current,
         tickerHeightPx: defaults.tickerHeightPx,
+        tickerLogoScale: defaults.tickerLogoScale,
         tickerOffsetX: defaults.tickerOffsetX,
         tickerOffsetY: defaults.tickerOffsetY
       };
@@ -1555,6 +1565,7 @@
       return {
         overlayPageScale: clampInt(els.overlayPageScale.value, 30, 200),
         tickerHeightPx: clampInt(els.tickerHeightPx.value, 30, 120),
+        tickerLogoScale: clampInt(els.tickerLogoScale.value, 40, 220),
         tickerOffsetX: clampInt(currentLayout.tickerOffsetX || 0, -300, 300),
         tickerOffsetY: clampInt(currentLayout.tickerOffsetY || 0, -300, 300),
         scorecardCenterX: clampNumber(els.scorecardCenterX.value, 0, 100),
@@ -1573,6 +1584,7 @@
       return {
         overlayPageScale: 100,
         tickerHeightPx: 58,
+        tickerLogoScale: 100,
         tickerOffsetX: 0,
         tickerOffsetY: 0,
         scorecardCenterX: 50,
