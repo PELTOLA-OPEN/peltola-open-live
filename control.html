@@ -96,6 +96,11 @@
       background: transparent;
     }
 
+    input[type="color"] {
+      padding: 4px 6px;
+      cursor: pointer;
+    }
+
     button {
       padding: 9px 13px;
       border: 1px solid var(--border);
@@ -413,6 +418,28 @@
         </section>
 
         <section class="card">
+          <h2>Overlay colors</h2>
+          <div class="grid">
+            <label>Overlay background color
+              <input id="overlayBackgroundColor" type="color" />
+            </label>
+            <label>Table line color
+              <input id="overlayLineColor" type="color" />
+            </label>
+            <label>Overlay text color
+              <input id="overlayTextColor" type="color" />
+            </label>
+            <label>Overlay opacity, %
+              <input id="overlayOpacity" type="number" min="0" max="100" step="1" />
+              <input id="overlayOpacityRange" class="slider" type="range" min="0" max="100" step="1" />
+            </label>
+          </div>
+          <div class="row" style="margin-top: 12px;">
+            <button id="resetOverlayThemeBtn" type="button">Reset overlay colors</button>
+          </div>
+        </section>
+
+        <section class="card">
           <h2>Scoring overlay adjustments</h2>
           <div class="grid">
             <label>Popup scorecard center X, %
@@ -544,6 +571,7 @@
     let activeTab = "setup";
     let overlayLayoutSaveTimer = null;
     let oddsOverlayLayoutSaveTimer = null;
+    let overlayThemeSaveTimer = null;
 
     const els = {
       authState: document.getElementById("authState"),
@@ -606,6 +634,12 @@
       resetScoringPositionBtn: document.getElementById("resetScoringPositionBtn"),
       togglePublicPickemsBtn: document.getElementById("togglePublicPickemsBtn"),
       showStandings: document.getElementById("showStandings"),
+      overlayBackgroundColor: document.getElementById("overlayBackgroundColor"),
+      overlayLineColor: document.getElementById("overlayLineColor"),
+      overlayTextColor: document.getElementById("overlayTextColor"),
+      overlayOpacity: document.getElementById("overlayOpacity"),
+      overlayOpacityRange: document.getElementById("overlayOpacityRange"),
+      resetOverlayThemeBtn: document.getElementById("resetOverlayThemeBtn"),
       addTeamBtn: document.getElementById("addTeamBtn"),
       eventStatus: document.getElementById("eventStatus"),
       teams: document.getElementById("teams"),
@@ -659,6 +693,13 @@
       [els.scorecardWidthScale, els.scorecardWidthScaleRange],
       [els.scorecardHeightScale, els.scorecardHeightScaleRange]
     ].forEach(([numberInput, rangeInput]) => bindSyncedOverlayInput(numberInput, rangeInput, saveOverlayLayoutLive));
+    bindSyncedOverlayInput(els.overlayOpacity, els.overlayOpacityRange, saveOverlayThemeLive);
+    [els.overlayBackgroundColor, els.overlayLineColor, els.overlayTextColor].forEach(input => {
+      if (!input) return;
+      input.addEventListener("input", saveOverlayThemeLive);
+      input.addEventListener("change", saveOverlayThemeLive);
+    });
+    els.resetOverlayThemeBtn.addEventListener("click", resetOverlayTheme);
     [
       [els.oddsCenterX, els.oddsCenterXRange],
       [els.oddsCenterY, els.oddsCenterYRange],
@@ -739,6 +780,7 @@
           scorecardColorMode: "circle",
           overlayLayout: getDefaultOverlayLayout(),
           oddsOverlayLayout: getDefaultOddsOverlayLayout(),
+          overlayTheme: getDefaultOverlayTheme(),
           showScorecardPreview: false,
           showOddsPreview: false,
           showHelsinkiClock: true,
@@ -823,6 +865,12 @@
       els.oddsWidthScaleRange.value = oddsOverlayLayout.oddsWidthScale;
       els.oddsHeightScale.value = oddsOverlayLayout.oddsHeightScale;
       els.oddsHeightScaleRange.value = oddsOverlayLayout.oddsHeightScale;
+      const overlayTheme = getOverlayTheme();
+      els.overlayBackgroundColor.value = overlayTheme.backgroundColor;
+      els.overlayLineColor.value = overlayTheme.lineColor;
+      els.overlayTextColor.value = overlayTheme.textColor;
+      els.overlayOpacity.value = overlayTheme.overlayOpacity;
+      els.overlayOpacityRange.value = overlayTheme.overlayOpacity;
       updatePopupToggleButtons();
       els.showHelsinkiClock.checked = eventState.showHelsinkiClock !== false;
       els.showStandings.checked = eventState.showStandings !== false;
@@ -1130,6 +1178,7 @@
         scorecardColorMode: els.scorecardColorMode.value,
         overlayLayout: readOverlayLayoutInputs(),
         oddsOverlayLayout: readOddsOverlayLayoutInputs(),
+        overlayTheme: readOverlayThemeInputs(),
         showScorecardPreview: eventState.showScorecardPreview === true,
         showOddsPreview: eventState.showOddsPreview === true,
         showHelsinkiClock: els.showHelsinkiClock.checked,
@@ -1438,6 +1487,67 @@
       const defaults = getDefaultOddsOverlayLayout();
       await update(eventRef, { oddsOverlayLayout: defaults, updatedAt: Date.now() });
       els.eventStatus.textContent = "Odds overlay adjustments reset.";
+    }
+
+    function saveOverlayThemeLive() {
+      if (!signedIn || !eventState) return;
+      window.clearTimeout(overlayThemeSaveTimer);
+      overlayThemeSaveTimer = window.setTimeout(async () => {
+        try {
+          await update(eventRef, {
+            overlayTheme: readOverlayThemeInputs(),
+            updatedAt: Date.now()
+          });
+          els.eventStatus.textContent = "Overlay colors saved.";
+        } catch (error) {
+          els.eventStatus.textContent = readableFirebaseError(error);
+        }
+      }, 180);
+    }
+
+    async function resetOverlayTheme() {
+      if (!signedIn) return;
+      const defaults = getDefaultOverlayTheme();
+      try {
+        await update(eventRef, { overlayTheme: defaults, updatedAt: Date.now() });
+        els.eventStatus.textContent = "Overlay colors reset.";
+      } catch (error) {
+        els.eventStatus.textContent = readableFirebaseError(error);
+      }
+    }
+
+    function readOverlayThemeInputs() {
+      return {
+        backgroundColor: normalizeHexColor(els.overlayBackgroundColor.value, "#000000"),
+        lineColor: normalizeHexColor(els.overlayLineColor.value, "#ffffff"),
+        textColor: normalizeHexColor(els.overlayTextColor.value, "#ffffff"),
+        overlayOpacity: clampInt(els.overlayOpacity.value, 0, 100)
+      };
+    }
+
+    function getOverlayTheme() {
+      const defaults = getDefaultOverlayTheme();
+      const saved = eventState?.overlayTheme || {};
+      return {
+        backgroundColor: normalizeHexColor(saved.backgroundColor, defaults.backgroundColor),
+        lineColor: normalizeHexColor(saved.lineColor, defaults.lineColor),
+        textColor: normalizeHexColor(saved.textColor, defaults.textColor),
+        overlayOpacity: clampInt(saved.overlayOpacity ?? defaults.overlayOpacity, 0, 100)
+      };
+    }
+
+    function getDefaultOverlayTheme() {
+      return {
+        backgroundColor: "#000000",
+        lineColor: "#ffffff",
+        textColor: "#ffffff",
+        overlayOpacity: 50
+      };
+    }
+
+    function normalizeHexColor(value, fallback) {
+      const text = String(value || "").trim();
+      return /^#[0-9a-fA-F]{6}$/.test(text) ? text.toLowerCase() : fallback;
     }
 
     function readOverlayLayoutInputs() {
