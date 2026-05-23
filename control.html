@@ -430,12 +430,13 @@
             </label>
           </div>
           <div class="row" style="margin-top: 12px;">
-            <button id="tickerLeftBtn" type="button">Move ticker left</button>
-            <button id="tickerRightBtn" type="button">Move ticker right</button>
-            <button id="tickerUpBtn" type="button">Move ticker up</button>
-            <button id="tickerDownBtn" type="button">Move ticker down</button>
+            <button id="tickerMoveTargetBtn" class="primary" type="button">Move target: Ticker</button>
+            <button id="tickerLeftBtn" type="button">Move left</button>
+            <button id="tickerRightBtn" type="button">Move right</button>
+            <button id="tickerUpBtn" type="button">Move up</button>
+            <button id="tickerDownBtn" type="button">Move down</button>
             <button id="resetTickerLayoutBtn" type="button">Reset rolling ticker</button>
-            <span id="tickerPositionLabel" class="muted">X 0 px · Y 0 px</span>
+            <span id="tickerPositionLabel" class="muted">Ticker X 0 px · Y 0 px | Logo X 0 px · Y 0 px</span>
           </div>
           <div class="row" style="margin-top: 12px;">
             <label class="row" style="display:flex; gap:8px;">
@@ -599,6 +600,7 @@
     let creatingEvent = false;
     let signedIn = false;
     let activeTab = "setup";
+    let tickerMoveTarget = "ticker";
     let overlayLayoutSaveTimer = null;
     let oddsOverlayLayoutSaveTimer = null;
     let overlayThemeSaveTimer = null;
@@ -631,6 +633,7 @@
       tickerHeightPxRange: document.getElementById("tickerHeightPxRange"),
       tickerLogoScale: document.getElementById("tickerLogoScale"),
       tickerLogoScaleRange: document.getElementById("tickerLogoScaleRange"),
+      tickerMoveTargetBtn: document.getElementById("tickerMoveTargetBtn"),
       tickerLeftBtn: document.getElementById("tickerLeftBtn"),
       tickerRightBtn: document.getElementById("tickerRightBtn"),
       tickerUpBtn: document.getElementById("tickerUpBtn"),
@@ -744,6 +747,7 @@
     ].forEach(([numberInput, rangeInput]) => bindSyncedOverlayInput(numberInput, rangeInput, saveOddsOverlayLayoutLive));
     els.toggleScorecardPreviewBtn.addEventListener("click", toggleScorecardPreview);
     els.toggleOddsPreviewBtn.addEventListener("click", toggleOddsPreview);
+    els.tickerMoveTargetBtn.addEventListener("click", toggleTickerMoveTarget);
     els.tickerLeftBtn.addEventListener("click", () => nudgeTickerPosition(-10, 0));
     els.tickerRightBtn.addEventListener("click", () => nudgeTickerPosition(10, 0));
     els.tickerUpBtn.addEventListener("click", () => nudgeTickerPosition(0, 10));
@@ -880,7 +884,7 @@
       els.tickerHeightPxRange.value = overlayLayout.tickerHeightPx;
       els.tickerLogoScale.value = overlayLayout.tickerLogoScale;
       els.tickerLogoScaleRange.value = overlayLayout.tickerLogoScale;
-      els.tickerPositionLabel.textContent = `X ${overlayLayout.tickerOffsetX || 0} px · Y ${overlayLayout.tickerOffsetY || 0} px`;
+      updateTickerMoveControls(overlayLayout);
       els.scorecardCenterX.value = overlayLayout.scorecardCenterX;
       els.scorecardCenterXRange.value = overlayLayout.scorecardCenterX;
       els.scorecardCenterY.value = overlayLayout.scorecardCenterY;
@@ -1480,17 +1484,39 @@
       }, 180);
     }
 
+    function toggleTickerMoveTarget() {
+      tickerMoveTarget = tickerMoveTarget === "ticker" ? "logo" : "ticker";
+      updateTickerMoveControls(getOverlayLayout());
+    }
+
+    function updateTickerMoveControls(layout = getOverlayLayout()) {
+      const tickerX = layout.tickerOffsetX || 0;
+      const tickerY = layout.tickerOffsetY || 0;
+      const logoX = layout.logoOffsetX || 0;
+      const logoY = layout.logoOffsetY || 0;
+      els.tickerMoveTargetBtn.textContent = tickerMoveTarget === "ticker" ? "Move target: Ticker" : "Move target: Logo";
+      els.tickerMoveTargetBtn.classList.toggle("primary", tickerMoveTarget === "ticker");
+      els.tickerMoveTargetBtn.classList.toggle("danger", tickerMoveTarget === "logo");
+      els.tickerPositionLabel.textContent = `Ticker X ${tickerX} px · Y ${tickerY} px | Logo X ${logoX} px · Y ${logoY} px`;
+    }
+
     async function nudgeTickerPosition(dx, dy) {
       if (!signedIn || !eventState) return;
       const layout = getOverlayLayout();
-      const nextLayout = {
-        ...layout,
-        tickerOffsetX: clampInt((layout.tickerOffsetX || 0) + dx, -300, 300),
-        tickerOffsetY: clampInt((layout.tickerOffsetY || 0) + dy, -300, 300)
-      };
+      const nextLayout = { ...layout };
+      if (tickerMoveTarget === "logo") {
+        nextLayout.logoOffsetX = clampInt((layout.logoOffsetX || 0) + dx, -600, 600);
+        nextLayout.logoOffsetY = clampInt((layout.logoOffsetY || 0) + dy, -600, 600);
+      } else {
+        nextLayout.tickerOffsetX = clampInt((layout.tickerOffsetX || 0) + dx, -300, 300);
+        nextLayout.tickerOffsetY = clampInt((layout.tickerOffsetY || 0) + dy, -300, 300);
+      }
       try {
         await update(eventRef, { overlayLayout: nextLayout, updatedAt: Date.now() });
-        els.eventStatus.textContent = `Ticker position saved: X ${nextLayout.tickerOffsetX} px, Y ${nextLayout.tickerOffsetY} px.`;
+        const label = tickerMoveTarget === "logo"
+          ? `Logo position saved: X ${nextLayout.logoOffsetX} px, Y ${nextLayout.logoOffsetY} px.`
+          : `Ticker position saved: X ${nextLayout.tickerOffsetX} px, Y ${nextLayout.tickerOffsetY} px.`;
+        els.eventStatus.textContent = label;
       } catch (error) {
         els.eventStatus.textContent = readableFirebaseError(error);
       }
@@ -1505,7 +1531,9 @@
         tickerHeightPx: defaults.tickerHeightPx,
         tickerLogoScale: defaults.tickerLogoScale,
         tickerOffsetX: defaults.tickerOffsetX,
-        tickerOffsetY: defaults.tickerOffsetY
+        tickerOffsetY: defaults.tickerOffsetY,
+        logoOffsetX: defaults.logoOffsetX,
+        logoOffsetY: defaults.logoOffsetY
       };
       try {
         await update(eventRef, { overlayLayout: nextLayout, updatedAt: Date.now() });
@@ -1623,6 +1651,8 @@
         tickerLogoScale: clampInt(els.tickerLogoScale.value, 40, 220),
         tickerOffsetX: clampInt(currentLayout.tickerOffsetX || 0, -300, 300),
         tickerOffsetY: clampInt(currentLayout.tickerOffsetY || 0, -300, 300),
+        logoOffsetX: clampInt(currentLayout.logoOffsetX || 0, -600, 600),
+        logoOffsetY: clampInt(currentLayout.logoOffsetY || 0, -600, 600),
         scorecardCenterX: clampNumber(els.scorecardCenterX.value, 0, 100),
         scorecardCenterY: clampNumber(els.scorecardCenterY.value, 0, 100),
         scorecardScale: clampInt(els.scorecardScale.value, 50, 150),
@@ -1642,6 +1672,8 @@
         tickerLogoScale: 100,
         tickerOffsetX: 0,
         tickerOffsetY: 0,
+        logoOffsetX: 0,
+        logoOffsetY: 0,
         scorecardCenterX: 50,
         scorecardCenterY: 43,
         scorecardScale: 100,

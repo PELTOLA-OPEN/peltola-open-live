@@ -225,8 +225,8 @@
 
     .ticker-logo {
       position: absolute;
-      left: calc(3vw + var(--ticker-offset-x, 0px));
-      bottom: calc(4vh + var(--ticker-height, 58px) + 8px + var(--ticker-offset-y, 0px));
+      left: calc(3vw + var(--logo-offset-x, 0px));
+      bottom: calc(4vh + var(--ticker-height, 58px) + 8px + var(--logo-offset-y, 0px));
       width: var(--ticker-logo-size, 72px);
       height: var(--ticker-logo-size, 72px);
       display: grid;
@@ -530,6 +530,11 @@
         padding: calc(7px * var(--overlay-page-scale, 1)) calc(8px * var(--overlay-page-scale, 1));
         border-radius: 10px;
         font-size: calc(11px * var(--overlay-page-scale, 1));
+      }
+
+      .ticker-logo {
+        left: calc(8px + var(--logo-offset-x, 0px));
+        bottom: calc(12px + var(--ticker-height, 44px) + 6px + var(--logo-offset-y, 0px));
       }
 
       .ticker-copy {
@@ -842,6 +847,8 @@
         tickerLogoScale: 100,
         tickerOffsetX: 0,
         tickerOffsetY: 0,
+        logoOffsetX: 0,
+        logoOffsetY: 0,
         scorecardCenterX: 50,
         scorecardCenterY: 43,
         scorecardScale: 100,
@@ -863,6 +870,8 @@
       const tickerLogoScale = clampNumber(layout.tickerLogoScale || 100, 40, 220) / 100;
       const tickerOffsetX = clampNumber(layout.tickerOffsetX || 0, -300, 300);
       const tickerOffsetY = clampNumber(layout.tickerOffsetY || 0, -300, 300);
+      const logoOffsetX = clampNumber(layout.logoOffsetX || 0, -600, 600);
+      const logoOffsetY = clampNumber(layout.logoOffsetY || 0, -600, 600);
       const centerX = clampNumber(layout.scorecardCenterX, 0, 100);
       const centerY = clampNumber(layout.scorecardCenterY, 0, 100);
       const scale = (clampNumber(layout.scorecardScale, 50, 150) / 100) * overlayPageScale;
@@ -888,6 +897,8 @@
       document.documentElement.style.setProperty("--ticker-logo-size", `${baseLogoSize}px`);
       document.documentElement.style.setProperty("--ticker-offset-x", `${tickerOffsetX}px`);
       document.documentElement.style.setProperty("--ticker-offset-y", `${tickerOffsetY}px`);
+      document.documentElement.style.setProperty("--logo-offset-x", `${logoOffsetX}px`);
+      document.documentElement.style.setProperty("--logo-offset-y", `${logoOffsetY}px`);
       document.documentElement.style.setProperty("--scorecard-center-x", `${centerX}%`);
       document.documentElement.style.setProperty("--scorecard-center-y", `${centerY}%`);
       document.documentElement.style.setProperty("--scorecard-show-scale", String(scale));
