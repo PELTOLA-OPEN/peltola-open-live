@@ -263,6 +263,21 @@
       font-variant-numeric: tabular-nums;
     }
 
+    .hole-score {
+      justify-self: center;
+      min-width: 42px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      line-height: 1;
+    }
+
+    .hole-score.score-under-big { background: #245f9e; color: #ffffff; }
+    .hole-score.score-under-one { background: #6db7f2; color: #ffffff; }
+    .hole-score.score-over-one { background: #e3a17d; color: #111111; }
+    .hole-score.score-over-two { background: #d86431; color: #111111; }
+    .hole-score.score-over-three { background: #d00000; color: #111111; }
+    .hole-score.score-over-four { background: #aa0000; color: #111111; }
+
     .total-score {
       padding: 8px 10px;
       border-radius: 12px;
@@ -1058,6 +1073,7 @@
         const storedScore = Number(eventState.teams?.[team.id]?.scores?.[holeKey]);
         const strokes = Number.isFinite(storedScore) && storedScore > 0 ? storedScore : par;
         const relative = strokes - par;
+        const scoreClass = getControlScoreClass(relative);
 
         const card = document.createElement("article");
         card.className = "score-card";
@@ -1068,7 +1084,7 @@
             <div class="score-team-sub">${team.played ? `${team.strokes} strokes` : "No completed holes"}</div>
           </div>
           <button class="score-minus" type="button">−</button>
-          <div class="hole-score">${formatToPar(relative)}</div>
+          <div class="hole-score ${scoreClass}">${strokes}</div>
           <button class="score-plus" type="button">+</button>
           <div class="total-score">${formatToPar(team.toPar)}</div>
         `;
@@ -1794,6 +1810,16 @@
 
     function getPar(holeNumber) {
       return clampInt(eventState?.holes?.[String(holeNumber)]?.par || 3, 1, 9);
+    }
+
+    function getControlScoreClass(relative) {
+      if (relative <= -2) return "score-under-big";
+      if (relative === -1) return "score-under-one";
+      if (relative === 1) return "score-over-one";
+      if (relative === 2) return "score-over-two";
+      if (relative === 3) return "score-over-three";
+      if (relative >= 4) return "score-over-four";
+      return "";
     }
 
     function formatToPar(value) {
