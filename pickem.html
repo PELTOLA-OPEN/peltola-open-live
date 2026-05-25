@@ -93,6 +93,7 @@
       text-align: center;
       text-decoration: none;
       text-transform: uppercase;
+      white-space: nowrap;
       cursor: pointer;
     }
 
@@ -273,8 +274,10 @@
       </div>
 
       <nav class="nav-links" aria-label="Links">
-        <a id="scorecardLink" class="dark" href="#" target="_blank" rel="noopener noreferrer">To scorecard</a>
+        <a id="scorecardLink" class="dark" href="#" target="_blank" rel="noopener noreferrer">To scorecard --&gt;</a>
       </nav>
+
+      <div id="closedNotice" class="closed-notice hide">Pickems closed</div>
 
       <div id="loading" class="status">Loading teams...</div>
 
@@ -339,6 +342,7 @@
     const subtitleEl = document.getElementById("subtitle");
     const scorecardLinkEl = document.getElementById("scorecardLink");
     const loadingEl = document.getElementById("loading");
+    const closedNoticeEl = document.getElementById("closedNotice");
     const formEl = document.getElementById("pickemForm");
     const nameInput = document.getElementById("nameInput");
     const nameHelpEl = document.getElementById("nameHelp");
@@ -375,6 +379,7 @@
         }
 
         eventData = snapshot.val();
+        updateClosedNotice();
         titleEl.textContent = eventData.name || "Peltola Open";
         subtitleEl.textContent = `Pickem form · Event ${eventId}`;
         teams = getTeams(eventData);
@@ -544,6 +549,7 @@
     }
 
     function validateForm() {
+      updateClosedNotice();
       const entriesOpen = publicPickemsOpen();
       const name = nameInput.value.trim();
       const pickemId = makePickemId(name);
@@ -571,6 +577,11 @@
       else if (uniquePicks.size !== teams.length) statusEl.textContent = "The same team cannot be selected twice.";
       else statusEl.textContent = eventData?.pickems?.[pickemId] ? "Ready to update existing pickem." : "Ready to save new pickem.";
       return valid;
+    }
+
+    function updateClosedNotice() {
+      if (!closedNoticeEl) return;
+      closedNoticeEl.classList.toggle("hide", publicPickemsOpen());
     }
 
     function publicPickemsOpen() {
