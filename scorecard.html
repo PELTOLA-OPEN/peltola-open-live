@@ -766,13 +766,15 @@
         return;
       }
 
-      const rows = assignPickemPositions(pickems.map(pickem => scorePickem(pickem, teams, actualRanges, actualBirdies)));
+      const scoringRules = getPickemScoringRules(event);
+      const rows = assignPickemPositions(pickems.map(pickem => scorePickem(pickem, teams, actualRanges, actualBirdies, scoringRules)));
+      const scoreHeader = scoringRules.birdieMode === "score" ? "Score" : "Placement score";
 
       const summaryRows = rows.map(row => `
         <tr>
           <td class="pos-cell">${escapeHtml(row.positionLabel)}</td>
           <td class="name-cell">${escapeHtml(row.name)}</td>
-          <td class="metric-cell">${row.placementPenalty}</td>
+          <td class="metric-cell">${formatPickemScore(row.finalScore)}</td>
           <td class="wide-metric-cell">${row.birdiesPrediction}</td>
           <td class="wide-metric-cell">${actualBirdies}</td>
         </tr>
@@ -781,7 +783,7 @@
       const detailCards = rows.map(row => `
         <article class="pickem-card">
           <h3>${escapeHtml(row.positionLabel)} - ${escapeHtml(row.name)}</h3>
-          <div class="pickem-meta">Placement penalty ${row.placementPenalty} · Birdie prediction ${row.birdiesPrediction} · Birdies now ${actualBirdies}</div>
+          <div class="pickem-meta">Placement penalty ${formatPickemScore(row.placementPenalty)}${scoringRules.birdieMode === "score" ? ` · Birdie score ${formatPickemScore(row.birdiePenalty)} · Total score ${formatPickemScore(row.finalScore)}` : ""} · Birdie prediction ${row.birdiesPrediction} · Birdies now ${actualBirdies}</div>
           <table>
             <thead>
               <tr><th>Pick</th><th class="team-cell">Team</th><th>Live</th><th>Penalty</th></tr>
@@ -808,7 +810,7 @@
               <tr>
                 <th class="pos-cell">Pos</th>
                 <th class="name-cell">Participant</th>
-                <th class="metric-cell">Score</th>
+                <th class="metric-cell">${scoreHeader}</th>
                 <th class="wide-metric-cell">Birdie prediction</th>
                 <th class="wide-metric-cell">Birdies now</th>
               </tr>
@@ -954,7 +956,7 @@
       return normalized.slice(0, teams.length);
     }
 
-    function scorePickem(pickem, teams, actualRanges, actualBirdies) {
+    function scorePickem(pickem, teams, actualRanges, actualBirdies, scoringRules = getDefaultPickemScoringRules()) {
       const teamNames = new Map(teams.map(team => [team.id, team.name]));
       let placementPenalty = 0;
       let exactCorrect = 0;
@@ -980,7 +982,24 @@
       });
 
       const birdieDiff = Math.abs(pickem.birdiesPrediction - actualBirdies);
-      return { ...pickem, placementPenalty, birdieDiff, exactCorrect, details };
+      const birdiePenalty = calculateBirdiePenalty(birdieDiff, scoringRules);
+      const finalScore = placementPenalty + (scoringRules.birdieMode === "score" ? birdiePenalty : 0);
+      return { ...pickem, placementPenalty, birdieDiff, birdiePenalty, finalScore, exactCorrect, details };
+    }
+
+    function calculateBirdiePenalty(birdieDiff, scoringRules = getDefaultPickemScoringRules()) {
+      const diff = Math.max(0, Number(birdieDiff) || 0);
+      if (scoringRules.birdiePenaltyMode === "threshold") {
+        const thresholds = [...(scoringRules.thresholds || [])]
+          .map(row => ({ maxDiff: clampInt(row.maxDiff, 0, 999), penalty: clampNumber(row.penalty, 0, 999) }))
+          .sort((a, b) => a.maxDiff - b.maxDiff);
+        for (const row of thresholds) {
+          if (diff <= row.maxDiff) return row.penalty;
+        }
+        if (thresholds.length) return thresholds[thresholds.length - 1].penalty + Math.max(0, diff - thresholds[thresholds.length - 1].maxDiff);
+        return diff;
+      }
+      return diff * clampNumber(scoringRules.linearPenaltyPerBirdie, 0, 20);
     }
 
     function buildActualRanges(standings) {
@@ -1000,7 +1019,7 @@
 
     function assignPickemPositions(rows) {
       const sorted = [...rows].sort((a, b) =>
-        a.placementPenalty - b.placementPenalty ||
+        a.finalScore - b.finalScore ||
         a.birdieDiff - b.birdieDiff ||
         b.exactCorrect - a.exactCorrect ||
         a.name.localeCompare(b.name)
@@ -1008,12 +1027,47 @@
       let previousKey = null;
       let previousRank = 0;
       return sorted.map((row, index) => {
-        const key = `${row.placementPenalty}|${row.birdieDiff}`;
+        const key = `${row.finalScore}|${row.birdieDiff}`;
         const rank = previousKey !== null && key === previousKey ? previousRank : index + 1;
         previousKey = key;
         previousRank = rank;
         return { ...row, rank, positionLabel: formatOrdinal(rank) };
       });
+    }
+
+    function getPickemScoringRules(event) {
+      const defaults = getDefaultPickemScoringRules();
+      const saved = event.pickemScoring || {};
+      const savedThresholds = Array.isArray(saved.thresholds) ? saved.thresholds : [];
+      const thresholds = defaults.thresholds.map((threshold, index) => ({
+        maxDiff: clampInt(savedThresholds[index]?.maxDiff ?? threshold.maxDiff, 0, 999),
+        penalty: clampNumber(savedThresholds[index]?.penalty ?? threshold.penalty, 0, 999)
+      })).sort((a, b) => a.maxDiff - b.maxDiff);
+      return {
+        birdieMode: saved.birdieMode === "score" ? "score" : defaults.birdieMode,
+        birdiePenaltyMode: saved.birdiePenaltyMode === "threshold" ? "threshold" : defaults.birdiePenaltyMode,
+        linearPenaltyPerBirdie: clampNumber(saved.linearPenaltyPerBirdie ?? defaults.linearPenaltyPerBirdie, 0, 20),
+        thresholds
+      };
+    }
+
+    function getDefaultPickemScoringRules() {
+      return {
+        birdieMode: "tiebreak",
+        birdiePenaltyMode: "linear",
+        linearPenaltyPerBirdie: 1,
+        thresholds: [
+          { maxDiff: 1, penalty: 0 },
+          { maxDiff: 2, penalty: 1 },
+          { maxDiff: 4, penalty: 2 }
+        ]
+      };
+    }
+
+    function formatPickemScore(value) {
+      const number = Number(value);
+      if (!Number.isFinite(number)) return "0";
+      return Number.isInteger(number) ? String(number) : number.toFixed(2).replace(/\.?0+$/, "");
     }
 
     function countBirdies(event, completedThrough) {
@@ -1134,6 +1188,12 @@
 
     function clampInt(value, min, max) {
       const number = Number.parseInt(value, 10);
+      if (!Number.isFinite(number)) return min;
+      return Math.max(min, Math.min(max, number));
+    }
+
+    function clampNumber(value, min, max) {
+      const number = Number(value);
       if (!Number.isFinite(number)) return min;
       return Math.max(min, Math.min(max, number));
     }

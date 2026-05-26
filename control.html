@@ -590,6 +590,59 @@
           <div id="pickems" class="pickems"></div>
           <div id="pickemStatus" class="status"></div>
         </section>
+
+        <section class="card">
+          <h2>Pickem scoring rules</h2>
+          <div class="pickem-rules-grid">
+            <label>Birdie prediction use
+              <select id="pickemBirdieMode">
+                <option value="tiebreak">Tiebreak only</option>
+                <option value="score">Affects pickem score</option>
+              </select>
+            </label>
+            <label>Birdie scoring method
+              <select id="pickemBirdiePenaltyMode">
+                <option value="linear">One penalty per birdie difference</option>
+                <option value="threshold">Threshold penalties</option>
+              </select>
+            </label>
+            <label>Linear penalty per birdie wrong
+              <input id="pickemLinearPenaltyPerBirdie" type="number" min="0" max="20" step="0.25" />
+            </label>
+          </div>
+
+          <div class="pickem-thresholds">
+            <div class="pickem-threshold-row">
+              <label>Threshold 1 max birdie difference
+                <input id="pickemThreshold1Max" type="number" min="0" max="999" step="1" />
+              </label>
+              <label>Threshold 1 penalty
+                <input id="pickemThreshold1Penalty" type="number" min="0" max="999" step="0.25" />
+              </label>
+            </div>
+            <div class="pickem-threshold-row">
+              <label>Threshold 2 max birdie difference
+                <input id="pickemThreshold2Max" type="number" min="0" max="999" step="1" />
+              </label>
+              <label>Threshold 2 penalty
+                <input id="pickemThreshold2Penalty" type="number" min="0" max="999" step="0.25" />
+              </label>
+            </div>
+            <div class="pickem-threshold-row">
+              <label>Threshold 3 max birdie difference
+                <input id="pickemThreshold3Max" type="number" min="0" max="999" step="1" />
+              </label>
+              <label>Threshold 3 penalty
+                <input id="pickemThreshold3Penalty" type="number" min="0" max="999" step="0.25" />
+              </label>
+            </div>
+          </div>
+
+          <div class="row" style="margin-top: 12px;">
+            <button id="savePickemScoringRulesBtn" type="button">Save pickem scoring rules</button>
+          </div>
+          <div id="pickemRulesStatus" class="status"></div>
+        </section>
       </section>
 
     </section>
@@ -705,7 +758,18 @@
       scoreStatus: document.getElementById("scoreStatus"),
       addPickemBtn: document.getElementById("addPickemBtn"),
       pickems: document.getElementById("pickems"),
-      pickemStatus: document.getElementById("pickemStatus")
+      pickemStatus: document.getElementById("pickemStatus"),
+      pickemBirdieMode: document.getElementById("pickemBirdieMode"),
+      pickemBirdiePenaltyMode: document.getElementById("pickemBirdiePenaltyMode"),
+      pickemLinearPenaltyPerBirdie: document.getElementById("pickemLinearPenaltyPerBirdie"),
+      pickemThreshold1Max: document.getElementById("pickemThreshold1Max"),
+      pickemThreshold1Penalty: document.getElementById("pickemThreshold1Penalty"),
+      pickemThreshold2Max: document.getElementById("pickemThreshold2Max"),
+      pickemThreshold2Penalty: document.getElementById("pickemThreshold2Penalty"),
+      pickemThreshold3Max: document.getElementById("pickemThreshold3Max"),
+      pickemThreshold3Penalty: document.getElementById("pickemThreshold3Penalty"),
+      savePickemScoringRulesBtn: document.getElementById("savePickemScoringRulesBtn"),
+      pickemRulesStatus: document.getElementById("pickemRulesStatus")
     };
 
     const overlayUrl = new URL("overlay.html", location.href);
@@ -781,6 +845,7 @@
     els.showScorecardBtn.addEventListener("click", showScorecardNow);
     els.showOddsBtn.addEventListener("click", showOddsNow);
     els.addPickemBtn.addEventListener("click", addPickem);
+    els.savePickemScoringRulesBtn.addEventListener("click", savePickemScoringRules);
 
     onAuthStateChanged(auth, user => {
       signedIn = Boolean(user);
@@ -841,6 +906,7 @@
           showHoleBug: false,
           showStandings: true,
           allowPublicPickems: true,
+          pickemScoring: getDefaultPickemScoringRules(),
           holes: initialHoles,
           teams: {},
           pickems: {},
@@ -936,6 +1002,7 @@
       renderParGrid(holeCount);
       renderScoring(currentHole, holeCount);
       renderPickems(setupTeams);
+      renderPickemScoringRules();
     }
 
     function showDataUnavailableState(message) {
@@ -944,6 +1011,7 @@
       els.parGrid.innerHTML = "";
       els.scoreList.innerHTML = `<p class="muted">${escapeHtml(message)}</p>`;
       els.pickems.innerHTML = `<p class="muted">${escapeHtml(message)}</p>`;
+      els.pickemRulesStatus.textContent = message;
       els.scoreHoleTitle.textContent = "Loading";
       els.scoreHoleSub.textContent = "";
       els.prevHoleBtn.disabled = true;
@@ -1223,6 +1291,83 @@
       if (!window.confirm(`Delete pickem for ${name || "this participant"}?`)) return;
       await remove(ref(db, `events/${eventId}/pickems/${pickemId}`));
       els.pickemStatus.textContent = "Pickem deleted.";
+    }
+
+    function renderPickemScoringRules() {
+      const rules = getPickemScoringRules();
+      els.pickemBirdieMode.value = rules.birdieMode;
+      els.pickemBirdiePenaltyMode.value = rules.birdiePenaltyMode;
+      els.pickemLinearPenaltyPerBirdie.value = rules.linearPenaltyPerBirdie;
+      els.pickemThreshold1Max.value = rules.thresholds[0].maxDiff;
+      els.pickemThreshold1Penalty.value = rules.thresholds[0].penalty;
+      els.pickemThreshold2Max.value = rules.thresholds[1].maxDiff;
+      els.pickemThreshold2Penalty.value = rules.thresholds[1].penalty;
+      els.pickemThreshold3Max.value = rules.thresholds[2].maxDiff;
+      els.pickemThreshold3Penalty.value = rules.thresholds[2].penalty;
+    }
+
+    async function savePickemScoringRules() {
+      if (!signedIn || !eventState) return;
+      const rules = readPickemScoringRulesInputs();
+      try {
+        await update(eventRef, { pickemScoring: rules, updatedAt: Date.now() });
+        els.pickemRulesStatus.textContent = "Pickem scoring rules saved.";
+      } catch (error) {
+        els.pickemRulesStatus.textContent = readableFirebaseError(error);
+      }
+    }
+
+    function readPickemScoringRulesInputs() {
+      const thresholds = [
+        {
+          maxDiff: clampInt(els.pickemThreshold1Max.value, 0, 999),
+          penalty: clampNumber(els.pickemThreshold1Penalty.value, 0, 999)
+        },
+        {
+          maxDiff: clampInt(els.pickemThreshold2Max.value, 0, 999),
+          penalty: clampNumber(els.pickemThreshold2Penalty.value, 0, 999)
+        },
+        {
+          maxDiff: clampInt(els.pickemThreshold3Max.value, 0, 999),
+          penalty: clampNumber(els.pickemThreshold3Penalty.value, 0, 999)
+        }
+      ].sort((a, b) => a.maxDiff - b.maxDiff);
+
+      return {
+        birdieMode: els.pickemBirdieMode.value === "score" ? "score" : "tiebreak",
+        birdiePenaltyMode: els.pickemBirdiePenaltyMode.value === "threshold" ? "threshold" : "linear",
+        linearPenaltyPerBirdie: clampNumber(els.pickemLinearPenaltyPerBirdie.value, 0, 20),
+        thresholds
+      };
+    }
+
+    function getPickemScoringRules() {
+      const defaults = getDefaultPickemScoringRules();
+      const saved = eventState?.pickemScoring || {};
+      const savedThresholds = Array.isArray(saved.thresholds) ? saved.thresholds : [];
+      const thresholds = defaults.thresholds.map((threshold, index) => ({
+        maxDiff: clampInt(savedThresholds[index]?.maxDiff ?? threshold.maxDiff, 0, 999),
+        penalty: clampNumber(savedThresholds[index]?.penalty ?? threshold.penalty, 0, 999)
+      })).sort((a, b) => a.maxDiff - b.maxDiff);
+      return {
+        birdieMode: saved.birdieMode === "score" ? "score" : defaults.birdieMode,
+        birdiePenaltyMode: saved.birdiePenaltyMode === "threshold" ? "threshold" : defaults.birdiePenaltyMode,
+        linearPenaltyPerBirdie: clampNumber(saved.linearPenaltyPerBirdie ?? defaults.linearPenaltyPerBirdie, 0, 20),
+        thresholds
+      };
+    }
+
+    function getDefaultPickemScoringRules() {
+      return {
+        birdieMode: "tiebreak",
+        birdiePenaltyMode: "linear",
+        linearPenaltyPerBirdie: 1,
+        thresholds: [
+          { maxDiff: 1, penalty: 0 },
+          { maxDiff: 2, penalty: 1 },
+          { maxDiff: 4, penalty: 2 }
+        ]
+      };
     }
 
     async function saveEventSettings() {
