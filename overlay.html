@@ -252,7 +252,7 @@
       transform: translate(-50%, -50%) translateY(24px) scale(var(--scorecard-hidden-scale, 0.96)) scaleX(var(--scorecard-width-factor, 1)) scaleY(var(--scorecard-height-factor, 1));
       transform-origin: center center;
       opacity: 0;
-      padding: 12px 12px 14px;
+      padding: var(--scorecard-popup-padding, 12px);
       border: 2px solid var(--popup-border);
       border-radius: 16px;
       background: var(--panel);
@@ -276,7 +276,7 @@
       transform: translate(-50%, -50%) translateY(24px) scale(var(--odds-hidden-scale, 0.96)) scaleX(var(--odds-width-factor, 1)) scaleY(var(--odds-height-factor, 1));
       transform-origin: center center;
       opacity: 0;
-      padding: 16px 16px 18px;
+      padding: var(--odds-padding, 16px);
       border: 2px solid var(--popup-border);
       border-radius: 16px;
       background: var(--panel);
@@ -300,7 +300,7 @@
 
     .odds-title {
       overflow: hidden;
-      font-size: clamp(17px, 2vw, 30px);
+      font-size: calc(clamp(17px, 2vw, 30px) * var(--odds-font-scale, 1));
       font-weight: 950;
       letter-spacing: 0.06em;
       text-overflow: ellipsis;
@@ -331,7 +331,7 @@
     .odds-pop-table td {
       height: var(--odds-cell-height, clamp(28px, 2.6vw, 39px));
       border: 1px solid var(--odds-grid);
-      padding: 3px 6px;
+      padding: calc(var(--odds-cell-padding, 3px) * 0.55) var(--odds-cell-padding, 3px);
       vertical-align: middle;
       line-height: 1;
       background-clip: padding-box;
@@ -340,13 +340,13 @@
 
     .odds-pop-table th {
       background: var(--table-head-bg);
-      font-size: clamp(10px, 0.9vw, 14px);
+      font-size: calc(clamp(10px, 0.9vw, 14px) * var(--odds-font-scale, 1));
       font-weight: 950;
       text-transform: uppercase;
     }
 
     .odds-pop-table td {
-      font-size: clamp(12px, 1.2vw, 19px);
+      font-size: calc(clamp(12px, 1.2vw, 19px) * var(--odds-font-scale, 1));
       font-weight: 850;
     }
 
@@ -385,7 +385,7 @@
 
     .scorecard-title {
       overflow: hidden;
-      font-size: clamp(17px, 2vw, 30px);
+      font-size: calc(clamp(17px, 2vw, 30px) * var(--scorecard-font-scale, 1));
       font-weight: 950;
       letter-spacing: 0.06em;
       text-overflow: ellipsis;
@@ -395,7 +395,7 @@
     .scorecard-through {
       flex: none;
       color: var(--muted);
-      font-size: clamp(12px, 1.15vw, 18px);
+      font-size: calc(clamp(12px, 1.15vw, 18px) * var(--scorecard-font-scale, 1));
       font-weight: 950;
       letter-spacing: 0.06em;
       white-space: nowrap;
@@ -410,7 +410,7 @@
     .scorecard-table {
       width: auto;
       border-collapse: collapse;
-      table-layout: auto;
+      table-layout: fixed;
       color: white;
       font-variant-numeric: tabular-nums;
       --scorecard-grid: var(--table-grid);
@@ -420,7 +420,7 @@
     .scorecard-table td {
       height: var(--scorecard-cell-height, clamp(24px, 2.45vw, 35px));
       border: 1px solid var(--scorecard-grid);
-      padding: 2px 3px;
+      padding: calc(var(--scorecard-cell-padding, 3px) * 0.35) var(--scorecard-cell-padding, 3px);
       text-align: center;
       vertical-align: middle;
       line-height: 1;
@@ -429,20 +429,21 @@
 
     .scorecard-table th {
       background: var(--table-head-bg);
-      font-size: clamp(10px, 0.9vw, 14px);
+      font-size: calc(clamp(10px, 0.9vw, 14px) * var(--scorecard-font-scale, 1));
       font-weight: 950;
       text-transform: uppercase;
     }
 
     .scorecard-table td {
-      font-size: clamp(11px, 1.1vw, 18px);
+      font-size: calc(clamp(11px, 1.1vw, 18px) * var(--scorecard-font-scale, 1));
       font-weight: 850;
       line-height: 1;
     }
 
     .scorecard-player {
-      width: 1%;
-      max-width: var(--scorecard-player-max, min(360px, 31vw));
+      width: var(--scorecard-player-width, 150px);
+      min-width: var(--scorecard-player-width, 150px);
+      max-width: var(--scorecard-player-width, 150px);
       text-align: left !important;
       padding-left: 7px !important;
       padding-right: 7px !important;
@@ -583,7 +584,7 @@
       }
 
       .scorecard-player {
-        max-width: var(--scorecard-player-mobile-max, 116px);
+        max-width: var(--scorecard-player-width, var(--scorecard-player-mobile-max, 116px));
         padding-left: 4px !important;
         padding-right: 4px !important;
       }
@@ -854,6 +855,10 @@
         scorecardScale: 100,
         scorecardWidthScale: 100,
         scorecardHeightScale: 100,
+        scorecardFontScale: 100,
+        scorecardRowHeightPx: 28,
+        scorecardColumnWidthPx: 24,
+        scorecardPaddingPx: 10,
         ...(event.overlayLayout || {})
       };
       const oddsLayout = {
@@ -862,6 +867,9 @@
         oddsScale: 100,
         oddsWidthScale: 100,
         oddsHeightScale: 100,
+        oddsFontScale: 100,
+        oddsRowHeightPx: 34,
+        oddsPaddingPx: 10,
         ...(event.oddsOverlayLayout || {})
       };
 
@@ -877,18 +885,27 @@
       const scale = (clampNumber(layout.scorecardScale, 50, 150) / 100) * overlayPageScale;
       const widthFactor = clampNumber(layout.scorecardWidthScale, 50, 180) / 100;
       const heightFactor = clampNumber(layout.scorecardHeightScale, 50, 180) / 100;
+      const scorecardFontScale = clampNumber(layout.scorecardFontScale || 100, 50, 200) / 100;
+      const scorecardRowHeight = clampNumber(layout.scorecardRowHeightPx || 28, 14, 80);
+      const scorecardColumnWidth = clampNumber(layout.scorecardColumnWidthPx || 24, 14, 80);
+      const scorecardPadding = clampNumber(layout.scorecardPaddingPx || 10, 0, 40);
+      const scorecardCellPadding = Math.max(1, Math.min(20, scorecardPadding / 3));
       const oddsCenterX = clampNumber(oddsLayout.oddsCenterX, 0, 100);
       const oddsCenterY = clampNumber(oddsLayout.oddsCenterY, 0, 100);
       const oddsScale = (clampNumber(oddsLayout.oddsScale, 50, 150) / 100) * overlayPageScale;
       const oddsWidthFactor = clampNumber(oddsLayout.oddsWidthScale, 50, 180) / 100;
       const oddsHeightFactor = clampNumber(oddsLayout.oddsHeightScale, 50, 180) / 100;
+      const oddsFontScaleControl = clampNumber(oddsLayout.oddsFontScale || 100, 50, 200) / 100;
+      const oddsRowHeight = clampNumber(oddsLayout.oddsRowHeightPx || 34, 16, 90);
+      const oddsPadding = clampNumber(oddsLayout.oddsPaddingPx || 10, 0, 40);
+      const oddsCellPadding = Math.max(1, Math.min(20, oddsPadding / 2));
       const viewportWidth = Math.max(320, window.innerWidth || 1920);
-      const baseHoleWidth = Math.max(22, Math.min(34, viewportWidth * 0.0225));
-      const baseTotalWidth = Math.max(42, Math.min(66, viewportWidth * 0.042));
+      const baseHoleWidth = scorecardColumnWidth;
+      const baseTotalWidth = Math.max(38, Math.round(scorecardColumnWidth * 1.65));
       const basePlayerMax = Math.min(360, viewportWidth * 0.31);
-      const baseCellHeight = Math.max(24, Math.min(35, viewportWidth * 0.0245));
-      const mobileBaseHoleWidth = 20;
-      const mobileBaseTotalWidth = 38;
+      const baseCellHeight = scorecardRowHeight;
+      const mobileBaseHoleWidth = scorecardColumnWidth;
+      const mobileBaseTotalWidth = Math.max(36, Math.round(scorecardColumnWidth * 1.55));
       const mobileBasePlayerMax = 116;
       const baseLogoSize = Math.max(64, Math.min(104, viewportWidth * 0.08)) * overlayPageScale * tickerLogoScale;
 
@@ -905,6 +922,9 @@
       document.documentElement.style.setProperty("--scorecard-hidden-scale", String(scale * 0.96));
       document.documentElement.style.setProperty("--scorecard-width-factor", String(widthFactor));
       document.documentElement.style.setProperty("--scorecard-height-factor", String(heightFactor));
+      document.documentElement.style.setProperty("--scorecard-font-scale", String(scorecardFontScale));
+      document.documentElement.style.setProperty("--scorecard-popup-padding", `${scorecardPadding}px`);
+      document.documentElement.style.setProperty("--scorecard-cell-padding", `${scorecardCellPadding}px`);
       document.documentElement.style.setProperty("--scorecard-hole-width", `${baseHoleWidth}px`);
       document.documentElement.style.setProperty("--scorecard-total-width", `${baseTotalWidth}px`);
       document.documentElement.style.setProperty("--scorecard-player-max", `${basePlayerMax}px`);
@@ -918,7 +938,10 @@
       document.documentElement.style.setProperty("--odds-hidden-scale", String(oddsScale * 0.96));
       document.documentElement.style.setProperty("--odds-width-factor", String(oddsWidthFactor));
       document.documentElement.style.setProperty("--odds-height-factor", String(oddsHeightFactor));
-      document.documentElement.style.setProperty("--odds-cell-height", `${Math.max(28, Math.min(39, viewportWidth * 0.026))}px`);
+      document.documentElement.style.setProperty("--odds-font-scale", String(oddsFontScaleControl));
+      document.documentElement.style.setProperty("--odds-padding", `${oddsPadding}px`);
+      document.documentElement.style.setProperty("--odds-cell-padding", `${oddsCellPadding}px`);
+      document.documentElement.style.setProperty("--odds-cell-height", `${oddsRowHeight}px`);
       document.documentElement.style.setProperty("--odds-team-max", `${Math.min(260, viewportWidth * 0.32)}px`);
       document.documentElement.style.setProperty("--odds-team-mobile-max", "136px");
     }
@@ -1066,6 +1089,12 @@
       scorecardThroughEl.textContent = throughHole === 1 ? "Through 1 hole" : `Through ${throughHole} holes`;
 
       const colorMode = getScorecardColorMode(event);
+      const layout = { scorecardFontScale:100, scorecardColumnWidthPx:24, scorecardPaddingPx:10, ...(event.overlayLayout || {}) };
+      const fontScale = clampNumber(layout.scorecardFontScale, 50, 200) / 100;
+      const cellPadding = Math.max(1, Math.min(20, clampNumber(layout.scorecardPaddingPx, 0, 40) / 3));
+      const holeWidth = clampNumber(layout.scorecardColumnWidthPx || 24, 14, 80);
+      const totalWidth = Math.max(38, Math.round(holeWidth * 1.65));
+      const playerWidth = measureScorecardPlayerWidth(standings, fontScale, cellPadding);
       const headerCells = Array.from({ length: holeCount }, (_, index) => `<th class="scorecard-hole">${index + 1}</th>`).join("");
       const rows = standings.map(team => {
         const holeCells = Array.from({ length: holeCount }, (_, index) => {
@@ -1090,7 +1119,12 @@
       }).join("");
 
       scorecardTableWrapEl.innerHTML = `
-        <table class="scorecard-table">
+        <table class="scorecard-table" style="--scorecard-player-width:${playerWidth}px; --scorecard-total-width:${totalWidth}px; --scorecard-hole-width:${holeWidth}px;">
+          <colgroup>
+            <col style="width:${playerWidth}px" />
+            ${Array.from({ length: holeCount }, () => `<col style="width:${holeWidth}px" />`).join("")}
+            <col style="width:${totalWidth}px" />
+          </colgroup>
           <thead>
             <tr>
               <th class="scorecard-player"></th>
@@ -1103,6 +1137,26 @@
           </tbody>
         </table>
       `;
+    }
+
+    function measureScorecardPlayerWidth(standings, fontScale, cellPadding) {
+      const labels = standings.length ? standings.map(team => `${team.positionLabel} - ${team.name}`) : ["Add teams in the control panel."];
+      let measured = 0;
+      let twoSpaces = 12 * fontScale;
+      try {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          const baseSize = Math.max(11, Math.min(18, (window.innerWidth || 1280) * 0.011)) * fontScale;
+          ctx.font = `850 ${baseSize}px system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif`;
+          measured = Math.max(...labels.map(label => ctx.measureText(label).width));
+          twoSpaces = ctx.measureText("  ").width;
+        }
+      } catch (_) {}
+      if (!measured) measured = Math.max(...labels.map(label => label.length)) * 8 * fontScale;
+      const spare = Math.max(8, twoSpaces + cellPadding * 2);
+      const viewportCap = Math.max(90, Math.min((window.innerWidth || 1280) * 0.42, 360));
+      return Math.round(Math.max(70, Math.min(measured + spare, viewportCap)));
     }
 
     function renderOddsPop(event) {
