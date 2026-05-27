@@ -463,6 +463,10 @@
               <input id="tickerHeightPx" type="number" min="30" max="120" step="1" />
               <input id="tickerHeightPxRange" class="slider" type="range" min="30" max="120" step="1" />
             </label>
+            <label>Ticker font size, %
+              <input id="tickerFontScale" type="number" min="50" max="200" step="1" />
+              <input id="tickerFontScaleRange" class="slider" type="range" min="50" max="200" step="1" />
+            </label>
             <label>Logo size, %
               <input id="tickerLogoScale" type="number" min="40" max="220" step="1" />
               <input id="tickerLogoScaleRange" class="slider" type="range" min="40" max="220" step="1" />
@@ -510,6 +514,22 @@
               <input id="scorecardHeightScale" type="number" min="50" max="180" step="1" />
               <input id="scorecardHeightScaleRange" class="slider" type="range" min="50" max="180" step="1" />
             </label>
+            <label>Scorecard font size, %
+              <input id="scorecardFontScale" type="number" min="50" max="200" step="1" />
+              <input id="scorecardFontScaleRange" class="slider" type="range" min="50" max="200" step="1" />
+            </label>
+            <label>Scorecard row height, px
+              <input id="scorecardRowHeightPx" type="number" min="14" max="80" step="1" />
+              <input id="scorecardRowHeightPxRange" class="slider" type="range" min="14" max="80" step="1" />
+            </label>
+            <label>Scorecard hole column width, px
+              <input id="scorecardColumnWidthPx" type="number" min="14" max="80" step="1" />
+              <input id="scorecardColumnWidthPxRange" class="slider" type="range" min="14" max="80" step="1" />
+            </label>
+            <label>Scorecard padding, px
+              <input id="scorecardPaddingPx" type="number" min="0" max="40" step="1" />
+              <input id="scorecardPaddingPxRange" class="slider" type="range" min="0" max="40" step="1" />
+            </label>
           </div>
           <div class="row" style="margin-top: 12px;">
             <button id="resetOverlayLayoutBtn" type="button">Reset scoring overlay adjustments</button>
@@ -539,6 +559,18 @@
             <label>Popup odds height scale, %
               <input id="oddsHeightScale" type="number" min="50" max="180" step="1" />
               <input id="oddsHeightScaleRange" class="slider" type="range" min="50" max="180" step="1" />
+            </label>
+            <label>Odds font size, %
+              <input id="oddsFontScale" type="number" min="50" max="200" step="1" />
+              <input id="oddsFontScaleRange" class="slider" type="range" min="50" max="200" step="1" />
+            </label>
+            <label>Odds row height, px
+              <input id="oddsRowHeightPx" type="number" min="16" max="90" step="1" />
+              <input id="oddsRowHeightPxRange" class="slider" type="range" min="16" max="90" step="1" />
+            </label>
+            <label>Odds padding, px
+              <input id="oddsPaddingPx" type="number" min="0" max="40" step="1" />
+              <input id="oddsPaddingPxRange" class="slider" type="range" min="0" max="40" step="1" />
             </label>
           </div>
           <div class="row" style="margin-top: 12px;">
@@ -736,6 +768,8 @@
       overlayPageScaleRange: document.getElementById("overlayPageScaleRange"),
       tickerHeightPx: document.getElementById("tickerHeightPx"),
       tickerHeightPxRange: document.getElementById("tickerHeightPxRange"),
+      tickerFontScale: document.getElementById("tickerFontScale"),
+      tickerFontScaleRange: document.getElementById("tickerFontScaleRange"),
       tickerLogoScale: document.getElementById("tickerLogoScale"),
       tickerLogoScaleRange: document.getElementById("tickerLogoScaleRange"),
       tickerMoveTargetBtn: document.getElementById("tickerMoveTargetBtn"),
@@ -755,6 +789,14 @@
       scorecardWidthScaleRange: document.getElementById("scorecardWidthScaleRange"),
       scorecardHeightScale: document.getElementById("scorecardHeightScale"),
       scorecardHeightScaleRange: document.getElementById("scorecardHeightScaleRange"),
+      scorecardFontScale: document.getElementById("scorecardFontScale"),
+      scorecardFontScaleRange: document.getElementById("scorecardFontScaleRange"),
+      scorecardRowHeightPx: document.getElementById("scorecardRowHeightPx"),
+      scorecardRowHeightPxRange: document.getElementById("scorecardRowHeightPxRange"),
+      scorecardColumnWidthPx: document.getElementById("scorecardColumnWidthPx"),
+      scorecardColumnWidthPxRange: document.getElementById("scorecardColumnWidthPxRange"),
+      scorecardPaddingPx: document.getElementById("scorecardPaddingPx"),
+      scorecardPaddingPxRange: document.getElementById("scorecardPaddingPxRange"),
       resetOverlayLayoutBtn: document.getElementById("resetOverlayLayoutBtn"),
       toggleScorecardPreviewBtn: document.getElementById("toggleScorecardPreviewBtn"),
       oddsCenterX: document.getElementById("oddsCenterX"),
@@ -767,6 +809,12 @@
       oddsWidthScaleRange: document.getElementById("oddsWidthScaleRange"),
       oddsHeightScale: document.getElementById("oddsHeightScale"),
       oddsHeightScaleRange: document.getElementById("oddsHeightScaleRange"),
+      oddsFontScale: document.getElementById("oddsFontScale"),
+      oddsFontScaleRange: document.getElementById("oddsFontScaleRange"),
+      oddsRowHeightPx: document.getElementById("oddsRowHeightPx"),
+      oddsRowHeightPxRange: document.getElementById("oddsRowHeightPxRange"),
+      oddsPaddingPx: document.getElementById("oddsPaddingPx"),
+      oddsPaddingPxRange: document.getElementById("oddsPaddingPxRange"),
       resetOddsOverlayLayoutBtn: document.getElementById("resetOddsOverlayLayoutBtn"),
       toggleOddsPreviewBtn: document.getElementById("toggleOddsPreviewBtn"),
       showHelsinkiClock: document.getElementById("showHelsinkiClock"),
@@ -855,12 +903,17 @@
     [
       [els.overlayPageScale, els.overlayPageScaleRange],
       [els.tickerHeightPx, els.tickerHeightPxRange],
+      [els.tickerFontScale, els.tickerFontScaleRange],
       [els.tickerLogoScale, els.tickerLogoScaleRange],
       [els.scorecardCenterX, els.scorecardCenterXRange],
       [els.scorecardCenterY, els.scorecardCenterYRange],
       [els.scorecardScale, els.scorecardScaleRange],
       [els.scorecardWidthScale, els.scorecardWidthScaleRange],
-      [els.scorecardHeightScale, els.scorecardHeightScaleRange]
+      [els.scorecardHeightScale, els.scorecardHeightScaleRange],
+      [els.scorecardFontScale, els.scorecardFontScaleRange],
+      [els.scorecardRowHeightPx, els.scorecardRowHeightPxRange],
+      [els.scorecardColumnWidthPx, els.scorecardColumnWidthPxRange],
+      [els.scorecardPaddingPx, els.scorecardPaddingPxRange]
     ].forEach(([numberInput, rangeInput]) => bindSyncedOverlayInput(numberInput, rangeInput, saveOverlayLayoutLive));
     bindSyncedOverlayInput(els.overlayOpacity, els.overlayOpacityRange, saveOverlayThemeLive);
     bindColorInputs(els.overlayBackgroundColor, els.overlayBackgroundColorText, saveOverlayThemeLive);
@@ -872,7 +925,10 @@
       [els.oddsCenterY, els.oddsCenterYRange],
       [els.oddsScale, els.oddsScaleRange],
       [els.oddsWidthScale, els.oddsWidthScaleRange],
-      [els.oddsHeightScale, els.oddsHeightScaleRange]
+      [els.oddsHeightScale, els.oddsHeightScaleRange],
+      [els.oddsFontScale, els.oddsFontScaleRange],
+      [els.oddsRowHeightPx, els.oddsRowHeightPxRange],
+      [els.oddsPaddingPx, els.oddsPaddingPxRange]
     ].forEach(([numberInput, rangeInput]) => bindSyncedOverlayInput(numberInput, rangeInput, saveOddsOverlayLayoutLive));
     els.toggleScorecardPreviewBtn.addEventListener("click", toggleScorecardPreview);
     els.toggleOddsPreviewBtn.addEventListener("click", toggleOddsPreview);
@@ -1013,6 +1069,8 @@
       els.overlayPageScaleRange.value = overlayLayout.overlayPageScale;
       els.tickerHeightPx.value = overlayLayout.tickerHeightPx;
       els.tickerHeightPxRange.value = overlayLayout.tickerHeightPx;
+      els.tickerFontScale.value = overlayLayout.tickerFontScale;
+      els.tickerFontScaleRange.value = overlayLayout.tickerFontScale;
       els.tickerLogoScale.value = overlayLayout.tickerLogoScale;
       els.tickerLogoScaleRange.value = overlayLayout.tickerLogoScale;
       updateTickerMoveControls(overlayLayout);
@@ -1026,6 +1084,14 @@
       els.scorecardWidthScaleRange.value = overlayLayout.scorecardWidthScale;
       els.scorecardHeightScale.value = overlayLayout.scorecardHeightScale;
       els.scorecardHeightScaleRange.value = overlayLayout.scorecardHeightScale;
+      els.scorecardFontScale.value = overlayLayout.scorecardFontScale;
+      els.scorecardFontScaleRange.value = overlayLayout.scorecardFontScale;
+      els.scorecardRowHeightPx.value = overlayLayout.scorecardRowHeightPx;
+      els.scorecardRowHeightPxRange.value = overlayLayout.scorecardRowHeightPx;
+      els.scorecardColumnWidthPx.value = overlayLayout.scorecardColumnWidthPx;
+      els.scorecardColumnWidthPxRange.value = overlayLayout.scorecardColumnWidthPx;
+      els.scorecardPaddingPx.value = overlayLayout.scorecardPaddingPx;
+      els.scorecardPaddingPxRange.value = overlayLayout.scorecardPaddingPx;
       const oddsOverlayLayout = getOddsOverlayLayout();
       els.oddsCenterX.value = oddsOverlayLayout.oddsCenterX;
       els.oddsCenterXRange.value = oddsOverlayLayout.oddsCenterX;
@@ -1037,6 +1103,12 @@
       els.oddsWidthScaleRange.value = oddsOverlayLayout.oddsWidthScale;
       els.oddsHeightScale.value = oddsOverlayLayout.oddsHeightScale;
       els.oddsHeightScaleRange.value = oddsOverlayLayout.oddsHeightScale;
+      els.oddsFontScale.value = oddsOverlayLayout.oddsFontScale;
+      els.oddsFontScaleRange.value = oddsOverlayLayout.oddsFontScale;
+      els.oddsRowHeightPx.value = oddsOverlayLayout.oddsRowHeightPx;
+      els.oddsRowHeightPxRange.value = oddsOverlayLayout.oddsRowHeightPx;
+      els.oddsPaddingPx.value = oddsOverlayLayout.oddsPaddingPx;
+      els.oddsPaddingPxRange.value = oddsOverlayLayout.oddsPaddingPx;
       const overlayTheme = getOverlayTheme();
       els.overlayBackgroundColor.value = overlayTheme.backgroundColor;
       els.overlayBackgroundColorText.value = overlayTheme.backgroundColor;
@@ -1772,6 +1844,7 @@
       const nextLayout = {
         ...current,
         tickerHeightPx: defaults.tickerHeightPx,
+        tickerFontScale: defaults.tickerFontScale,
         tickerLogoScale: defaults.tickerLogoScale,
         tickerOffsetX: defaults.tickerOffsetX,
         tickerOffsetY: defaults.tickerOffsetY,
@@ -1796,7 +1869,11 @@
         scorecardCenterY: defaults.scorecardCenterY,
         scorecardScale: defaults.scorecardScale,
         scorecardWidthScale: defaults.scorecardWidthScale,
-        scorecardHeightScale: defaults.scorecardHeightScale
+        scorecardHeightScale: defaults.scorecardHeightScale,
+        scorecardFontScale: defaults.scorecardFontScale,
+        scorecardRowHeightPx: defaults.scorecardRowHeightPx,
+        scorecardColumnWidthPx: defaults.scorecardColumnWidthPx,
+        scorecardPaddingPx: defaults.scorecardPaddingPx
       };
       await update(eventRef, { overlayLayout: nextLayout, updatedAt: Date.now() });
       els.eventStatus.textContent = "Scoring overlay adjustments reset.";
@@ -1891,6 +1968,7 @@
       return {
         overlayPageScale: clampInt(els.overlayPageScale.value, 30, 200),
         tickerHeightPx: clampInt(els.tickerHeightPx.value, 30, 120),
+        tickerFontScale: clampInt(els.tickerFontScale.value, 50, 200),
         tickerLogoScale: clampInt(els.tickerLogoScale.value, 40, 220),
         tickerOffsetX: clampInt(currentLayout.tickerOffsetX || 0, -300, 300),
         tickerOffsetY: clampInt(currentLayout.tickerOffsetY || 0, -300, 300),
@@ -1900,7 +1978,11 @@
         scorecardCenterY: clampNumber(els.scorecardCenterY.value, 0, 100),
         scorecardScale: clampInt(els.scorecardScale.value, 50, 150),
         scorecardWidthScale: clampInt(els.scorecardWidthScale.value, 50, 180),
-        scorecardHeightScale: clampInt(els.scorecardHeightScale.value, 50, 180)
+        scorecardHeightScale: clampInt(els.scorecardHeightScale.value, 50, 180),
+        scorecardFontScale: clampInt(els.scorecardFontScale.value, 50, 200),
+        scorecardRowHeightPx: clampInt(els.scorecardRowHeightPx.value, 14, 80),
+        scorecardColumnWidthPx: clampInt(els.scorecardColumnWidthPx.value, 14, 80),
+        scorecardPaddingPx: clampInt(els.scorecardPaddingPx.value, 0, 40)
       };
     }
 
@@ -1912,6 +1994,7 @@
       return {
         overlayPageScale: 100,
         tickerHeightPx: 58,
+        tickerFontScale: 100,
         tickerLogoScale: 100,
         tickerOffsetX: 0,
         tickerOffsetY: 0,
@@ -1921,7 +2004,11 @@
         scorecardCenterY: 43,
         scorecardScale: 100,
         scorecardWidthScale: 100,
-        scorecardHeightScale: 100
+        scorecardHeightScale: 100,
+        scorecardFontScale: 100,
+        scorecardRowHeightPx: 28,
+        scorecardColumnWidthPx: 28,
+        scorecardPaddingPx: 10
       };
     }
 
@@ -1931,7 +2018,10 @@
         oddsCenterY: clampNumber(els.oddsCenterY.value, 0, 100),
         oddsScale: clampInt(els.oddsScale.value, 50, 150),
         oddsWidthScale: clampInt(els.oddsWidthScale.value, 50, 180),
-        oddsHeightScale: clampInt(els.oddsHeightScale.value, 50, 180)
+        oddsHeightScale: clampInt(els.oddsHeightScale.value, 50, 180),
+        oddsFontScale: clampInt(els.oddsFontScale.value, 50, 200),
+        oddsRowHeightPx: clampInt(els.oddsRowHeightPx.value, 16, 90),
+        oddsPaddingPx: clampInt(els.oddsPaddingPx.value, 0, 40)
       };
     }
 
@@ -1945,7 +2035,10 @@
         oddsCenterY: 38,
         oddsScale: 100,
         oddsWidthScale: 100,
-        oddsHeightScale: 100
+        oddsHeightScale: 100,
+        oddsFontScale: 100,
+        oddsRowHeightPx: 34,
+        oddsPaddingPx: 10
       };
     }
 

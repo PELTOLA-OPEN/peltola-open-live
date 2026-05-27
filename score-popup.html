@@ -9,18 +9,18 @@
     html, body { margin:0; width:100%; height:100%; overflow:hidden; background:transparent; font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
     body.debug { background:#123; } .hidden { display:none!important; }
     .frame { width:100vw; height:100vh; color:var(--text); text-shadow:0 2px 8px rgba(0,0,0,.55); }
-    .scorecard-card { width:100%; height:100%; display:flex; flex-direction:column; padding:10px; border:2px solid var(--popup-border); border-radius:14px; background:var(--panel); box-sizing:border-box; overflow:hidden; }
+    .scorecard-card { width:100%; height:100%; display:flex; flex-direction:column; padding:var(--scorecard-padding, 10px); border:2px solid var(--popup-border); border-radius:14px; background:var(--panel); box-sizing:border-box; overflow:hidden; }
     .scorecard-header { display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:8px; text-transform:uppercase; flex:none; }
-    .scorecard-title { min-width:0; overflow:hidden; font-size:clamp(14px, 5.2vh, 30px); font-weight:950; letter-spacing:.06em; text-overflow:ellipsis; white-space:nowrap; }
-    .scorecard-through { flex:none; color:var(--muted); font-size:clamp(10px, 3vh, 18px); font-weight:950; letter-spacing:.06em; white-space:nowrap; }
+    .scorecard-title { min-width:0; overflow:hidden; font-size:calc(clamp(14px, 5.2vh, 30px) * var(--scorecard-font-scale, 1)); font-weight:950; letter-spacing:.06em; text-overflow:ellipsis; white-space:nowrap; }
+    .scorecard-through { flex:none; color:var(--muted); font-size:calc(clamp(10px, 3vh, 18px) * var(--scorecard-font-scale, 1)); font-weight:950; letter-spacing:.06em; white-space:nowrap; }
     .scorecard-table-wrap { flex:1; min-height:0; width:100%; overflow:hidden; }
-    .scorecard-table { width:100%; height:100%; border-collapse:collapse; table-layout:fixed; color:var(--text); font-variant-numeric:tabular-nums; --scorecard-grid:var(--table-grid); }
-    .scorecard-table th, .scorecard-table td { border:1px solid var(--scorecard-grid); padding:1px 3px; text-align:center; vertical-align:middle; line-height:1; background-clip:padding-box; }
-    .scorecard-table th { background:var(--table-head-bg); font-size:clamp(8px, 2.5vh, 14px); font-weight:950; text-transform:uppercase; }
-    .scorecard-table td { font-size:clamp(9px, 3vh, 18px); font-weight:850; }
-    .scorecard-player { width:23%; text-align:left!important; padding-left:6px!important; padding-right:6px!important; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .scorecard-total { width:7%; font-weight:950!important; }
-    .scorecard-hole { width:auto; } .scorecard-empty-cell { color:rgba(255,255,255,.28); }
+    .scorecard-table { width:max-content; max-width:100%; height:auto; border-collapse:collapse; table-layout:fixed; color:var(--text); font-variant-numeric:tabular-nums; --scorecard-grid:var(--table-grid); }
+    .scorecard-table th, .scorecard-table td { height:var(--scorecard-row-height, 28px); border:1px solid var(--scorecard-grid); padding:calc(var(--scorecard-cell-padding, 3px) * 0.35) var(--scorecard-cell-padding, 3px); text-align:center; vertical-align:middle; line-height:1; background-clip:padding-box; }
+    .scorecard-table th { background:var(--table-head-bg); font-size:calc(clamp(8px, 2.5vh, 14px) * var(--scorecard-font-scale, 1)); font-weight:950; text-transform:uppercase; }
+    .scorecard-table td { font-size:calc(clamp(9px, 3vh, 18px) * var(--scorecard-font-scale, 1)); font-weight:850; }
+    .scorecard-player { width:var(--scorecard-player-width, 150px); max-width:var(--scorecard-player-width, 150px); text-align:left!important; padding-left:calc(var(--scorecard-cell-padding, 3px) * 2)!important; padding-right:calc(var(--scorecard-cell-padding, 3px) * 2)!important; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .scorecard-total { width:var(--scorecard-total-width, 52px); max-width:var(--scorecard-total-width, 52px); font-weight:950!important; }
+    .scorecard-hole { width:var(--scorecard-column-width, 28px); max-width:var(--scorecard-column-width, 28px); } .scorecard-empty-cell { color:rgba(255,255,255,.28); }
     .scorecard-mark { display:inline-grid!important; place-items:center!important; width:min(2.2em, 70%); aspect-ratio:1/1; border-radius:50%; line-height:1!important; margin:auto!important; font-weight:950!important; }
     .scorecard-cell-fill { font-weight:950!important; }
     .scorecard-mark-albatross { background:#183f8f!important; color:#fff!important; } .scorecard-mark-birdie { background:#78c8ff!important; color:#06131d!important; } .scorecard-mark-bogey { background:#df8b2f!important; color:#050505!important; } .scorecard-mark-double { background:#c65f16!important; color:#050505!important; } .scorecard-mark-triple { background:#e04421!important; color:#050505!important; } .scorecard-mark-quad { background:#b71919!important; color:#fff!important; }
@@ -74,6 +74,15 @@
       document.documentElement.style.setProperty("--popup-border", rgba(line, 0.72));
       document.documentElement.style.setProperty("--table-grid", rgba(line, 0.46));
       document.documentElement.style.setProperty("--table-head-bg", rgba(line, 0.10));
+    }
+
+    function applyScorecardPopupLayout(event) {
+      const layout = { scorecardFontScale:100, scorecardRowHeightPx:28, scorecardColumnWidthPx:28, scorecardPaddingPx:10, ...(event?.overlayLayout || {}) };
+      document.documentElement.style.setProperty("--scorecard-font-scale", String(clampNumber(layout.scorecardFontScale, 50, 200) / 100));
+      document.documentElement.style.setProperty("--scorecard-row-height", `${clampNumber(layout.scorecardRowHeightPx, 14, 80)}px`);
+      document.documentElement.style.setProperty("--scorecard-column-width", `${clampNumber(layout.scorecardColumnWidthPx, 14, 80)}px`);
+      document.documentElement.style.setProperty("--scorecard-cell-padding", `${Math.max(1, Math.min(20, clampNumber(layout.scorecardPaddingPx, 0, 40) / 3))}px`);
+      document.documentElement.style.setProperty("--scorecard-padding", `${clampNumber(layout.scorecardPaddingPx, 0, 40)}px`);
     }
 
     function hexToRgb(value, fallback) {
@@ -256,6 +265,7 @@
     function renderController(event) {
       if (!isUsableEvent(event)) { hideFrame(); return; }
       applyOverlayTheme(event);
+      applyScorecardPopupLayout(event);
       const preview = event.showScorecardPreview === true;
       if (preview) {
         renderScorecard(event, getCompletedThrough(event) || clampInt((event.currentHole || 1) - 1, 0, clampInt(event.holeCount || 18, 1, 36)) || clampInt(event.holeCount || 18, 1, 36));
@@ -290,7 +300,14 @@
     function renderScorecard(event, throughHole) {
       const holeCount = clampInt(event.holeCount || 18, 1, 36); const standings = assignPositions(calculateStandings(event, throughHole));
       scorecardTitleEl.textContent = event.name || "Peltola Open"; scorecardThroughEl.textContent = throughHole === 1 ? "Through 1 hole" : `Through ${throughHole} holes`;
-      const colorMode = getScorecardColorMode(event); const headerCells = Array.from({ length: holeCount }, (_, index) => `<th class="scorecard-hole">${index + 1}</th>`).join("");
+      const colorMode = getScorecardColorMode(event);
+      const layout = { scorecardFontScale:100, scorecardColumnWidthPx:28, scorecardPaddingPx:10, ...(event?.overlayLayout || {}) };
+      const fontScale = clampNumber(layout.scorecardFontScale, 50, 200) / 100;
+      const cellPadding = Math.max(1, Math.min(20, clampNumber(layout.scorecardPaddingPx, 0, 40) / 3));
+      const holeWidth = clampNumber(layout.scorecardColumnWidthPx, 14, 80);
+      const totalWidth = Math.max(42, Math.round(holeWidth * 1.65));
+      const playerWidth = measureScorecardPlayerWidth(standings, fontScale, cellPadding);
+      const headerCells = Array.from({ length: holeCount }, (_, index) => `<th class="scorecard-hole">${index + 1}</th>`).join("");
       const rows = standings.map(team => {
         const holeCells = Array.from({ length: holeCount }, (_, index) => {
           const hole = index + 1; if (hole > throughHole) return `<td class="scorecard-hole scorecard-empty-cell">·</td>`;
@@ -300,7 +317,25 @@
         }).join("");
         return `<tr><td class="scorecard-player">${escapeHtml(team.positionLabel)} - ${escapeHtml(team.name)}</td>${holeCells}<td class="scorecard-total">${formatToPar(team.toPar)}</td></tr>`;
       }).join("");
-      scorecardTableWrapEl.innerHTML = `<table class="scorecard-table"><thead><tr><th class="scorecard-player"></th>${headerCells}<th class="scorecard-total">Total</th></tr></thead><tbody>${rows || `<tr><td class="scorecard-player">Add teams in the control panel.</td><td colspan="${holeCount + 1}"></td></tr>`}</tbody></table>`;
+      scorecardTableWrapEl.innerHTML = `<table class="scorecard-table" style="--scorecard-player-width:${playerWidth}px; --scorecard-total-width:${totalWidth}px; --scorecard-column-width:${holeWidth}px;"><colgroup><col style="width:${playerWidth}px" />${Array.from({ length: holeCount }, () => `<col style="width:${holeWidth}px" />`).join("")}<col style="width:${totalWidth}px" /></colgroup><thead><tr><th class="scorecard-player"></th>${headerCells}<th class="scorecard-total">Total</th></tr></thead><tbody>${rows || `<tr><td class="scorecard-player">Add teams in the control panel.</td><td colspan="${holeCount + 1}"></td></tr>`}</tbody></table>`;
+    }
+
+    function measureScorecardPlayerWidth(standings, fontScale, cellPadding) {
+      const labels = standings.length ? standings.map(team => `${team.positionLabel} - ${team.name}`) : ["Add teams in the control panel."];
+      let measured = 0;
+      try {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          const baseSize = Math.max(9, Math.min(18, window.innerHeight * 0.03)) * fontScale;
+          ctx.font = `850 ${baseSize}px system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif`;
+          measured = Math.max(...labels.map(label => ctx.measureText(label).width));
+        }
+      } catch (_) {}
+      if (!measured) measured = Math.max(...labels.map(label => label.length)) * 8 * fontScale;
+      const spare = Math.max(8, cellPadding * 4 + 8);
+      const viewportCap = Math.max(90, Math.min(window.innerWidth * 0.42, 360));
+      return Math.round(Math.max(70, Math.min(measured + spare, viewportCap)));
     }
   </script>
 </body>

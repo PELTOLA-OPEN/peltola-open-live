@@ -17,11 +17,11 @@
     .ticker-viewport { flex:1; overflow:hidden; min-width:0; }
     .ticker-track { display:flex; width:max-content; height:100%; animation:ticker-scroll var(--ticker-duration, 27.2s) linear infinite; will-change:transform; }
     .ticker-copy { display:flex; align-items:center; gap:34px; padding:0 17px; white-space:nowrap; }
-    .ticker-item { display:inline-flex; align-items:baseline; gap:10px; font-size:calc(clamp(15px, 3.2vh, 23px) * var(--overlay-page-scale)); line-height:1; }
+    .ticker-item { display:inline-flex; align-items:baseline; gap:10px; font-size:calc(clamp(15px, 3.2vh, 23px) * var(--overlay-page-scale) * var(--ticker-font-scale, 1)); line-height:1; }
     .ticker-team { font-weight:850; } .ticker-score { font-weight:950; font-variant-numeric:tabular-nums; }
     .ticker-separator { align-self:stretch; width:30px; margin:0; background:var(--panel-strong); border-radius:0; opacity:1; }
-    .ticker-info { display:grid; place-items:center; min-width:clamp(104px, 18vh, 150px); padding:0 12px; border-right:1px solid var(--line); background:var(--panel-strong); font-size:calc(clamp(11px, 2.2vh, 15px) * var(--overlay-page-scale)); font-weight:950; letter-spacing:.06em; text-align:center; text-transform:uppercase; white-space:nowrap; }
-    .helsinki-clock { position:absolute; left:0; bottom:calc(var(--ticker-height) + 8px); min-width:clamp(104px, 18vh, 150px); padding:8px 12px; border-radius:12px; background:var(--panel-strong); color:var(--text); font-size:calc(clamp(12px, 2.4vh, 17px) * var(--overlay-page-scale)); font-weight:950; letter-spacing:.06em; line-height:1; text-align:center; white-space:nowrap; }
+    .ticker-info { display:grid; place-items:center; min-width:clamp(104px, 18vh, 150px); padding:0 12px; border-right:1px solid var(--line); background:var(--panel-strong); font-size:calc(clamp(11px, 2.2vh, 15px) * var(--overlay-page-scale) * var(--ticker-font-scale, 1)); font-weight:950; letter-spacing:.06em; text-align:center; text-transform:uppercase; white-space:nowrap; }
+    .helsinki-clock { position:absolute; left:0; bottom:calc(var(--ticker-height) + 8px); min-width:clamp(104px, 18vh, 150px); padding:8px 12px; border-radius:12px; background:var(--panel-strong); color:var(--text); font-size:calc(clamp(12px, 2.4vh, 17px) * var(--overlay-page-scale) * var(--ticker-font-scale, 1)); font-weight:950; letter-spacing:.06em; line-height:1; text-align:center; white-space:nowrap; }
     .ticker-logo { position:absolute; left:var(--logo-offset-x, 0px); bottom:calc(var(--ticker-height) + 8px + var(--logo-offset-y, 0px)); width:var(--ticker-logo-size); height:var(--ticker-logo-size); display:grid; place-items:center; }
     .ticker-logo img { display:block; width:100%; height:100%; object-fit:contain; filter:drop-shadow(0 4px 12px rgba(0,0,0,.45)); }
     @keyframes ticker-scroll { from { transform:translateX(0); } to { transform:translateX(-50%); } }
@@ -251,13 +251,15 @@
     }
 
     function applyTickerLayout(event) {
-      const layout = { overlayPageScale:100, tickerHeightPx:58, tickerLogoScale:100, logoOffsetX:0, logoOffsetY:0, ...(event.overlayLayout || {}) };
+      const layout = { overlayPageScale:100, tickerHeightPx:58, tickerFontScale:100, tickerLogoScale:100, logoOffsetX:0, logoOffsetY:0, ...(event.overlayLayout || {}) };
       const scale = clampNumber(layout.overlayPageScale, 30, 200) / 100;
       const tickerHeight = clampNumber(layout.tickerHeightPx, 30, 120) * scale;
+      const fontScale = clampNumber(layout.tickerFontScale || 100, 50, 200) / 100;
       const logoScale = clampNumber(layout.tickerLogoScale || 100, 40, 220) / 100;
       const viewportWidth = Math.max(320, window.innerWidth || 1920);
       const baseLogoSize = Math.max(58, Math.min(104, viewportWidth * 0.08)) * scale * logoScale;
       document.documentElement.style.setProperty("--overlay-page-scale", String(scale));
+      document.documentElement.style.setProperty("--ticker-font-scale", String(fontScale));
       document.documentElement.style.setProperty("--ticker-height", `${tickerHeight}px`);
       document.documentElement.style.setProperty("--ticker-logo-size", `${baseLogoSize}px`);
       document.documentElement.style.setProperty("--logo-offset-x", `${clampNumber(layout.logoOffsetX || 0, -500, 500)}px`);
