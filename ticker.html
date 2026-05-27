@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Peltola Open Ticker Overlay</title>
+  <style>
+    :root {
+      --panel: rgba(0, 0, 0, 0.5); --panel-strong: rgba(0,0,0,0.58); --text:#fff; --muted:rgba(255,255,255,.72); --line:rgba(255,255,255,.16);
+      --overlay-page-scale: 1; --ticker-height: 58px; --ticker-logo-size: 76px;
+    }
+    html, body { margin:0; width:100%; height:100%; overflow:hidden; background:transparent; font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    body.debug { background:#123; }
+    .stage { position:relative; width:100vw; height:100vh; color:var(--text); pointer-events:none; text-shadow:0 2px 8px rgba(0,0,0,.55); }
+    .hidden { display:none!important; }
+    .ticker { position:absolute; left:0; right:0; bottom:0; height:var(--ticker-height); display:flex; overflow:hidden; border-radius:0; background:var(--panel); }
+    .ticker-viewport { flex:1; overflow:hidden; min-width:0; }
+    .ticker-track { display:flex; width:max-content; height:100%; animation:ticker-scroll var(--ticker-duration, 27.2s) linear infinite; will-change:transform; }
+    .ticker-copy { display:flex; align-items:center; gap:34px; padding:0 17px; white-space:nowrap; }
+    .ticker-item { display:inline-flex; align-items:baseline; gap:10px; font-size:calc(clamp(15px, 3.2vh, 23px) * var(--overlay-page-scale)); line-height:1; }
+    .ticker-team { font-weight:850; } .ticker-score { font-weight:950; font-variant-numeric:tabular-nums; }
+    .ticker-separator { align-self:stretch; width:30px; margin:0; background:var(--panel-strong); border-radius:0; opacity:1; }
+    .ticker-info { display:grid; place-items:center; min-width:clamp(104px, 18vh, 150px); padding:0 12px; border-right:1px solid var(--line); background:var(--panel-strong); font-size:calc(clamp(11px, 2.2vh, 15px) * var(--overlay-page-scale)); font-weight:950; letter-spacing:.06em; text-align:center; text-transform:uppercase; white-space:nowrap; }
+    .helsinki-clock { position:absolute; left:0; bottom:calc(var(--ticker-height) + 8px); min-width:clamp(104px, 18vh, 150px); padding:8px 12px; border-radius:12px; background:var(--panel-strong); color:var(--text); font-size:calc(clamp(12px, 2.4vh, 17px) * var(--overlay-page-scale)); font-weight:950; letter-spacing:.06em; line-height:1; text-align:center; white-space:nowrap; }
+    .ticker-logo { position:absolute; left:var(--logo-offset-x, 0px); bottom:calc(var(--ticker-height) + 8px + var(--logo-offset-y, 0px)); width:var(--ticker-logo-size); height:var(--ticker-logo-size); display:grid; place-items:center; }
+    .ticker-logo img { display:block; width:100%; height:100%; object-fit:contain; filter:drop-shadow(0 4px 12px rgba(0,0,0,.45)); }
+    @keyframes ticker-scroll { from { transform:translateX(0); } to { transform:translateX(-50%); } }
+  </style>
+</head>
+<body>
+  <main class="stage">
+    <section id="ticker" class="ticker hidden" aria-live="polite"><div id="tickerInfo" class="ticker-info">Before round</div><div class="ticker-viewport"><div id="tickerTrack" class="ticker-track"></div></div></section>
+    <div id="helsinkiClock" class="helsinki-clock hidden" aria-live="off">--:--:--</div>
+    <div id="tickerLogo" class="ticker-logo hidden" aria-live="off"><img src="peltola-logo-round.png" alt="Peltola Sport logo" /></div>
+  </main>
+  <script type="module">
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+    import { firebaseConfig } from "./firebase-config.js";
+
+    const params = new URLSearchParams(location.search);
+    const eventId = params.get("event") || "2026";
+    if (params.get("debug") === "1") document.body.classList.add("debug");
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    let latestEvent = null;
+    let firebaseLoaded = false;
+
+    function isUsableEvent(event) {
+      return Boolean(event) && typeof event === "object" && (event.teams || event.holes || event.name || event.overlayLayout);
+    }
+
+    function applyOverlayTheme(event) {
+      const theme = {
+        backgroundColor: "#000000",
+        lineColor: "#ffffff",
+        textColor: "#ffffff",
+        overlayOpacity: 50,
+        ...(event?.overlayTheme || {})
+      };
+      const background = hexToRgb(theme.backgroundColor, { r: 0, g: 0, b: 0 });
+      const line = hexToRgb(theme.lineColor, { r: 255, g: 255, b: 255 });
+      const text = hexToRgb(theme.textColor, { r: 255, g: 255, b: 255 });
+      const opacity = clampNumber(theme.overlayOpacity, 0, 100) / 100;
+      const strongOpacity = Math.min(1, opacity + 0.08);
+      document.documentElement.style.setProperty("--panel", rgba(background, opacity));
+      document.documentElement.style.setProperty("--panel-strong", rgba(background, strongOpacity));
+      document.documentElement.style.setProperty("--text", rgb(text));
+      document.documentElement.style.setProperty("--muted", rgba(text, 0.72));
+      document.documentElement.style.setProperty("--line", rgba(line, 0.16));
+      document.documentElement.style.setProperty("--line-subtle", rgba(line, 0.08));
+      document.documentElement.style.setProperty("--popup-border", rgba(line, 0.72));
+      document.documentElement.style.setProperty("--table-grid", rgba(line, 0.46));
+      document.documentElement.style.setProperty("--table-head-bg", rgba(line, 0.10));
+    }
+
+    function hexToRgb(value, fallback) {
+      const text = String(value || "").trim();
+      const match = /^#?([0-9a-fA-F]{6})$/.exec(text);
+      if (!match) return fallback;
+      const hex = match[1];
+      return {
+        r: parseInt(hex.slice(0, 2), 16),
+        g: parseInt(hex.slice(2, 4), 16),
+        b: parseInt(hex.slice(4, 6), 16)
+      };
+    }
+    function rgba(color, alpha) { return `rgba(${color.r}, ${color.g}, ${color.b}, ${clampNumber(alpha, 0, 1)})`; }
+    function rgb(color) { return `rgb(${color.r}, ${color.g}, ${color.b})`; }
+
+    function getCompletedThrough(event) {
+      const teams = Object.values(event?.teams || {});
+      if (!teams.length) return 0;
+      const holeCount = clampInt(event.holeCount || 18, 1, 36);
+      let completedThrough = 0;
+      for (let hole = 1; hole <= holeCount; hole += 1) {
+        const holeKey = String(hole);
+        const everyTeamHasScore = teams.every(team => {
+          const score = Number(team.scores?.[holeKey]);
+          return Number.isFinite(score) && score > 0;
+        });
+        if (!everyTeamHasScore) break;
+        completedThrough = hole;
+      }
+      return completedThrough;
+    }
+
+    function calculateStandings(event, completedThrough) {
+      const holes = event?.holes || {};
+      const teams = event?.teams || {};
+      return Object.entries(teams).map(([teamId, team], index) => {
+        let strokes = 0;
+        let par = 0;
+        for (let hole = 1; hole <= completedThrough; hole += 1) {
+          const holeKey = String(hole);
+          const score = Number(team.scores?.[holeKey]);
+          const holePar = Number(holes[holeKey]?.par || 0);
+          if (Number.isFinite(score) && score > 0) {
+            strokes += score;
+            par += holePar;
+          }
+        }
+        return { id: teamId, name: team.name || `Team ${index + 1}`, order: Number(team.order || index + 1), strokes, par, toPar: strokes - par };
+      }).sort((a, b) => {
+        if (!completedThrough) return a.order - b.order || a.name.localeCompare(b.name);
+        return a.toPar - b.toPar || a.strokes - b.strokes || a.order - b.order || a.name.localeCompare(b.name);
+      });
+    }
+
+    function assignPositions(standings) {
+      let previousKey = null;
+      let previousRank = 0;
+      return standings.map((team, index) => {
+        const key = `${team.toPar}|${team.strokes}`;
+        const rank = previousKey !== null && key === previousKey ? previousRank : index + 1;
+        previousKey = key;
+        previousRank = rank;
+        return { ...team, rank, positionLabel: formatOrdinal(rank) };
+      });
+    }
+
+    function formatPlayedLabel(completedThrough) {
+      if (!completedThrough) return "Before round";
+      if (completedThrough === 1) return "Through 1 hole";
+      return `Through ${completedThrough} holes`;
+    }
+    function formatOrdinal(value) {
+      const v = Math.abs(Number(value));
+      const mod100 = v % 100;
+      if (mod100 >= 11 && mod100 <= 13) return `${v}th`;
+      switch (v % 10) {
+        case 1: return `${v}st`;
+        case 2: return `${v}nd`;
+        case 3: return `${v}rd`;
+        default: return `${v}th`;
+      }
+    }
+    function formatToPar(value) { if (value === 0) return "E"; return value > 0 ? `+${value}` : String(value); }
+    function clampInt(value, min, max) { const number = Number.parseInt(value, 10); if (!Number.isFinite(number)) return min; return Math.max(min, Math.min(max, number)); }
+    function clampNumber(value, min, max) { const number = Number(value); if (!Number.isFinite(number)) return min; return Math.max(min, Math.min(max, number)); }
+    function escapeHtml(value) { return String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char])); }
+
+    function getTeams(event) {
+      return Object.entries(event?.teams || {})
+        .map(([id, team], index) => ({ id, name: team.name || `Team ${index + 1}`, order: Number(team.order || index + 1) }))
+        .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name));
+    }
+    function getPickems(event, teams) {
+      return Object.entries(event?.pickems || {})
+        .map(([id, pickem], index) => ({ id, name: pickem.name || `Participant ${index + 1}`, order: Number(pickem.order || index + 1), picks: normalizePickemPicks(pickem.picks, teams) }))
+        .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name));
+    }
+    function normalizePickemPicks(picks, teams) {
+      const validIds = new Set(teams.map(team => team.id));
+      const normalized = Array.isArray(picks) ? picks.filter(teamId => validIds.has(teamId)) : [];
+      for (const team of teams) if (!normalized.includes(team.id)) normalized.push(team.id);
+      return normalized;
+    }
+    function calculateWinnerOdds(event, teams, completedThrough, holeCount) {
+      const teamCount = teams.length;
+      const pickems = getPickems(event, teams);
+      const standings = assignPositions(calculateStandings(event, completedThrough));
+      const standingById = new Map(standings.map(team => [team.id, team]));
+      if (completedThrough >= holeCount && completedThrough > 0 && standings.length) {
+        const winningScore = standings[0].toPar;
+        return teams.map(team => {
+          const standing = standingById.get(team.id);
+          const isWinner = standing && standing.toPar === winningScore;
+          return { id: team.id, name: team.name, probability: isWinner ? 1 : 0, decimalOdds: isWinner ? 1 : Number.POSITIVE_INFINITY, odds: isWinner ? "1.00" : "—" };
+        }).sort((a, b) => a.decimalOdds - b.decimalOdds || a.name.localeCompare(b.name));
+      }
+      const baseStrength = new Map(teams.map(team => [team.id, 1]));
+      if (pickems.length) {
+        for (const team of teams) baseStrength.set(team.id, 0);
+        for (const pickem of pickems) {
+          pickem.picks.forEach((teamId, index) => {
+            const predictedPosition = index + 1;
+            const points = Math.pow(teamCount - predictedPosition + 1, 2);
+            baseStrength.set(teamId, (baseStrength.get(teamId) || 0) + points);
+          });
+        }
+      }
+      const baseTotal = Array.from(baseStrength.values()).reduce((sum, value) => sum + value, 0) || 1;
+      const progress = Math.max(0, Math.min(0.999, completedThrough / Math.max(1, holeCount)));
+      const liveWeight = completedThrough > 0 ? Math.min(0.98, Math.pow(progress, 0.7)) : 0;
+      const leaderScore = standings.length ? standings[0].toPar : 0;
+      const gapPenalty = 0.8 + liveWeight * 3.2;
+      const liveStrength = new Map();
+      for (const team of teams) {
+        const standing = standingById.get(team.id);
+        if (!standing || !completedThrough) { liveStrength.set(team.id, 1); continue; }
+        const scoreGap = Math.max(0, standing.toPar - leaderScore);
+        const rankBoost = Math.pow(Math.max(1, teamCount - standing.rank + 1), 0.75);
+        liveStrength.set(team.id, Math.max(0.000001, Math.exp(-scoreGap * gapPenalty) * rankBoost));
+      }
+      const liveTotal = Array.from(liveStrength.values()).reduce((sum, value) => sum + value, 0) || 1;
+      const rows = teams.map(team => {
+        const baseProbability = (baseStrength.get(team.id) || 0) / baseTotal;
+        const liveProbability = (liveStrength.get(team.id) || 0) / liveTotal;
+        const probability = Math.max(0.000001, baseProbability * (1 - liveWeight) + liveProbability * liveWeight);
+        const decimalOdds = Math.min(99.99, Math.max(1.01, 1 / probability));
+        return { id: team.id, name: team.name, probability, decimalOdds, odds: decimalOdds.toFixed(2) };
+      });
+      return rows.sort((a, b) => a.decimalOdds - b.decimalOdds || a.name.localeCompare(b.name));
+    }
+
+    const tickerEl = document.getElementById("ticker");
+    const tickerTrackEl = document.getElementById("tickerTrack");
+    const tickerInfoEl = document.getElementById("tickerInfo");
+    const helsinkiClockEl = document.getElementById("helsinkiClock");
+    const tickerLogoEl = document.getElementById("tickerLogo");
+    let clockTimer = null;
+
+    onValue(ref(db, `events/${eventId}`), snapshot => {
+      firebaseLoaded = true; latestEvent = snapshot.val(); renderTickerOverlay(latestEvent);
+    }, error => { console.error(error); });
+
+    function renderTickerOverlay(event) {
+      if (!isUsableEvent(event) || event.showStandings === false) { hideTickerOverlay(); return; }
+      applyOverlayTheme(event); applyTickerLayout(event); updateClockVisibility(event);
+      const completedThrough = getCompletedThrough(event);
+      const standings = assignPositions(calculateStandings(event, completedThrough));
+      tickerEl.classList.remove("hidden");
+      tickerInfoEl.textContent = completedThrough ? `Through ${completedThrough}` : "Before round";
+      const content = standings.length ? standings.map(team => `<span class="ticker-item"><span class="ticker-team">${escapeHtml(team.positionLabel)} - ${escapeHtml(team.name)}</span><span class="ticker-score">${completedThrough ? formatToPar(team.toPar) : "--"}</span></span>`).join("") : `<span class="ticker-item"><span class="ticker-team">Add teams in the control panel</span></span>`;
+      tickerTrackEl.innerHTML = Array.from({ length: 4 }, (_, index) => `<div class="ticker-copy" ${index ? 'aria-hidden="true"' : ''}>${content}<span class="ticker-separator" aria-hidden="true"></span></div>`).join("");
+      const oldDurationSeconds = Math.max(26, Math.min(70, standings.length * 5 + 18));
+      tickerTrackEl.style.setProperty("--ticker-duration", `${oldDurationSeconds / 1.25}s`);
+    }
+
+    function applyTickerLayout(event) {
+      const layout = { overlayPageScale:100, tickerHeightPx:58, tickerLogoScale:100, logoOffsetX:0, logoOffsetY:0, ...(event.overlayLayout || {}) };
+      const scale = clampNumber(layout.overlayPageScale, 30, 200) / 100;
+      const tickerHeight = clampNumber(layout.tickerHeightPx, 30, 120) * scale;
+      const logoScale = clampNumber(layout.tickerLogoScale || 100, 40, 220) / 100;
+      const viewportWidth = Math.max(320, window.innerWidth || 1920);
+      const baseLogoSize = Math.max(58, Math.min(104, viewportWidth * 0.08)) * scale * logoScale;
+      document.documentElement.style.setProperty("--overlay-page-scale", String(scale));
+      document.documentElement.style.setProperty("--ticker-height", `${tickerHeight}px`);
+      document.documentElement.style.setProperty("--ticker-logo-size", `${baseLogoSize}px`);
+      document.documentElement.style.setProperty("--logo-offset-x", `${clampNumber(layout.logoOffsetX || 0, -500, 500)}px`);
+      document.documentElement.style.setProperty("--logo-offset-y", `${clampNumber(layout.logoOffsetY || 0, -500, 500)}px`);
+    }
+    function hideTickerOverlay() { tickerEl.classList.add("hidden"); helsinkiClockEl.classList.add("hidden"); tickerLogoEl.classList.add("hidden"); if (clockTimer) { window.clearInterval(clockTimer); clockTimer = null; } }
+    function updateClockVisibility(event) {
+      const showClock = event.showHelsinkiClock !== false;
+      if (!showClock) { helsinkiClockEl.classList.add("hidden"); tickerLogoEl.classList.add("hidden"); }
+      if (showClock && !clockTimer) { updateHelsinkiClock(); clockTimer = window.setInterval(updateHelsinkiClock, 1000); }
+      if (!showClock && clockTimer) { window.clearInterval(clockTimer); clockTimer = null; }
+      if (showClock) updateHelsinkiClock();
+    }
+    function updateHelsinkiClock() {
+      const parts = new Intl.DateTimeFormat("en-GB", { timeZone:"Europe/Helsinki", hour:"2-digit", minute:"2-digit", second:"2-digit", hour12:false }).formatToParts(new Date());
+      const value = Object.fromEntries(parts.filter(part => part.type !== "literal").map(part => [part.type, part.value]));
+      const showClock = latestEvent?.showHelsinkiClock !== false;
+      const second = Number(value.second || 0);
+      const showLogo = showClock && second >= 0 && second < 10;
+      helsinkiClockEl.textContent = `${value.hour}:${value.minute}:${value.second}`;
+      helsinkiClockEl.classList.toggle("hidden", !showClock || showLogo);
+      tickerLogoEl.classList.toggle("hidden", !showLogo);
+    }
+  </script>
+</body>
+</html>

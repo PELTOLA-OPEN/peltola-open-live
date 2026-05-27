@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Peltola Open Scorecard Popup</title>
+  <style>
+    :root { --panel:rgba(0,0,0,.5); --panel-strong:rgba(0,0,0,.58); --text:#fff; --muted:rgba(255,255,255,.72); --line:rgba(255,255,255,.16); --popup-border:rgba(255,255,255,.72); --table-grid:rgba(255,255,255,.46); --table-head-bg:rgba(255,255,255,.1); }
+    html, body { margin:0; width:100%; height:100%; overflow:hidden; background:transparent; font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    body.debug { background:#123; } .hidden { display:none!important; }
+    .frame { width:100vw; height:100vh; color:var(--text); text-shadow:0 2px 8px rgba(0,0,0,.55); }
+    .scorecard-card { width:100%; height:100%; display:flex; flex-direction:column; padding:10px; border:2px solid var(--popup-border); border-radius:14px; background:var(--panel); box-sizing:border-box; overflow:hidden; }
+    .scorecard-header { display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:8px; text-transform:uppercase; flex:none; }
+    .scorecard-title { min-width:0; overflow:hidden; font-size:clamp(14px, 5.2vh, 30px); font-weight:950; letter-spacing:.06em; text-overflow:ellipsis; white-space:nowrap; }
+    .scorecard-through { flex:none; color:var(--muted); font-size:clamp(10px, 3vh, 18px); font-weight:950; letter-spacing:.06em; white-space:nowrap; }
+    .scorecard-table-wrap { flex:1; min-height:0; width:100%; overflow:hidden; }
+    .scorecard-table { width:100%; height:100%; border-collapse:collapse; table-layout:fixed; color:var(--text); font-variant-numeric:tabular-nums; --scorecard-grid:var(--table-grid); }
+    .scorecard-table th, .scorecard-table td { border:1px solid var(--scorecard-grid); padding:1px 3px; text-align:center; vertical-align:middle; line-height:1; background-clip:padding-box; }
+    .scorecard-table th { background:var(--table-head-bg); font-size:clamp(8px, 2.5vh, 14px); font-weight:950; text-transform:uppercase; }
+    .scorecard-table td { font-size:clamp(9px, 3vh, 18px); font-weight:850; }
+    .scorecard-player { width:23%; text-align:left!important; padding-left:6px!important; padding-right:6px!important; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .scorecard-total { width:7%; font-weight:950!important; }
+    .scorecard-hole { width:auto; } .scorecard-empty-cell { color:rgba(255,255,255,.28); }
+    .scorecard-mark { display:inline-grid!important; place-items:center!important; width:min(2.2em, 70%); aspect-ratio:1/1; border-radius:50%; line-height:1!important; margin:auto!important; font-weight:950!important; }
+    .scorecard-cell-fill { font-weight:950!important; }
+    .scorecard-mark-albatross { background:#183f8f!important; color:#fff!important; } .scorecard-mark-birdie { background:#78c8ff!important; color:#06131d!important; } .scorecard-mark-bogey { background:#df8b2f!important; color:#050505!important; } .scorecard-mark-double { background:#c65f16!important; color:#050505!important; } .scorecard-mark-triple { background:#e04421!important; color:#050505!important; } .scorecard-mark-quad { background:#b71919!important; color:#fff!important; }
+  </style>
+</head>
+<body>
+  <main id="frame" class="frame hidden" aria-live="polite">
+    <section class="scorecard-card">
+      <div class="scorecard-header"><div id="scorecardTitle" class="scorecard-title">Peltola Open</div><div id="scorecardThrough" class="scorecard-through">Through 1</div></div>
+      <div id="scorecardTableWrap" class="scorecard-table-wrap"></div>
+    </section>
+  </main>
+  <script type="module">
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+    import { firebaseConfig } from "./firebase-config.js";
+
+    const params = new URLSearchParams(location.search);
+    const eventId = params.get("event") || "2026";
+    if (params.get("debug") === "1") document.body.classList.add("debug");
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    let latestEvent = null;
+    let firebaseLoaded = false;
+
+    function isUsableEvent(event) {
+      return Boolean(event) && typeof event === "object" && (event.teams || event.holes || event.name || event.overlayLayout);
+    }
+
+    function applyOverlayTheme(event) {
+      const theme = {
+        backgroundColor: "#000000",
+        lineColor: "#ffffff",
+        textColor: "#ffffff",
+        overlayOpacity: 50,
+        ...(event?.overlayTheme || {})
+      };
+      const background = hexToRgb(theme.backgroundColor, { r: 0, g: 0, b: 0 });
+      const line = hexToRgb(theme.lineColor, { r: 255, g: 255, b: 255 });
+      const text = hexToRgb(theme.textColor, { r: 255, g: 255, b: 255 });
+      const opacity = clampNumber(theme.overlayOpacity, 0, 100) / 100;
+      const strongOpacity = Math.min(1, opacity + 0.08);
+      document.documentElement.style.setProperty("--panel", rgba(background, opacity));
+      document.documentElement.style.setProperty("--panel-strong", rgba(background, strongOpacity));
+      document.documentElement.style.setProperty("--text", rgb(text));
+      document.documentElement.style.setProperty("--muted", rgba(text, 0.72));
+      document.documentElement.style.setProperty("--line", rgba(line, 0.16));
+      document.documentElement.style.setProperty("--line-subtle", rgba(line, 0.08));
+      document.documentElement.style.setProperty("--popup-border", rgba(line, 0.72));
+      document.documentElement.style.setProperty("--table-grid", rgba(line, 0.46));
+      document.documentElement.style.setProperty("--table-head-bg", rgba(line, 0.10));
+    }
+
+    function hexToRgb(value, fallback) {
+      const text = String(value || "").trim();
+      const match = /^#?([0-9a-fA-F]{6})$/.exec(text);
+      if (!match) return fallback;
+      const hex = match[1];
+      return {
+        r: parseInt(hex.slice(0, 2), 16),
+        g: parseInt(hex.slice(2, 4), 16),
+        b: parseInt(hex.slice(4, 6), 16)
+      };
+    }
+    function rgba(color, alpha) { return `rgba(${color.r}, ${color.g}, ${color.b}, ${clampNumber(alpha, 0, 1)})`; }
+    function rgb(color) { return `rgb(${color.r}, ${color.g}, ${color.b})`; }
+
+    function getCompletedThrough(event) {
+      const teams = Object.values(event?.teams || {});
+      if (!teams.length) return 0;
+      const holeCount = clampInt(event.holeCount || 18, 1, 36);
+      let completedThrough = 0;
+      for (let hole = 1; hole <= holeCount; hole += 1) {
+        const holeKey = String(hole);
+        const everyTeamHasScore = teams.every(team => {
+          const score = Number(team.scores?.[holeKey]);
+          return Number.isFinite(score) && score > 0;
+        });
+        if (!everyTeamHasScore) break;
+        completedThrough = hole;
+      }
+      return completedThrough;
+    }
+
+    function calculateStandings(event, completedThrough) {
+      const holes = event?.holes || {};
+      const teams = event?.teams || {};
+      return Object.entries(teams).map(([teamId, team], index) => {
+        let strokes = 0;
+        let par = 0;
+        for (let hole = 1; hole <= completedThrough; hole += 1) {
+          const holeKey = String(hole);
+          const score = Number(team.scores?.[holeKey]);
+          const holePar = Number(holes[holeKey]?.par || 0);
+          if (Number.isFinite(score) && score > 0) {
+            strokes += score;
+            par += holePar;
+          }
+        }
+        return { id: teamId, name: team.name || `Team ${index + 1}`, order: Number(team.order || index + 1), strokes, par, toPar: strokes - par };
+      }).sort((a, b) => {
+        if (!completedThrough) return a.order - b.order || a.name.localeCompare(b.name);
+        return a.toPar - b.toPar || a.strokes - b.strokes || a.order - b.order || a.name.localeCompare(b.name);
+      });
+    }
+
+    function assignPositions(standings) {
+      let previousKey = null;
+      let previousRank = 0;
+      return standings.map((team, index) => {
+        const key = `${team.toPar}|${team.strokes}`;
+        const rank = previousKey !== null && key === previousKey ? previousRank : index + 1;
+        previousKey = key;
+        previousRank = rank;
+        return { ...team, rank, positionLabel: formatOrdinal(rank) };
+      });
+    }
+
+    function formatPlayedLabel(completedThrough) {
+      if (!completedThrough) return "Before round";
+      if (completedThrough === 1) return "Through 1 hole";
+      return `Through ${completedThrough} holes`;
+    }
+    function formatOrdinal(value) {
+      const v = Math.abs(Number(value));
+      const mod100 = v % 100;
+      if (mod100 >= 11 && mod100 <= 13) return `${v}th`;
+      switch (v % 10) {
+        case 1: return `${v}st`;
+        case 2: return `${v}nd`;
+        case 3: return `${v}rd`;
+        default: return `${v}th`;
+      }
+    }
+    function formatToPar(value) { if (value === 0) return "E"; return value > 0 ? `+${value}` : String(value); }
+    function clampInt(value, min, max) { const number = Number.parseInt(value, 10); if (!Number.isFinite(number)) return min; return Math.max(min, Math.min(max, number)); }
+    function clampNumber(value, min, max) { const number = Number(value); if (!Number.isFinite(number)) return min; return Math.max(min, Math.min(max, number)); }
+    function escapeHtml(value) { return String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char])); }
+
+    function getTeams(event) {
+      return Object.entries(event?.teams || {})
+        .map(([id, team], index) => ({ id, name: team.name || `Team ${index + 1}`, order: Number(team.order || index + 1) }))
+        .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name));
+    }
+    function getPickems(event, teams) {
+      return Object.entries(event?.pickems || {})
+        .map(([id, pickem], index) => ({ id, name: pickem.name || `Participant ${index + 1}`, order: Number(pickem.order || index + 1), picks: normalizePickemPicks(pickem.picks, teams) }))
+        .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name));
+    }
+    function normalizePickemPicks(picks, teams) {
+      const validIds = new Set(teams.map(team => team.id));
+      const normalized = Array.isArray(picks) ? picks.filter(teamId => validIds.has(teamId)) : [];
+      for (const team of teams) if (!normalized.includes(team.id)) normalized.push(team.id);
+      return normalized;
+    }
+    function calculateWinnerOdds(event, teams, completedThrough, holeCount) {
+      const teamCount = teams.length;
+      const pickems = getPickems(event, teams);
+      const standings = assignPositions(calculateStandings(event, completedThrough));
+      const standingById = new Map(standings.map(team => [team.id, team]));
+      if (completedThrough >= holeCount && completedThrough > 0 && standings.length) {
+        const winningScore = standings[0].toPar;
+        return teams.map(team => {
+          const standing = standingById.get(team.id);
+          const isWinner = standing && standing.toPar === winningScore;
+          return { id: team.id, name: team.name, probability: isWinner ? 1 : 0, decimalOdds: isWinner ? 1 : Number.POSITIVE_INFINITY, odds: isWinner ? "1.00" : "—" };
+        }).sort((a, b) => a.decimalOdds - b.decimalOdds || a.name.localeCompare(b.name));
+      }
+      const baseStrength = new Map(teams.map(team => [team.id, 1]));
+      if (pickems.length) {
+        for (const team of teams) baseStrength.set(team.id, 0);
+        for (const pickem of pickems) {
+          pickem.picks.forEach((teamId, index) => {
+            const predictedPosition = index + 1;
+            const points = Math.pow(teamCount - predictedPosition + 1, 2);
+            baseStrength.set(teamId, (baseStrength.get(teamId) || 0) + points);
+          });
+        }
+      }
+      const baseTotal = Array.from(baseStrength.values()).reduce((sum, value) => sum + value, 0) || 1;
+      const progress = Math.max(0, Math.min(0.999, completedThrough / Math.max(1, holeCount)));
+      const liveWeight = completedThrough > 0 ? Math.min(0.98, Math.pow(progress, 0.7)) : 0;
+      const leaderScore = standings.length ? standings[0].toPar : 0;
+      const gapPenalty = 0.8 + liveWeight * 3.2;
+      const liveStrength = new Map();
+      for (const team of teams) {
+        const standing = standingById.get(team.id);
+        if (!standing || !completedThrough) { liveStrength.set(team.id, 1); continue; }
+        const scoreGap = Math.max(0, standing.toPar - leaderScore);
+        const rankBoost = Math.pow(Math.max(1, teamCount - standing.rank + 1), 0.75);
+        liveStrength.set(team.id, Math.max(0.000001, Math.exp(-scoreGap * gapPenalty) * rankBoost));
+      }
+      const liveTotal = Array.from(liveStrength.values()).reduce((sum, value) => sum + value, 0) || 1;
+      const rows = teams.map(team => {
+        const baseProbability = (baseStrength.get(team.id) || 0) / baseTotal;
+        const liveProbability = (liveStrength.get(team.id) || 0) / liveTotal;
+        const probability = Math.max(0.000001, baseProbability * (1 - liveWeight) + liveProbability * liveWeight);
+        const decimalOdds = Math.min(99.99, Math.max(1.01, 1 / probability));
+        return { id: team.id, name: team.name, probability, decimalOdds, odds: decimalOdds.toFixed(2) };
+      });
+      return rows.sort((a, b) => a.decimalOdds - b.decimalOdds || a.name.localeCompare(b.name));
+    }
+
+
+    function renderScorecardHoleCell(score, par, colorMode) {
+      const relative = score - par;
+      const className = getScorecardMarkClass(relative);
+      if (!className) return `<td class="scorecard-hole">${score}</td>`;
+      if (colorMode === "cell") return `<td class="scorecard-hole scorecard-cell-fill ${className}">${score}</td>`;
+      return `<td class="scorecard-hole"><span class="scorecard-mark ${className}">${score}</span></td>`;
+    }
+    function getScorecardColorMode(event) { return event.scorecardColorMode === "cell" ? "cell" : "circle"; }
+    function getScorecardMarkClass(relative) {
+      if (relative <= -2) return "scorecard-mark-albatross";
+      if (relative === -1) return "scorecard-mark-birdie";
+      if (relative === 1) return "scorecard-mark-bogey";
+      if (relative === 2) return "scorecard-mark-double";
+      if (relative === 3) return "scorecard-mark-triple";
+      if (relative >= 4) return "scorecard-mark-quad";
+      return "";
+    }
+
+    const frameEl = document.getElementById("frame");
+    const scorecardTitleEl = document.getElementById("scorecardTitle");
+    const scorecardThroughEl = document.getElementById("scorecardThrough");
+    const scorecardTableWrapEl = document.getElementById("scorecardTableWrap");
+    let hideTimer = null;
+    let lastFlashSequence = null;
+    let flashActiveUntil = 0;
+    onValue(ref(db, `events/${eventId}`), snapshot => { firebaseLoaded = true; latestEvent = snapshot.val(); renderController(latestEvent); }, error => console.error(error));
+    function renderController(event) {
+      if (!isUsableEvent(event)) { hideFrame(); return; }
+      applyOverlayTheme(event);
+      const preview = event.showScorecardPreview === true;
+      if (preview) {
+        renderScorecard(event, getCompletedThrough(event) || clampInt((event.currentHole || 1) - 1, 0, clampInt(event.holeCount || 18, 1, 36)) || clampInt(event.holeCount || 18, 1, 36));
+        showFrame(0);
+        return;
+      }
+      if (!maybeShowScorecardFlash(event)) hideFrame();
+    }
+    function maybeShowScorecardFlash(event) {
+      const flash = event.overlayFlash;
+      if (!flash || flash.type !== "scorecard" || !flash.sequence) return false;
+      const durationMs = Number(flash.durationMs || 10000);
+      const triggeredAt = Number(flash.triggeredAt || 0);
+      const now = Date.now();
+      if (triggeredAt && now - triggeredAt > durationMs + 1500) {
+        lastFlashSequence = flash.sequence;
+        flashActiveUntil = 0;
+        return false;
+      }
+      if (flash.sequence === lastFlashSequence && now < flashActiveUntil) return true;
+      if (flash.sequence === lastFlashSequence) return false;
+      const throughHole = clampInt(flash.hole || getCompletedThrough(event), 0, clampInt(event.holeCount || 18, 1, 36));
+      if (!throughHole) return false;
+      lastFlashSequence = flash.sequence;
+      flashActiveUntil = now + durationMs;
+      renderScorecard(event, throughHole);
+      showFrame(durationMs);
+      return true;
+    }
+    function showFrame(durationMs) { window.clearTimeout(hideTimer); frameEl.classList.remove("hidden"); if (durationMs) hideTimer = window.setTimeout(hideFrame, durationMs); }
+    function hideFrame() { frameEl.classList.add("hidden"); }
+    function renderScorecard(event, throughHole) {
+      const holeCount = clampInt(event.holeCount || 18, 1, 36); const standings = assignPositions(calculateStandings(event, throughHole));
+      scorecardTitleEl.textContent = event.name || "Peltola Open"; scorecardThroughEl.textContent = throughHole === 1 ? "Through 1 hole" : `Through ${throughHole} holes`;
+      const colorMode = getScorecardColorMode(event); const headerCells = Array.from({ length: holeCount }, (_, index) => `<th class="scorecard-hole">${index + 1}</th>`).join("");
+      const rows = standings.map(team => {
+        const holeCells = Array.from({ length: holeCount }, (_, index) => {
+          const hole = index + 1; if (hole > throughHole) return `<td class="scorecard-hole scorecard-empty-cell">·</td>`;
+          const holeKey = String(hole); const score = Number(event.teams?.[team.id]?.scores?.[holeKey]); const par = Number(event.holes?.[holeKey]?.par || 0);
+          if (!Number.isFinite(score) || score <= 0 || !Number.isFinite(par) || par <= 0) return `<td class="scorecard-hole scorecard-empty-cell">·</td>`;
+          return renderScorecardHoleCell(score, par, colorMode);
+        }).join("");
+        return `<tr><td class="scorecard-player">${escapeHtml(team.positionLabel)} - ${escapeHtml(team.name)}</td>${holeCells}<td class="scorecard-total">${formatToPar(team.toPar)}</td></tr>`;
+      }).join("");
+      scorecardTableWrapEl.innerHTML = `<table class="scorecard-table"><thead><tr><th class="scorecard-player"></th>${headerCells}<th class="scorecard-total">Total</th></tr></thead><tbody>${rows || `<tr><td class="scorecard-player">Add teams in the control panel.</td><td colspan="${holeCount + 1}"></td></tr>`}</tbody></table>`;
+    }
+  </script>
+</body>
+</html>

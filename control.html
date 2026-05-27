@@ -393,8 +393,15 @@
     </section>
 
     <section class="card">
-      <h2>Overlay URL</h2>
-      <p class="muted">Paste this URL into your streaming app as a web overlay/browser-source URL.</p>
+      <h2>Overlay URLs</h2>
+      <p class="muted">Separated browser-source URLs for Streamlabs/PRISM.</p>
+      <p class="muted" style="margin-top:12px;">Ticker + clock/logo overlay.</p>
+      <div id="tickerOverlayUrl" class="url-box"></div>
+      <p class="muted" style="margin-top:12px;">Scorecard popup overlay.</p>
+      <div id="scorePopupUrl" class="url-box"></div>
+      <p class="muted" style="margin-top:12px;">Live odds popup overlay.</p>
+      <div id="oddsPopupUrl" class="url-box"></div>
+      <p class="muted" style="margin-top:12px;">Legacy combined overlay.</p>
       <div id="overlayUrl" class="url-box"></div>
       <p class="muted" style="margin-top:12px;">Permanent scorecard page for browsers and phones.</p>
       <div id="scorecardUrl" class="url-box"></div>
@@ -711,6 +718,9 @@
       loginBtn: document.getElementById("loginBtn"),
       logoutBtn: document.getElementById("logoutBtn"),
       overlayUrl: document.getElementById("overlayUrl"),
+      tickerOverlayUrl: document.getElementById("tickerOverlayUrl"),
+      scorePopupUrl: document.getElementById("scorePopupUrl"),
+      oddsPopupUrl: document.getElementById("oddsPopupUrl"),
       scorecardUrl: document.getElementById("scorecardUrl"),
       setupTabBtn: document.getElementById("setupTabBtn"),
       scoringTabBtn: document.getElementById("scoringTabBtn"),
@@ -801,6 +811,18 @@
       savePickemScoringRulesBtn: document.getElementById("savePickemScoringRulesBtn"),
       pickemRulesStatus: document.getElementById("pickemRulesStatus")
     };
+
+    const tickerOverlayUrl = new URL("ticker.html", location.href);
+    tickerOverlayUrl.searchParams.set("event", eventId);
+    els.tickerOverlayUrl.textContent = tickerOverlayUrl.href;
+
+    const scorePopupUrl = new URL("score-popup.html", location.href);
+    scorePopupUrl.searchParams.set("event", eventId);
+    els.scorePopupUrl.textContent = scorePopupUrl.href;
+
+    const oddsPopupUrl = new URL("odds-popup.html", location.href);
+    oddsPopupUrl.searchParams.set("event", eventId);
+    els.oddsPopupUrl.textContent = oddsPopupUrl.href;
 
     const overlayUrl = new URL("overlay.html", location.href);
     overlayUrl.searchParams.set("event", eventId);
