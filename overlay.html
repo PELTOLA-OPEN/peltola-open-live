@@ -514,16 +514,20 @@
       width: auto;
       max-width: 90vw;
       max-height: 90vh;
-      transform: translate(-50%, -50%) scale(var(--ad-hidden-scale, 0.96)) scaleX(var(--ad-width-factor, 1)) scaleY(var(--ad-height-factor, 1));
+      transform: translate(-50%, -50%) rotate(0deg) scale(var(--ad-show-scale, 1)) scaleX(var(--ad-width-factor, 1)) scaleY(var(--ad-height-factor, 1));
       transform-origin: center center;
       opacity: 0;
       background: transparent;
-      transition: opacity 260ms ease, transform 260ms ease;
     }
 
     .ad-pop.show {
-      transform: translate(-50%, -50%) scale(var(--ad-show-scale, 1)) scaleX(var(--ad-width-factor, 1)) scaleY(var(--ad-height-factor, 1));
       opacity: 1;
+      animation: ad-boomerang-in 720ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    .ad-pop.exiting {
+      opacity: 0;
+      animation: ad-boomerang-out 680ms cubic-bezier(0.5, 0, 0.75, 0) both;
     }
 
     .ad-pop img {
@@ -533,6 +537,32 @@
       max-height: 90vh;
       object-fit: contain;
       filter: none;
+    }
+
+    @keyframes ad-boomerang-in {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) rotate(-540deg) scale(calc(var(--ad-show-scale, 1) * 0.08)) scaleX(var(--ad-width-factor, 1)) scaleY(var(--ad-height-factor, 1));
+      }
+      68% {
+        opacity: 1;
+        transform: translate(-50%, -50%) rotate(18deg) scale(calc(var(--ad-show-scale, 1) * 1.08)) scaleX(var(--ad-width-factor, 1)) scaleY(var(--ad-height-factor, 1));
+      }
+      100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) rotate(0deg) scale(var(--ad-show-scale, 1)) scaleX(var(--ad-width-factor, 1)) scaleY(var(--ad-height-factor, 1));
+      }
+    }
+
+    @keyframes ad-boomerang-out {
+      0% {
+        opacity: 1;
+        transform: translate(-50%, -50%) rotate(0deg) scale(var(--ad-show-scale, 1)) scaleX(var(--ad-width-factor, 1)) scaleY(var(--ad-height-factor, 1));
+      }
+      100% {
+        opacity: 0;
+        transform: translate(calc(-50% + 120vw), -50%) rotate(720deg) scale(calc(var(--ad-show-scale, 1) * 0.35)) scaleX(var(--ad-width-factor, 1)) scaleY(var(--ad-height-factor, 1));
+      }
     }
 
     @media (max-width: 760px) {
@@ -1139,7 +1169,9 @@
 
     function showAdPop(durationMs = 10000, persistent = false) {
       window.clearTimeout(adHideTimer);
-      adPopEl.classList.remove("hidden");
+      if (persistent && adPopEl.classList.contains("show") && !adPopEl.classList.contains("exiting")) return;
+      adPopEl.classList.remove("hidden", "exiting");
+      void adPopEl.offsetWidth;
       requestAnimationFrame(() => adPopEl.classList.add("show"));
 
       if (persistent) return;
@@ -1151,10 +1183,15 @@
     }
 
     function hideAdPop() {
+      if (adPopEl.classList.contains("hidden")) return;
       adPopEl.classList.remove("show");
+      adPopEl.classList.add("exiting");
       window.setTimeout(() => {
-        if (!adPreviewActive && !adFlashActive) adPopEl.classList.add("hidden");
-      }, 320);
+        if (!adPreviewActive && !adFlashActive) {
+          adPopEl.classList.remove("exiting");
+          adPopEl.classList.add("hidden");
+        }
+      }, 720);
     }
 
     function updateScorecardPreview(event) {
