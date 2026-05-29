@@ -10,6 +10,7 @@
       --panel-strong: rgba(0, 0, 0, 0.5);
       --ticker-panel: rgba(0, 0, 0, 0.5);
       --ticker-panel-strong: rgba(0, 0, 0, 0.58);
+      --ticker-info-panel: rgba(0, 0, 0, 0.58);
       --ticker-text: #ffffff;
       --ticker-muted: rgba(255, 255, 255, 0.72);
       --ticker-line: rgba(255, 255, 255, 0.16);
@@ -202,7 +203,7 @@
       min-width: clamp(104px, 10vw, 150px);
       padding: 0 12px;
       border-right: 1px solid var(--ticker-line);
-      background: var(--ticker-panel-strong);
+      background: var(--ticker-info-panel);
       font-size: calc(clamp(11px, 1vw, 15px) * var(--overlay-page-scale, 1) * var(--ticker-font-scale, 1));
       font-weight: 950;
       letter-spacing: 0.06em;
@@ -218,7 +219,7 @@
       min-width: clamp(104px, 10vw, 150px);
       padding: 8px 12px;
       border-radius: 12px;
-      background: var(--ticker-panel-strong);
+      background: var(--ticker-panel);
       color: var(--ticker-text);
       font-size: calc(clamp(12px, 1.1vw, 17px) * var(--overlay-page-scale, 1) * var(--ticker-font-scale, 1));
       font-weight: 950;
@@ -855,6 +856,7 @@
         tickerLineColor: saved.tickerLineColor || legacyLine,
         tickerTextColor: saved.tickerTextColor || legacyText,
         tickerOpacity: saved.tickerOpacity ?? legacyOpacity,
+        tickerInfoOpacity: saved.tickerInfoOpacity ?? saved.tickerOpacity ?? legacyOpacity,
         popupBackgroundColor: saved.popupBackgroundColor || legacyBackground,
         popupLineColor: saved.popupLineColor || legacyLine,
         popupTextColor: saved.popupTextColor || legacyText,
@@ -868,10 +870,12 @@
       const popupLine = hexToRgb(theme.popupLineColor, { r: 255, g: 255, b: 255 });
       const popupText = hexToRgb(theme.popupTextColor, { r: 255, g: 255, b: 255 });
       const tickerOpacity = clampNumber(theme.tickerOpacity, 0, 100) / 100;
+      const tickerInfoOpacity = clampNumber(theme.tickerInfoOpacity, 0, 100) / 100;
       const popupOpacity = clampNumber(theme.popupOpacity, 0, 100) / 100;
 
       document.documentElement.style.setProperty("--ticker-panel", rgba(tickerBackground, tickerOpacity));
       document.documentElement.style.setProperty("--ticker-panel-strong", rgba(tickerStrong, tickerOpacity));
+      document.documentElement.style.setProperty("--ticker-info-panel", rgba(tickerStrong, tickerInfoOpacity));
       document.documentElement.style.setProperty("--ticker-text", rgb(tickerText));
       document.documentElement.style.setProperty("--ticker-muted", rgba(tickerText, 0.72));
       document.documentElement.style.setProperty("--ticker-line", rgba(tickerLine, 0.20));

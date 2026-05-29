@@ -667,6 +667,10 @@
               <input id="tickerOpacity" type="number" min="0" max="100" step="1" />
               <input id="tickerOpacityRange" class="slider" type="range" min="0" max="100" step="1" />
             </label>
+            <label>Before/through opacity, %
+              <input id="tickerInfoOpacity" type="number" min="0" max="100" step="1" />
+              <input id="tickerInfoOpacityRange" class="slider" type="range" min="0" max="100" step="1" />
+            </label>
           </div>
 
           <h3 style="margin-top: 18px;">Scorecard and odds colors</h3>
@@ -925,6 +929,8 @@
       tickerTextColorText: document.getElementById("tickerTextColorText"),
       tickerOpacity: document.getElementById("tickerOpacity"),
       tickerOpacityRange: document.getElementById("tickerOpacityRange"),
+      tickerInfoOpacity: document.getElementById("tickerInfoOpacity"),
+      tickerInfoOpacityRange: document.getElementById("tickerInfoOpacityRange"),
       popupBackgroundColor: document.getElementById("popupBackgroundColor"),
       popupBackgroundColorText: document.getElementById("popupBackgroundColorText"),
       popupLineColor: document.getElementById("popupLineColor"),
@@ -1033,6 +1039,7 @@
       [els.scorecardPaddingPx, els.scorecardPaddingPxRange]
     ].forEach(([numberInput, rangeInput]) => bindSyncedOverlayInput(numberInput, rangeInput, saveOverlayLayoutLive));
     bindSyncedOverlayInput(els.tickerOpacity, els.tickerOpacityRange, saveOverlayThemeLive);
+    bindSyncedOverlayInput(els.tickerInfoOpacity, els.tickerInfoOpacityRange, saveOverlayThemeLive);
     bindSyncedOverlayInput(els.popupOpacity, els.popupOpacityRange, saveOverlayThemeLive);
     bindColorInputs(els.tickerBackgroundColor, els.tickerBackgroundColorText, saveOverlayThemeLive);
     bindColorInputs(els.tickerStrongColor, els.tickerStrongColorText, saveOverlayThemeLive);
@@ -1265,6 +1272,8 @@
       els.tickerTextColorText.value = overlayTheme.tickerTextColor;
       els.tickerOpacity.value = overlayTheme.tickerOpacity;
       els.tickerOpacityRange.value = overlayTheme.tickerOpacity;
+      els.tickerInfoOpacity.value = overlayTheme.tickerInfoOpacity;
+      els.tickerInfoOpacityRange.value = overlayTheme.tickerInfoOpacity;
       els.popupBackgroundColor.value = overlayTheme.popupBackgroundColor;
       els.popupBackgroundColorText.value = overlayTheme.popupBackgroundColor;
       els.popupLineColor.value = overlayTheme.popupLineColor;
@@ -2142,6 +2151,7 @@
       const popupLineColor = normalizeHexColor(els.popupLineColorText.value, normalizeHexColor(els.popupLineColor.value, "#ffffff"));
       const popupTextColor = normalizeHexColor(els.popupTextColorText.value, normalizeHexColor(els.popupTextColor.value, "#ffffff"));
       const tickerOpacity = clampInt(els.tickerOpacity.value, 0, 100);
+      const tickerInfoOpacity = clampInt(els.tickerInfoOpacity.value, 0, 100);
       const popupOpacity = clampInt(els.popupOpacity.value, 0, 100);
       return {
         tickerBackgroundColor,
@@ -2149,6 +2159,7 @@
         tickerLineColor,
         tickerTextColor,
         tickerOpacity,
+        tickerInfoOpacity,
         popupBackgroundColor,
         popupLineColor,
         popupTextColor,
@@ -2173,6 +2184,7 @@
         tickerLineColor: normalizeHexColor(saved.tickerLineColor, legacyLine),
         tickerTextColor: normalizeHexColor(saved.tickerTextColor, legacyText),
         tickerOpacity: clampInt(saved.tickerOpacity ?? legacyOpacity, 0, 100),
+        tickerInfoOpacity: clampInt(saved.tickerInfoOpacity ?? saved.tickerOpacity ?? legacyOpacity, 0, 100),
         popupBackgroundColor: normalizeHexColor(saved.popupBackgroundColor, legacyBackground),
         popupLineColor: normalizeHexColor(saved.popupLineColor, legacyLine),
         popupTextColor: normalizeHexColor(saved.popupTextColor, legacyText),
@@ -2187,6 +2199,7 @@
         tickerLineColor: "#ffffff",
         tickerTextColor: "#ffffff",
         tickerOpacity: 50,
+        tickerInfoOpacity: 50,
         popupBackgroundColor: "#000000",
         popupLineColor: "#ffffff",
         popupTextColor: "#ffffff",

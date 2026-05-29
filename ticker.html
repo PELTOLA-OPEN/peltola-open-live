@@ -6,7 +6,7 @@
   <title>Peltola Open Ticker Overlay</title>
   <style>
     :root {
-      --panel: rgba(0, 0, 0, 0.5); --panel-strong: rgba(0,0,0,0.58); --text:#fff; --muted:rgba(255,255,255,.72); --line:rgba(255,255,255,.16);
+      --panel: rgba(0, 0, 0, 0.5); --panel-strong: rgba(0,0,0,0.58); --info-panel: rgba(0,0,0,0.58); --text:#fff; --muted:rgba(255,255,255,.72); --line:rgba(255,255,255,.16);
       --overlay-page-scale: 1; --ticker-height: 58px; --ticker-logo-size: 76px;
     }
     html, body { margin:0; width:100%; height:100%; overflow:hidden; background:transparent; font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
@@ -20,8 +20,8 @@
     .ticker-item { display:inline-flex; align-items:baseline; gap:10px; font-size:calc(clamp(15px, 3.2vh, 23px) * var(--overlay-page-scale) * var(--ticker-font-scale, 1)); line-height:1; }
     .ticker-team { font-weight:850; } .ticker-score { font-weight:950; font-variant-numeric:tabular-nums; }
     .ticker-separator { align-self:stretch; width:30px; margin:0; background:var(--panel-strong); border-radius:0; opacity:1; }
-    .ticker-info { display:grid; place-items:center; min-width:clamp(104px, 18vh, 150px); padding:0 12px; border-right:1px solid var(--line); background:var(--panel-strong); font-size:calc(clamp(11px, 2.2vh, 15px) * var(--overlay-page-scale) * var(--ticker-font-scale, 1)); font-weight:950; letter-spacing:.06em; text-align:center; text-transform:uppercase; white-space:nowrap; }
-    .helsinki-clock { position:absolute; left:0; bottom:calc(var(--ticker-height) + 8px); min-width:clamp(104px, 18vh, 150px); padding:8px 12px; border-radius:12px; background:var(--panel-strong); color:var(--text); font-size:calc(clamp(12px, 2.4vh, 17px) * var(--overlay-page-scale) * var(--ticker-font-scale, 1)); font-weight:950; letter-spacing:.06em; line-height:1; text-align:center; white-space:nowrap; }
+    .ticker-info { display:grid; place-items:center; min-width:clamp(104px, 18vh, 150px); padding:0 12px; border-right:1px solid var(--line); background:var(--info-panel); font-size:calc(clamp(11px, 2.2vh, 15px) * var(--overlay-page-scale) * var(--ticker-font-scale, 1)); font-weight:950; letter-spacing:.06em; text-align:center; text-transform:uppercase; white-space:nowrap; }
+    .helsinki-clock { position:absolute; left:0; bottom:calc(var(--ticker-height) + 8px); min-width:clamp(104px, 18vh, 150px); padding:8px 12px; border-radius:12px; background:var(--panel); color:var(--text); font-size:calc(clamp(12px, 2.4vh, 17px) * var(--overlay-page-scale) * var(--ticker-font-scale, 1)); font-weight:950; letter-spacing:.06em; line-height:1; text-align:center; white-space:nowrap; }
     .ticker-logo { position:absolute; left:var(--logo-offset-x, 0px); bottom:calc(var(--ticker-height) + 8px + var(--logo-offset-y, 0px)); width:var(--ticker-logo-size); height:var(--ticker-logo-size); display:grid; place-items:center; }
     .ticker-logo img { display:block; width:100%; height:100%; object-fit:contain; filter:drop-shadow(0 4px 12px rgba(0,0,0,.45)); }
     @keyframes ticker-scroll { from { transform:translateX(0); } to { transform:translateX(-50%); } }
@@ -63,15 +63,18 @@
         tickerStrongColor: saved.tickerStrongColor || saved.tickerBackgroundColor || legacyBackground,
         tickerLineColor: saved.tickerLineColor || legacyLine,
         tickerTextColor: saved.tickerTextColor || legacyText,
-        tickerOpacity: saved.tickerOpacity ?? legacyOpacity
+        tickerOpacity: saved.tickerOpacity ?? legacyOpacity,
+        tickerInfoOpacity: saved.tickerInfoOpacity ?? saved.tickerOpacity ?? legacyOpacity
       };
       const background = hexToRgb(theme.tickerBackgroundColor, { r: 0, g: 0, b: 0 });
       const strong = hexToRgb(theme.tickerStrongColor, background);
       const line = hexToRgb(theme.tickerLineColor, { r: 255, g: 255, b: 255 });
       const text = hexToRgb(theme.tickerTextColor, { r: 255, g: 255, b: 255 });
       const opacity = clampNumber(theme.tickerOpacity, 0, 100) / 100;
+      const infoOpacity = clampNumber(theme.tickerInfoOpacity, 0, 100) / 100;
       document.documentElement.style.setProperty("--panel", rgba(background, opacity));
       document.documentElement.style.setProperty("--panel-strong", rgba(strong, opacity));
+      document.documentElement.style.setProperty("--info-panel", rgba(strong, infoOpacity));
       document.documentElement.style.setProperty("--text", rgb(text));
       document.documentElement.style.setProperty("--muted", rgba(text, 0.72));
       document.documentElement.style.setProperty("--line", rgba(line, 0.20));
