@@ -393,20 +393,25 @@
     </section>
 
     <section class="card">
-      <h2>Overlay URLs</h2>
-      <p class="muted">Separated browser-source URLs for Streamlabs/PRISM.</p>
-      <p class="muted" style="margin-top:12px;">Ticker + clock/logo overlay.</p>
-      <div id="tickerOverlayUrl" class="url-box"></div>
-      <p class="muted" style="margin-top:12px;">Scorecard popup overlay.</p>
-      <div id="scorePopupUrl" class="url-box"></div>
-      <p class="muted" style="margin-top:12px;">Live odds popup overlay.</p>
-      <div id="oddsPopupUrl" class="url-box"></div>
-      <p class="muted" style="margin-top:12px;">Ad popup overlay.</p>
-      <div id="adPopupUrl" class="url-box"></div>
-      <p class="muted" style="margin-top:12px;">Legacy combined overlay.</p>
-      <div id="overlayUrl" class="url-box"></div>
-      <p class="muted" style="margin-top:12px;">Permanent scorecard page for browsers and phones.</p>
-      <div id="scorecardUrl" class="url-box"></div>
+      <div class="row between">
+        <h2>Overlay URLs</h2>
+        <button id="toggleUrlListBtn" type="button" aria-expanded="false">Show URLs</button>
+      </div>
+      <div id="urlList" class="hide">
+        <p class="muted">Separated browser-source URLs for Streamlabs/PRISM.</p>
+        <p class="muted" style="margin-top:12px;">Ticker + clock/logo overlay.</p>
+        <div id="tickerOverlayUrl" class="url-box"></div>
+        <p class="muted" style="margin-top:12px;">Scorecard popup overlay.</p>
+        <div id="scorePopupUrl" class="url-box"></div>
+        <p class="muted" style="margin-top:12px;">Live odds popup overlay.</p>
+        <div id="oddsPopupUrl" class="url-box"></div>
+        <p class="muted" style="margin-top:12px;">Ad popup overlay.</p>
+        <div id="adPopupUrl" class="url-box"></div>
+        <p class="muted" style="margin-top:12px;">Legacy combined overlay.</p>
+        <div id="overlayUrl" class="url-box"></div>
+        <p class="muted" style="margin-top:12px;">Permanent scorecard page for browsers and phones.</p>
+        <div id="scorecardUrl" class="url-box"></div>
+      </div>
     </section>
 
     <section id="controlSections" class="hide">
@@ -786,6 +791,8 @@
       password: document.getElementById("password"),
       loginBtn: document.getElementById("loginBtn"),
       logoutBtn: document.getElementById("logoutBtn"),
+      toggleUrlListBtn: document.getElementById("toggleUrlListBtn"),
+      urlList: document.getElementById("urlList"),
       overlayUrl: document.getElementById("overlayUrl"),
       tickerOverlayUrl: document.getElementById("tickerOverlayUrl"),
       scorePopupUrl: document.getElementById("scorePopupUrl"),
@@ -797,6 +804,7 @@
       scoringTabBtn: document.getElementById("scoringTabBtn"),
       pickemsTabBtn: document.getElementById("pickemsTabBtn"),
       setupTab: document.getElementById("setupTab"),
+      overlayTab: document.getElementById("overlayTab"),
       scoringTab: document.getElementById("scoringTab"),
       pickemsTab: document.getElementById("pickemsTab"),
       eventName: document.getElementById("eventName"),
@@ -937,6 +945,13 @@
     els.scorecardUrl.textContent = scorecardUrl.href;
 
     installSliderLocks();
+
+    els.toggleUrlListBtn.addEventListener("click", () => {
+      const willShow = els.urlList.classList.contains("hide");
+      els.urlList.classList.toggle("hide", !willShow);
+      els.toggleUrlListBtn.textContent = willShow ? "Hide URLs" : "Show URLs";
+      els.toggleUrlListBtn.setAttribute("aria-expanded", String(willShow));
+    });
 
     els.loginBtn.addEventListener("click", async () => {
       try {
