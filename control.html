@@ -1507,6 +1507,7 @@
       renderScoring(currentHole, holeCount);
       renderPickems(setupTeams);
       renderPickemScoringRules();
+      renderHistoryAdmin();
     }
 
     function showDataUnavailableState(message) {
@@ -1515,6 +1516,8 @@
       els.parGrid.innerHTML = "";
       els.scoreList.innerHTML = `<p class="muted">${escapeHtml(message)}</p>`;
       els.pickems.innerHTML = `<p class="muted">${escapeHtml(message)}</p>`;
+      if (els.historyAdminList) els.historyAdminList.innerHTML = `<p class="muted">${escapeHtml(message)}</p>`;
+      if (els.historyCountLabel) els.historyCountLabel.textContent = "";
       els.pickemRulesStatus.textContent = message;
       els.scoreHoleTitle.textContent = "Loading";
       els.scoreHoleSub.textContent = "";
