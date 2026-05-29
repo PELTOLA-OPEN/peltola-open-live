@@ -170,7 +170,7 @@
       display: inline-flex;
       align-items: baseline;
       gap: 10px;
-      font-size: calc(clamp(15px, 1.6vw, 23px) * var(--overlay-page-scale, 1));
+      font-size: calc(clamp(15px, 1.6vw, 23px) * var(--overlay-page-scale, 1) * var(--ticker-font-scale, 1));
       line-height: 1;
     }
 
@@ -197,7 +197,7 @@
       padding: 0 12px;
       border-right: 1px solid var(--line);
       background: var(--panel-strong);
-      font-size: calc(clamp(11px, 1vw, 15px) * var(--overlay-page-scale, 1));
+      font-size: calc(clamp(11px, 1vw, 15px) * var(--overlay-page-scale, 1) * var(--ticker-font-scale, 1));
       font-weight: 950;
       letter-spacing: 0.06em;
       text-align: center;
@@ -214,7 +214,7 @@
       border-radius: 12px;
       background: var(--panel-strong);
       color: var(--text);
-      font-size: calc(clamp(12px, 1.1vw, 17px) * var(--overlay-page-scale, 1));
+      font-size: calc(clamp(12px, 1.1vw, 17px) * var(--overlay-page-scale, 1) * var(--ticker-font-scale, 1));
       font-weight: 950;
       letter-spacing: 0.06em;
       line-height: 1;
@@ -499,6 +499,35 @@
     }
 
 
+
+    .ad-pop {
+      position: absolute;
+      left: var(--ad-center-x, 50%);
+      top: var(--ad-center-y, 50%);
+      width: auto;
+      max-width: 90vw;
+      max-height: 90vh;
+      transform: translate(-50%, -50%) scale(var(--ad-hidden-scale, 0.96)) scaleX(var(--ad-width-factor, 1)) scaleY(var(--ad-height-factor, 1));
+      transform-origin: center center;
+      opacity: 0;
+      background: transparent;
+      transition: opacity 260ms ease, transform 260ms ease;
+    }
+
+    .ad-pop.show {
+      transform: translate(-50%, -50%) scale(var(--ad-show-scale, 1)) scaleX(var(--ad-width-factor, 1)) scaleY(var(--ad-height-factor, 1));
+      opacity: 1;
+    }
+
+    .ad-pop img {
+      display: block;
+      width: var(--ad-base-width, min(55vw, 1000px));
+      max-width: 90vw;
+      max-height: 90vh;
+      object-fit: contain;
+      filter: drop-shadow(0 16px 34px rgba(0, 0, 0, 0.45));
+    }
+
     @media (max-width: 760px) {
       body.debug {
         background: #102018;
@@ -544,7 +573,7 @@
       }
 
       .ticker-item {
-        font-size: calc(14px * var(--overlay-page-scale, 1));
+        font-size: calc(14px * var(--overlay-page-scale, 1) * var(--ticker-font-scale, 1));
       }
 
       .scorecard-pop {
@@ -672,7 +701,7 @@
     </section>
 
     <div id="helsinkiClock" class="helsinki-clock hidden" aria-live="off">--:--:--</div>
-    <div id="tickerLogo" class="ticker-logo hidden" aria-live="off"><img src="peltola-logo-round.png" alt="Peltola Sport logo" /></div>
+    <div id="tickerLogo" class="ticker-logo hidden" aria-live="off"><img id="tickerLogoImg" src="peltola-logo-round.png" alt="Peltola Open logo" /></div>
 
     <section id="scorecardPop" class="scorecard-pop hidden" aria-live="polite">
       <div class="scorecard-header">
@@ -687,6 +716,10 @@
         <div id="oddsSubtitle" class="odds-subtitle">Before round</div>
       </div>
       <div id="oddsTableWrap" class="odds-table-wrap"></div>
+    </section>
+
+    <section id="adPop" class="ad-pop hidden" aria-live="polite">
+      <img src="peltola-ad.png" alt="Peltola Open ad" />
     </section>
   </main>
 
@@ -723,15 +756,21 @@
     const oddsTableWrapEl = document.getElementById("oddsTableWrap");
     const helsinkiClockEl = document.getElementById("helsinkiClock");
     const tickerLogoEl = document.getElementById("tickerLogo");
+    const tickerLogoImgEl = document.getElementById("tickerLogoImg");
+    const adPopEl = document.getElementById("adPop");
 
     let lastFlashSequence = null;
     let scorecardHideTimer = null;
     let oddsHideTimer = null;
+    let adHideTimer = null;
     let scorecardPreviewActive = false;
     let oddsPreviewActive = false;
+    let adPreviewActive = false;
     let flashActive = false;
     let oddsFlashActive = false;
+    let adFlashActive = false;
     let lastOddsFlashSequence = null;
+    let lastAdFlashSequence = null;
     let clockTimer = null;
     let latestEvent = null;
     let firebaseLoaded = false;
@@ -774,8 +813,10 @@
 
       maybeShowScorecardFlash(event);
       maybeShowOddsFlash(event);
+      maybeShowAdFlash(event);
       updateScorecardPreview(event);
       updateOddsPreview(event);
+      updateAdPreview(event);
     }
 
     function hideAllOverlay() {
@@ -785,6 +826,7 @@
       tickerLogoEl.classList.add("hidden");
       if (!scorecardPreviewActive && !flashActive) scorecardPopEl.classList.add("hidden");
       if (!oddsPreviewActive && !oddsFlashActive) oddsPopEl.classList.add("hidden");
+      if (!adPreviewActive && !adFlashActive) adPopEl.classList.add("hidden");
       if (clockTimer) {
         window.clearInterval(clockTimer);
         clockTimer = null;
@@ -845,6 +887,7 @@
       const layout = {
         overlayPageScale: 100,
         tickerHeightPx: 58,
+        tickerFontScale: 100,
         tickerLogoScale: 100,
         tickerOffsetX: 0,
         tickerOffsetY: 0,
@@ -872,9 +915,18 @@
         oddsPaddingPx: 10,
         ...(event.oddsOverlayLayout || {})
       };
+      const adLayout = {
+        adCenterX: 50,
+        adCenterY: 50,
+        adScale: 100,
+        adWidthScale: 100,
+        adHeightScale: 100,
+        ...(event.adOverlayLayout || {})
+      };
 
       const overlayPageScale = clampNumber(layout.overlayPageScale, 30, 200) / 100;
-      const tickerHeight = clampNumber(layout.tickerHeightPx, 30, 120) * overlayPageScale;
+      const tickerHeight = clampNumber(layout.tickerHeightPx, 16, 120) * overlayPageScale;
+      const tickerFontScale = clampNumber(layout.tickerFontScale || 100, 50, 200) / 100;
       const tickerLogoScale = clampNumber(layout.tickerLogoScale || 100, 40, 220) / 100;
       const tickerOffsetX = clampNumber(layout.tickerOffsetX || 0, -300, 300);
       const tickerOffsetY = clampNumber(layout.tickerOffsetY || 0, -300, 300);
@@ -899,6 +951,11 @@
       const oddsRowHeight = clampNumber(oddsLayout.oddsRowHeightPx || 34, 16, 90);
       const oddsPadding = clampNumber(oddsLayout.oddsPaddingPx || 10, 0, 40);
       const oddsCellPadding = Math.max(1, Math.min(20, oddsPadding / 2));
+      const adCenterX = clampNumber(adLayout.adCenterX, 0, 100);
+      const adCenterY = clampNumber(adLayout.adCenterY, 0, 100);
+      const adScale = (clampNumber(adLayout.adScale, 20, 200) / 100) * overlayPageScale;
+      const adWidthFactor = clampNumber(adLayout.adWidthScale, 50, 200) / 100;
+      const adHeightFactor = clampNumber(adLayout.adHeightScale, 50, 200) / 100;
       const viewportWidth = Math.max(320, window.innerWidth || 1920);
       const baseHoleWidth = scorecardColumnWidth;
       const baseTotalWidth = Math.max(38, Math.round(scorecardColumnWidth * 1.65));
@@ -911,6 +968,7 @@
 
       document.documentElement.style.setProperty("--overlay-page-scale", String(overlayPageScale));
       document.documentElement.style.setProperty("--ticker-height", `${tickerHeight}px`);
+      document.documentElement.style.setProperty("--ticker-font-scale", String(tickerFontScale));
       document.documentElement.style.setProperty("--ticker-logo-size", `${baseLogoSize}px`);
       document.documentElement.style.setProperty("--ticker-offset-x", `${tickerOffsetX}px`);
       document.documentElement.style.setProperty("--ticker-offset-y", `${tickerOffsetY}px`);
@@ -944,6 +1002,13 @@
       document.documentElement.style.setProperty("--odds-cell-height", `${oddsRowHeight}px`);
       document.documentElement.style.setProperty("--odds-team-max", `${Math.min(260, viewportWidth * 0.32)}px`);
       document.documentElement.style.setProperty("--odds-team-mobile-max", "136px");
+      document.documentElement.style.setProperty("--ad-center-x", `${adCenterX}%`);
+      document.documentElement.style.setProperty("--ad-center-y", `${adCenterY}%`);
+      document.documentElement.style.setProperty("--ad-show-scale", String(adScale));
+      document.documentElement.style.setProperty("--ad-hidden-scale", String(adScale * 0.96));
+      document.documentElement.style.setProperty("--ad-width-factor", String(adWidthFactor));
+      document.documentElement.style.setProperty("--ad-height-factor", String(adHeightFactor));
+      document.documentElement.style.setProperty("--ad-base-width", `${Math.min(1100, Math.max(420, viewportWidth * 0.55))}px`);
     }
 
     function maybeShowScorecardFlash(event) {
@@ -981,6 +1046,22 @@
       lastOddsFlashSequence = flash.sequence;
       renderOddsPop(event);
       showOddsPop(durationMs);
+    }
+
+    function maybeShowAdFlash(event) {
+      const flash = event.overlayFlash;
+      if (!flash || flash.type !== "ad" || !flash.sequence) return;
+      if (flash.sequence === lastAdFlashSequence) return;
+
+      const durationMs = Number(flash.durationMs || 10000);
+      const triggeredAt = Number(flash.triggeredAt || 0);
+      if (triggeredAt && Date.now() - triggeredAt > durationMs + 1500) {
+        lastAdFlashSequence = flash.sequence;
+        return;
+      }
+
+      lastAdFlashSequence = flash.sequence;
+      showAdPop(durationMs);
     }
 
     function showScorecardPop(durationMs = 10000, persistent = false) {
@@ -1023,12 +1104,32 @@
       }, 320);
     }
 
+    function showAdPop(durationMs = 10000, persistent = false) {
+      window.clearTimeout(adHideTimer);
+      adPopEl.classList.remove("hidden");
+      requestAnimationFrame(() => adPopEl.classList.add("show"));
+
+      if (persistent) return;
+      adFlashActive = true;
+      adHideTimer = window.setTimeout(() => {
+        adFlashActive = false;
+        if (!adPreviewActive) hideAdPop();
+      }, durationMs);
+    }
+
+    function hideAdPop() {
+      adPopEl.classList.remove("show");
+      window.setTimeout(() => {
+        if (!adPreviewActive && !adFlashActive) adPopEl.classList.add("hidden");
+      }, 320);
+    }
+
     function updateScorecardPreview(event) {
       const previewEnabled = event.showScorecardPreview === true;
       scorecardPreviewActive = previewEnabled;
       if (previewEnabled) {
         const holeCount = clampInt(event.holeCount || 18, 1, 36);
-        const previewThrough = getCompletedThrough(event) || clampInt((event.currentHole || 1) - 1, 0, holeCount) || holeCount;
+        const previewThrough = getCompletedThrough(event) || clampInt((event.currentHole || 0) - 1, 0, holeCount);
         renderScorecardPop(event, previewThrough);
         showScorecardPop(0, true);
       } else if (!flashActive) {
@@ -1044,6 +1145,16 @@
         showOddsPop(0, true);
       } else if (!oddsFlashActive) {
         hideOddsPop();
+      }
+    }
+
+    function updateAdPreview(event) {
+      const previewEnabled = event.showAdPreview === true;
+      adPreviewActive = previewEnabled;
+      if (previewEnabled) {
+        showAdPop(0, true);
+      } else if (!adFlashActive) {
+        hideAdPop();
       }
     }
 
@@ -1075,7 +1186,11 @@
       const value = Object.fromEntries(parts.filter(part => part.type !== "literal").map(part => [part.type, part.value]));
       const showClock = latestEvent?.showHelsinkiClock !== false;
       const second = Number(value.second || 0);
-      const showLogo = showClock && second >= 0 && second < 10;
+      const showPrimaryLogo = showClock && second >= 0 && second < 10;
+      const showOuluLogo = showClock && second >= 30 && second < 40;
+      const showLogo = showPrimaryLogo || showOuluLogo;
+      tickerLogoImgEl.src = showOuluLogo ? "oulu-logo.png" : "peltola-logo-round.png";
+      tickerLogoImgEl.alt = showOuluLogo ? "Oulu 2026 logo" : "Peltola Open logo";
       helsinkiClockEl.textContent = `${value.hour}:${value.minute}:${value.second}`;
       helsinkiClockEl.classList.toggle("hidden", !showClock || showLogo);
       tickerLogoEl.classList.toggle("hidden", !showLogo);
@@ -1086,7 +1201,8 @@
       const standings = assignPositions(calculateStandings(event, throughHole));
 
       scorecardTitleEl.textContent = event.name || "Peltola Open";
-      scorecardThroughEl.textContent = throughHole === 1 ? "Through 1 hole" : `Through ${throughHole} holes`;
+      scorecardThroughEl.textContent = throughHole > 0 ? (throughHole === 1 ? "Through 1 hole" : `Through ${throughHole} holes`) : "";
+      scorecardThroughEl.classList.toggle("hidden", throughHole <= 0);
 
       const colorMode = getScorecardColorMode(event);
       const layout = { scorecardFontScale:100, scorecardColumnWidthPx:24, scorecardPaddingPx:10, ...(event.overlayLayout || {}) };

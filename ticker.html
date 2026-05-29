@@ -31,7 +31,7 @@
   <main class="stage">
     <section id="ticker" class="ticker hidden" aria-live="polite"><div id="tickerInfo" class="ticker-info">Before round</div><div class="ticker-viewport"><div id="tickerTrack" class="ticker-track"></div></div></section>
     <div id="helsinkiClock" class="helsinki-clock hidden" aria-live="off">--:--:--</div>
-    <div id="tickerLogo" class="ticker-logo hidden" aria-live="off"><img src="peltola-logo-round.png" alt="Peltola Sport logo" /></div>
+    <div id="tickerLogo" class="ticker-logo hidden" aria-live="off"><img id="tickerLogoImg" src="peltola-logo-round.png" alt="Peltola Open logo" /></div>
   </main>
   <script type="module">
 
@@ -231,6 +231,7 @@
     const tickerInfoEl = document.getElementById("tickerInfo");
     const helsinkiClockEl = document.getElementById("helsinkiClock");
     const tickerLogoEl = document.getElementById("tickerLogo");
+    const tickerLogoImgEl = document.getElementById("tickerLogoImg");
     let clockTimer = null;
 
     onValue(ref(db, `events/${eventId}`), snapshot => {
@@ -253,7 +254,7 @@
     function applyTickerLayout(event) {
       const layout = { overlayPageScale:100, tickerHeightPx:58, tickerFontScale:100, tickerLogoScale:100, logoOffsetX:0, logoOffsetY:0, ...(event.overlayLayout || {}) };
       const scale = clampNumber(layout.overlayPageScale, 30, 200) / 100;
-      const tickerHeight = clampNumber(layout.tickerHeightPx, 30, 120) * scale;
+      const tickerHeight = clampNumber(layout.tickerHeightPx, 16, 120) * scale;
       const fontScale = clampNumber(layout.tickerFontScale || 100, 50, 200) / 100;
       const logoScale = clampNumber(layout.tickerLogoScale || 100, 40, 220) / 100;
       const viewportWidth = Math.max(320, window.innerWidth || 1920);
@@ -278,7 +279,11 @@
       const value = Object.fromEntries(parts.filter(part => part.type !== "literal").map(part => [part.type, part.value]));
       const showClock = latestEvent?.showHelsinkiClock !== false;
       const second = Number(value.second || 0);
-      const showLogo = showClock && second >= 0 && second < 10;
+      const showPrimaryLogo = showClock && second >= 0 && second < 10;
+      const showOuluLogo = showClock && second >= 30 && second < 40;
+      const showLogo = showPrimaryLogo || showOuluLogo;
+      tickerLogoImgEl.src = showOuluLogo ? "oulu-logo.png" : "peltola-logo-round.png";
+      tickerLogoImgEl.alt = showOuluLogo ? "Oulu 2026 logo" : "Peltola Open logo";
       helsinkiClockEl.textContent = `${value.hour}:${value.minute}:${value.second}`;
       helsinkiClockEl.classList.toggle("hidden", !showClock || showLogo);
       tickerLogoEl.classList.toggle("hidden", !showLogo);

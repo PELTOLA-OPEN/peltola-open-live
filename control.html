@@ -180,7 +180,7 @@
 
     .tabs {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 8px;
       margin: 14px 0;
     }
@@ -401,6 +401,8 @@
       <div id="scorePopupUrl" class="url-box"></div>
       <p class="muted" style="margin-top:12px;">Live odds popup overlay.</p>
       <div id="oddsPopupUrl" class="url-box"></div>
+      <p class="muted" style="margin-top:12px;">Ad popup overlay.</p>
+      <div id="adPopupUrl" class="url-box"></div>
       <p class="muted" style="margin-top:12px;">Legacy combined overlay.</p>
       <div id="overlayUrl" class="url-box"></div>
       <p class="muted" style="margin-top:12px;">Permanent scorecard page for browsers and phones.</p>
@@ -410,6 +412,7 @@
     <section id="controlSections" class="hide">
       <nav class="tabs" aria-label="Control panel tabs">
         <button id="setupTabBtn" class="tab-btn active" type="button">Setup</button>
+        <button id="overlayTabBtn" class="tab-btn" type="button">Overlay</button>
         <button id="scoringTabBtn" class="tab-btn" type="button">Scoring</button>
         <button id="pickemsTabBtn" class="tab-btn" type="button">Pickems</button>
       </nav>
@@ -447,6 +450,24 @@
         </section>
 
         <section class="card">
+          <div class="row between">
+            <h2>Teams</h2>
+            <button id="addTeamBtn" type="button">Add team</button>
+          </div>
+          <div id="teams" class="teams"></div>
+        </section>
+
+        <section class="card">
+          <div class="row between">
+            <h2>Hole pars</h2>
+            <button id="setAllPar3Btn" type="button">Set all par 3</button>
+          </div>
+          <div id="parGrid" class="par-grid"></div>
+        </section>
+      </section>
+
+      <section id="overlayTab" class="hide">
+        <section class="card">
           <h2>Overlay page scale</h2>
           <div class="grid">
             <label>Scale the overlay page, %
@@ -460,8 +481,8 @@
           <h2>Rolling ticker adjustment</h2>
           <div class="grid">
             <label>Rolling bar height, px
-              <input id="tickerHeightPx" type="number" min="30" max="120" step="1" />
-              <input id="tickerHeightPxRange" class="slider" type="range" min="30" max="120" step="1" />
+              <input id="tickerHeightPx" type="number" min="16" max="120" step="1" />
+              <input id="tickerHeightPxRange" class="slider" type="range" min="16" max="120" step="1" />
             </label>
             <label>Ticker font size, %
               <input id="tickerFontScale" type="number" min="50" max="200" step="1" />
@@ -578,6 +599,35 @@
             <button id="toggleOddsPreviewBtn" class="toggle-off" type="button">Odds popup preview: OFF</button>
           </div>
         </section>
+        <section class="card">
+          <h2>Ad adjustment</h2>
+          <div class="grid">
+            <label>Ad center X, %
+              <input id="adCenterX" type="number" min="0" max="100" step="1" />
+              <input id="adCenterXRange" class="slider" type="range" min="0" max="100" step="1" />
+            </label>
+            <label>Ad center Y, %
+              <input id="adCenterY" type="number" min="0" max="100" step="1" />
+              <input id="adCenterYRange" class="slider" type="range" min="0" max="100" step="1" />
+            </label>
+            <label>Ad size, %
+              <input id="adScale" type="number" min="20" max="200" step="1" />
+              <input id="adScaleRange" class="slider" type="range" min="20" max="200" step="1" />
+            </label>
+            <label>Ad width scale, %
+              <input id="adWidthScale" type="number" min="50" max="200" step="1" />
+              <input id="adWidthScaleRange" class="slider" type="range" min="50" max="200" step="1" />
+            </label>
+            <label>Ad height scale, %
+              <input id="adHeightScale" type="number" min="50" max="200" step="1" />
+              <input id="adHeightScaleRange" class="slider" type="range" min="50" max="200" step="1" />
+            </label>
+          </div>
+          <div class="row" style="margin-top: 12px;">
+            <button id="resetAdOverlayLayoutBtn" type="button">Reset ad adjustments</button>
+            <button id="toggleAdPreviewBtn" class="toggle-off" type="button">Ad preview: OFF</button>
+          </div>
+        </section>
 
         <section class="card">
           <h2>Overlay colors</h2>
@@ -611,21 +661,6 @@
         </section>
 
 
-        <section class="card">
-          <div class="row between">
-            <h2>Teams</h2>
-            <button id="addTeamBtn" type="button">Add team</button>
-          </div>
-          <div id="teams" class="teams"></div>
-        </section>
-
-        <section class="card">
-          <div class="row between">
-            <h2>Hole pars</h2>
-            <button id="setAllPar3Btn" type="button">Set all par 3</button>
-          </div>
-          <div id="parGrid" class="par-grid"></div>
-        </section>
       </section>
 
       <section id="scoringTab" class="hide">
@@ -641,6 +676,7 @@
           <div id="scoreList" class="score-list"></div>
           <div class="row between" style="margin-top: 12px;">
             <button id="showScorecardBtn" class="primary" type="button">Show scorecard 10s</button>
+            <button id="showAdBtn" class="primary" type="button">Show ad 10s</button>
             <button id="showOddsBtn" class="primary" type="button">Show odds 10s</button>
           </div>
           <div id="scoreStatus" class="status"></div>
@@ -737,6 +773,7 @@
     let tickerMoveTarget = "ticker";
     let overlayLayoutSaveTimer = null;
     let oddsOverlayLayoutSaveTimer = null;
+    let adOverlayLayoutSaveTimer = null;
     let overlayThemeSaveTimer = null;
 
     const els = {
@@ -753,8 +790,10 @@
       tickerOverlayUrl: document.getElementById("tickerOverlayUrl"),
       scorePopupUrl: document.getElementById("scorePopupUrl"),
       oddsPopupUrl: document.getElementById("oddsPopupUrl"),
+      adPopupUrl: document.getElementById("adPopupUrl"),
       scorecardUrl: document.getElementById("scorecardUrl"),
       setupTabBtn: document.getElementById("setupTabBtn"),
+      overlayTabBtn: document.getElementById("overlayTabBtn"),
       scoringTabBtn: document.getElementById("scoringTabBtn"),
       pickemsTabBtn: document.getElementById("pickemsTabBtn"),
       setupTab: document.getElementById("setupTab"),
@@ -817,6 +856,18 @@
       oddsPaddingPxRange: document.getElementById("oddsPaddingPxRange"),
       resetOddsOverlayLayoutBtn: document.getElementById("resetOddsOverlayLayoutBtn"),
       toggleOddsPreviewBtn: document.getElementById("toggleOddsPreviewBtn"),
+      adCenterX: document.getElementById("adCenterX"),
+      adCenterXRange: document.getElementById("adCenterXRange"),
+      adCenterY: document.getElementById("adCenterY"),
+      adCenterYRange: document.getElementById("adCenterYRange"),
+      adScale: document.getElementById("adScale"),
+      adScaleRange: document.getElementById("adScaleRange"),
+      adWidthScale: document.getElementById("adWidthScale"),
+      adWidthScaleRange: document.getElementById("adWidthScaleRange"),
+      adHeightScale: document.getElementById("adHeightScale"),
+      adHeightScaleRange: document.getElementById("adHeightScaleRange"),
+      resetAdOverlayLayoutBtn: document.getElementById("resetAdOverlayLayoutBtn"),
+      toggleAdPreviewBtn: document.getElementById("toggleAdPreviewBtn"),
       showHelsinkiClock: document.getElementById("showHelsinkiClock"),
       saveEventBtn: document.getElementById("saveEventBtn"),
       resetScoringPositionBtn: document.getElementById("resetScoringPositionBtn"),
@@ -839,6 +890,7 @@
       prevHoleBtn: document.getElementById("prevHoleBtn"),
       nextHoleBtn: document.getElementById("nextHoleBtn"),
       showScorecardBtn: document.getElementById("showScorecardBtn"),
+      showAdBtn: document.getElementById("showAdBtn"),
       showOddsBtn: document.getElementById("showOddsBtn"),
       scoreHoleTitle: document.getElementById("scoreHoleTitle"),
       scoreHoleSub: document.getElementById("scoreHoleSub"),
@@ -872,6 +924,10 @@
     oddsPopupUrl.searchParams.set("event", eventId);
     els.oddsPopupUrl.textContent = oddsPopupUrl.href;
 
+    const adPopupUrl = new URL("ad-popup.html", location.href);
+    adPopupUrl.searchParams.set("event", eventId);
+    els.adPopupUrl.textContent = adPopupUrl.href;
+
     const overlayUrl = new URL("overlay.html", location.href);
     overlayUrl.searchParams.set("event", eventId);
     els.overlayUrl.textContent = overlayUrl.href;
@@ -895,11 +951,13 @@
 
     els.logoutBtn.addEventListener("click", () => signOut(auth));
     els.setupTabBtn.addEventListener("click", () => setActiveTab("setup"));
+    els.overlayTabBtn.addEventListener("click", () => setActiveTab("overlay"));
     els.scoringTabBtn.addEventListener("click", () => setActiveTab("scoring"));
     els.pickemsTabBtn.addEventListener("click", () => setActiveTab("pickems"));
     els.saveEventBtn.addEventListener("click", saveEventSettings);
     els.resetOverlayLayoutBtn.addEventListener("click", resetOverlayLayout);
     els.resetOddsOverlayLayoutBtn.addEventListener("click", resetOddsOverlayLayout);
+    els.resetAdOverlayLayoutBtn.addEventListener("click", resetAdOverlayLayout);
     [
       [els.overlayPageScale, els.overlayPageScaleRange],
       [els.tickerHeightPx, els.tickerHeightPxRange],
@@ -930,8 +988,16 @@
       [els.oddsRowHeightPx, els.oddsRowHeightPxRange],
       [els.oddsPaddingPx, els.oddsPaddingPxRange]
     ].forEach(([numberInput, rangeInput]) => bindSyncedOverlayInput(numberInput, rangeInput, saveOddsOverlayLayoutLive));
+    [
+      [els.adCenterX, els.adCenterXRange],
+      [els.adCenterY, els.adCenterYRange],
+      [els.adScale, els.adScaleRange],
+      [els.adWidthScale, els.adWidthScaleRange],
+      [els.adHeightScale, els.adHeightScaleRange]
+    ].forEach(([numberInput, rangeInput]) => bindSyncedOverlayInput(numberInput, rangeInput, saveAdOverlayLayoutLive));
     els.toggleScorecardPreviewBtn.addEventListener("click", toggleScorecardPreview);
     els.toggleOddsPreviewBtn.addEventListener("click", toggleOddsPreview);
+    els.toggleAdPreviewBtn.addEventListener("click", toggleAdPreview);
     els.tickerMoveTargetBtn.addEventListener("click", toggleTickerMoveTarget);
     els.tickerLeftBtn.addEventListener("click", () => nudgeTickerPosition(-10, 0));
     els.tickerRightBtn.addEventListener("click", () => nudgeTickerPosition(10, 0));
@@ -949,6 +1015,7 @@
     els.prevHoleBtn.addEventListener("click", () => moveScoringHole(-1));
     els.nextHoleBtn.addEventListener("click", () => moveScoringHole(1));
     els.showScorecardBtn.addEventListener("click", showScorecardNow);
+    els.showAdBtn.addEventListener("click", showAdNow);
     els.showOddsBtn.addEventListener("click", showOddsNow);
     els.addPickemBtn.addEventListener("click", addPickem);
     els.savePickemScoringRulesBtn.addEventListener("click", savePickemScoringRules);
@@ -1005,6 +1072,7 @@
           scorecardColorMode: "circle",
           overlayLayout: getDefaultOverlayLayout(),
           oddsOverlayLayout: getDefaultOddsOverlayLayout(),
+          adOverlayLayout: getDefaultAdOverlayLayout(),
           overlayTheme: getDefaultOverlayTheme(),
           showScorecardPreview: false,
           showOddsPreview: false,
@@ -1029,9 +1097,11 @@
     function setActiveTab(tab) {
       activeTab = tab;
       els.setupTab.classList.toggle("hide", tab !== "setup");
+      els.overlayTab.classList.toggle("hide", tab !== "overlay");
       els.scoringTab.classList.toggle("hide", tab !== "scoring");
       els.pickemsTab.classList.toggle("hide", tab !== "pickems");
       els.setupTabBtn.classList.toggle("active", tab === "setup");
+      els.overlayTabBtn.classList.toggle("active", tab === "overlay");
       els.scoringTabBtn.classList.toggle("active", tab === "scoring");
       els.pickemsTabBtn.classList.toggle("active", tab === "pickems");
       render();
@@ -1109,6 +1179,17 @@
       els.oddsRowHeightPxRange.value = oddsOverlayLayout.oddsRowHeightPx;
       els.oddsPaddingPx.value = oddsOverlayLayout.oddsPaddingPx;
       els.oddsPaddingPxRange.value = oddsOverlayLayout.oddsPaddingPx;
+      const adOverlayLayout = getAdOverlayLayout();
+      els.adCenterX.value = adOverlayLayout.adCenterX;
+      els.adCenterXRange.value = adOverlayLayout.adCenterX;
+      els.adCenterY.value = adOverlayLayout.adCenterY;
+      els.adCenterYRange.value = adOverlayLayout.adCenterY;
+      els.adScale.value = adOverlayLayout.adScale;
+      els.adScaleRange.value = adOverlayLayout.adScale;
+      els.adWidthScale.value = adOverlayLayout.adWidthScale;
+      els.adWidthScaleRange.value = adOverlayLayout.adWidthScale;
+      els.adHeightScale.value = adOverlayLayout.adHeightScale;
+      els.adHeightScaleRange.value = adOverlayLayout.adHeightScale;
       const overlayTheme = getOverlayTheme();
       els.overlayBackgroundColor.value = overlayTheme.backgroundColor;
       els.overlayBackgroundColorText.value = overlayTheme.backgroundColor;
@@ -1505,9 +1586,11 @@
         scorecardColorMode: els.scorecardColorMode.value,
         overlayLayout: readOverlayLayoutInputs(),
         oddsOverlayLayout: readOddsOverlayLayoutInputs(),
+        adOverlayLayout: readAdOverlayLayoutInputs(),
         overlayTheme: readOverlayThemeInputs(),
         showScorecardPreview: eventState.showScorecardPreview === true,
         showOddsPreview: eventState.showOddsPreview === true,
+        showAdPreview: eventState.showAdPreview === true,
         showHelsinkiClock: els.showHelsinkiClock.checked,
         showStandings: els.showStandings.checked,
         updatedAt: Date.now()
@@ -1604,9 +1687,25 @@
       els.scoreStatus.textContent = "Showing odds for 10 seconds.";
     }
 
+    async function showAdNow() {
+      if (!signedIn || !eventState) return;
+      const now = Date.now();
+      await update(eventRef, {
+        overlayFlash: {
+          type: "ad",
+          sequence: now,
+          triggeredAt: now,
+          durationMs: 10000
+        },
+        updatedAt: now
+      });
+      els.scoreStatus.textContent = "Showing ad for 10 seconds.";
+    }
+
     function updatePopupToggleButtons() {
       updateToggleButton(els.toggleScorecardPreviewBtn, eventState?.showScorecardPreview === true, "Scorecard popup preview");
       updateToggleButton(els.toggleOddsPreviewBtn, eventState?.showOddsPreview === true, "Odds popup preview");
+      updateToggleButton(els.toggleAdPreviewBtn, eventState?.showAdPreview === true, "Ad preview");
     }
 
     function updateToggleButton(button, enabled, label) {
@@ -1628,6 +1727,13 @@
       const nextValue = eventState.showOddsPreview !== true;
       await update(eventRef, { showOddsPreview: nextValue, updatedAt: Date.now() });
       els.eventStatus.textContent = nextValue ? "Odds popup preview enabled." : "Odds popup preview disabled.";
+    }
+
+    async function toggleAdPreview() {
+      if (!signedIn || !eventState) return;
+      const nextValue = eventState.showAdPreview !== true;
+      await update(eventRef, { showAdPreview: nextValue, updatedAt: Date.now() });
+      els.eventStatus.textContent = nextValue ? "Ad preview enabled." : "Ad preview disabled.";
     }
 
 
@@ -1664,6 +1770,7 @@
         overlayFlash: null,
         overlayFlashShownHoles: null,
         showOddsPreview: false,
+        showAdPreview: false,
         updatedAt: Date.now()
       };
 
@@ -1902,6 +2009,29 @@
       els.eventStatus.textContent = "Odds overlay adjustments reset.";
     }
 
+    function saveAdOverlayLayoutLive() {
+      if (!signedIn || !eventState) return;
+      window.clearTimeout(adOverlayLayoutSaveTimer);
+      adOverlayLayoutSaveTimer = window.setTimeout(async () => {
+        try {
+          await update(eventRef, {
+            adOverlayLayout: readAdOverlayLayoutInputs(),
+            updatedAt: Date.now()
+          });
+          els.eventStatus.textContent = "Ad adjustments saved.";
+        } catch (error) {
+          els.eventStatus.textContent = readableFirebaseError(error);
+        }
+      }, 180);
+    }
+
+    async function resetAdOverlayLayout() {
+      if (!signedIn) return;
+      const defaults = getDefaultAdOverlayLayout();
+      await update(eventRef, { adOverlayLayout: defaults, updatedAt: Date.now() });
+      els.eventStatus.textContent = "Ad adjustments reset.";
+    }
+
     function saveOverlayThemeLive() {
       if (!signedIn || !eventState) return;
       window.clearTimeout(overlayThemeSaveTimer);
@@ -1967,7 +2097,7 @@
       const currentLayout = getOverlayLayout();
       return {
         overlayPageScale: clampInt(els.overlayPageScale.value, 30, 200),
-        tickerHeightPx: clampInt(els.tickerHeightPx.value, 30, 120),
+        tickerHeightPx: clampInt(els.tickerHeightPx.value, 16, 120),
         tickerFontScale: clampInt(els.tickerFontScale.value, 50, 200),
         tickerLogoScale: clampInt(els.tickerLogoScale.value, 40, 220),
         tickerOffsetX: clampInt(currentLayout.tickerOffsetX || 0, -300, 300),
@@ -2039,6 +2169,30 @@
         oddsFontScale: 100,
         oddsRowHeightPx: 34,
         oddsPaddingPx: 10
+      };
+    }
+
+    function readAdOverlayLayoutInputs() {
+      return {
+        adCenterX: clampNumber(els.adCenterX.value, 0, 100),
+        adCenterY: clampNumber(els.adCenterY.value, 0, 100),
+        adScale: clampInt(els.adScale.value, 20, 200),
+        adWidthScale: clampInt(els.adWidthScale.value, 50, 200),
+        adHeightScale: clampInt(els.adHeightScale.value, 50, 200)
+      };
+    }
+
+    function getAdOverlayLayout() {
+      return { ...getDefaultAdOverlayLayout(), ...(eventState?.adOverlayLayout || {}) };
+    }
+
+    function getDefaultAdOverlayLayout() {
+      return {
+        adCenterX: 50,
+        adCenterY: 50,
+        adScale: 100,
+        adWidthScale: 100,
+        adHeightScale: 100
       };
     }
 

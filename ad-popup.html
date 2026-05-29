@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Peltola Open Ad Overlay</title>
+  <style>
+    html, body { margin:0; width:100%; height:100%; overflow:hidden; background:transparent; }
+    body.debug { background:rgba(20,40,80,.35); }
+    .stage { position:relative; width:100vw; height:100vh; pointer-events:none; }
+    .hidden { display:none!important; }
+    .ad-pop {
+      position:absolute;
+      left:var(--ad-center-x, 50%);
+      top:var(--ad-center-y, 50%);
+      transform:translate(-50%, -50%) scale(var(--ad-hidden-scale, .96)) scaleX(var(--ad-width-factor, 1)) scaleY(var(--ad-height-factor, 1));
+      transform-origin:center center;
+      opacity:0;
+      transition:opacity 260ms ease, transform 260ms ease;
+    }
+    .ad-pop.show {
+      transform:translate(-50%, -50%) scale(var(--ad-show-scale, 1)) scaleX(var(--ad-width-factor, 1)) scaleY(var(--ad-height-factor, 1));
+      opacity:1;
+    }
+    .ad-pop img {
+      display:block;
+      width:var(--ad-base-width, min(55vw, 1000px));
+      max-width:90vw;
+      max-height:90vh;
+      object-fit:contain;
+      filter:drop-shadow(0 16px 34px rgba(0,0,0,.45));
+    }
+  </style>
+</head>
+<body>
+  <main class="stage">
+    <section id="adPop" class="ad-pop hidden" aria-live="polite"><img src="peltola-ad.png" alt="Peltola Open ad" /></section>
+  </main>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+    import { firebaseConfig } from "./firebase-config.js";
+
+    const params = new URLSearchParams(location.search);
+    const eventId = params.get("event") || "2026";
+    if (params.get("debug") === "1") document.body.classList.add("debug");
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const adPopEl = document.getElementById("adPop");
+
+    let lastAdFlashSequence = null;
+    let adHideTimer = null;
+    let adPreviewActive = false;
+    let adFlashActive = false;
+
+    onValue(ref(db, `events/${eventId}`), snapshot => renderAdOverlay(snapshot.val()), error => { console.error(error); hideAdPop(true); });
+
+    function renderAdOverlay(event) {
+      if (!event || typeof event !== "object") { hideAdPop(true); return; }
+      applyAdLayout(event);
+      maybeShowAdFlash(event);
+      updateAdPreview(event);
+    }
+
+    function applyAdLayout(event) {
+      const layout = { adCenterX:50, adCenterY:50, adScale:100, adWidthScale:100, adHeightScale:100, ...(event.adOverlayLayout || {}) };
+      const overlayScale = clampNumber(event.overlayLayout?.overlayPageScale ?? 100, 30, 200) / 100;
+      const adScale = (clampNumber(layout.adScale, 20, 200) / 100) * overlayScale;
+      const viewportWidth = Math.max(320, window.innerWidth || 1920);
+      document.documentElement.style.setProperty("--ad-center-x", `${clampNumber(layout.adCenterX, 0, 100)}%`);
+      document.documentElement.style.setProperty("--ad-center-y", `${clampNumber(layout.adCenterY, 0, 100)}%`);
+      document.documentElement.style.setProperty("--ad-show-scale", String(adScale));
+      document.documentElement.style.setProperty("--ad-hidden-scale", String(adScale * 0.96));
+      document.documentElement.style.setProperty("--ad-width-factor", String(clampNumber(layout.adWidthScale, 50, 200) / 100));
+      document.documentElement.style.setProperty("--ad-height-factor", String(clampNumber(layout.adHeightScale, 50, 200) / 100));
+      document.documentElement.style.setProperty("--ad-base-width", `${Math.min(1100, Math.max(420, viewportWidth * 0.55))}px`);
+    }
+
+    function maybeShowAdFlash(event) {
+      const flash = event.overlayFlash;
+      if (!flash || flash.type !== "ad" || !flash.sequence) return;
+      if (flash.sequence === lastAdFlashSequence) return;
+      const durationMs = Number(flash.durationMs || 10000);
+      const triggeredAt = Number(flash.triggeredAt || 0);
+      if (triggeredAt && Date.now() - triggeredAt > durationMs + 1500) { lastAdFlashSequence = flash.sequence; return; }
+      lastAdFlashSequence = flash.sequence;
+      showAdPop(durationMs);
+    }
+
+    function updateAdPreview(event) {
+      adPreviewActive = event.showAdPreview === true;
+      if (adPreviewActive) showAdPop(0, true);
+      else if (!adFlashActive) hideAdPop();
+    }
+
+    function showAdPop(durationMs = 10000, persistent = false) {
+      window.clearTimeout(adHideTimer);
+      adPopEl.classList.remove("hidden");
+      requestAnimationFrame(() => adPopEl.classList.add("show"));
+      if (persistent) return;
+      adFlashActive = true;
+      adHideTimer = window.setTimeout(() => { adFlashActive = false; if (!adPreviewActive) hideAdPop(); }, durationMs);
+    }
+
+    function hideAdPop(force = false) {
+      adPopEl.classList.remove("show");
+      window.setTimeout(() => { if (force || (!adPreviewActive && !adFlashActive)) adPopEl.classList.add("hidden"); }, 320);
+    }
+
+    function clampNumber(value, min, max) { const number = Number(value); if (!Number.isFinite(number)) return min; return Math.max(min, Math.min(max, number)); }
+  </script>
+</body>
+</html>
