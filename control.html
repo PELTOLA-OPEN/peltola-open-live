@@ -820,6 +820,8 @@
     let firebaseError = null;
     let creatingEvent = false;
     let signedIn = false;
+    let currentUserEmail = "";
+    const SCORING_ONLY_EMAILS = new Set(["tulos@peltola.com"]);
     let activeTab = "setup";
     let tickerMoveTarget = "ticker";
     let overlayLayoutSaveTimer = null;
@@ -1107,11 +1109,14 @@
 
     onAuthStateChanged(auth, user => {
       signedIn = Boolean(user);
+      currentUserEmail = user?.email ? String(user.email).trim().toLowerCase() : "";
       els.authState.textContent = user ? `Signed in: ${user.email}` : "Not signed in";
       els.loginForm.classList.toggle("hide", Boolean(user));
       els.signedInTools.classList.toggle("hide", !user);
       els.controlSections.classList.toggle("hide", !user);
-      if (user) maybeInitEventIfMissing();
+      if (user && isScoringOnlyUser()) activeTab = "scoring";
+      if (user && !isScoringOnlyUser()) maybeInitEventIfMissing();
+      applyAccessMode();
       render();
     });
 
@@ -1132,7 +1137,7 @@
     );
 
     function maybeInitEventIfMissing() {
-      if (!signedIn || !firebaseLoaded || firebaseError || eventState !== null || creatingEvent) return;
+      if (!signedIn || isScoringOnlyUser() || !firebaseLoaded || firebaseError || eventState !== null || creatingEvent) return;
       initEventIfMissing();
     }
 
@@ -1180,6 +1185,7 @@
     }
 
     function setActiveTab(tab) {
+      if (isScoringOnlyUser()) tab = "scoring";
       activeTab = tab;
       els.setupTab.classList.toggle("hide", tab !== "setup");
       els.overlayTab.classList.toggle("hide", tab !== "overlay");
@@ -1189,11 +1195,32 @@
       els.overlayTabBtn.classList.toggle("active", tab === "overlay");
       els.scoringTabBtn.classList.toggle("active", tab === "scoring");
       els.pickemsTabBtn.classList.toggle("active", tab === "pickems");
+      applyAccessMode();
       render();
+    }
+
+    function isScoringOnlyUser() {
+      return SCORING_ONLY_EMAILS.has(currentUserEmail);
+    }
+
+    function applyAccessMode() {
+      const scoringOnly = isScoringOnlyUser();
+      if (scoringOnly && activeTab !== "scoring") activeTab = "scoring";
+      els.setupTabBtn.classList.toggle("hide", scoringOnly);
+      els.overlayTabBtn.classList.toggle("hide", scoringOnly);
+      els.pickemsTabBtn.classList.toggle("hide", scoringOnly);
+      els.scoringTabBtn.classList.toggle("active", scoringOnly || activeTab === "scoring");
+      if (scoringOnly) {
+        els.setupTab.classList.add("hide");
+        els.overlayTab.classList.add("hide");
+        els.pickemsTab.classList.add("hide");
+        els.scoringTab.classList.remove("hide");
+      }
     }
 
     function render() {
       if (!signedIn) return;
+      applyAccessMode();
       if (firebaseError) {
         showDataUnavailableState(`Firebase error: ${readableFirebaseError(firebaseError)}`);
         return;
