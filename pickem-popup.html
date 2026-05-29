@@ -17,13 +17,13 @@
     .pickem-pop-table th, .pickem-pop-table td { height:var(--pickem-row-height, 34px); border:1px solid var(--pickem-grid); padding:calc(var(--pickem-cell-padding, 6px) * 0.35) var(--pickem-cell-padding, 6px); vertical-align:middle; line-height:1; background-clip:padding-box; white-space:nowrap; }
     .pickem-pop-table th { background:var(--table-head-bg); font-size:calc(clamp(9px, 3vh, 14px) * var(--pickem-header-font-scale, var(--pickem-font-scale, 1))); font-weight:950; text-transform:uppercase; }
     .pickem-pop-table td { font-size:calc(clamp(11px, 4vh, 20px) * var(--pickem-font-scale, 1)); font-weight:850; }
-    .pickem-pos-cell { width:var(--pickem-pos-width, 42px); max-width:var(--pickem-pos-width, 42px); text-align:center; font-weight:950!important; }
+    .pickem-pos-cell { width:var(--pickem-pos-width, 54px); max-width:var(--pickem-pos-width, 54px); text-align:center; font-weight:950!important; }
     .pickem-name-cell { width:var(--pickem-name-width, 150px); max-width:var(--pickem-name-width, 150px); overflow:hidden; text-align:left; text-overflow:ellipsis; }
     .pickem-score-cell { width:var(--pickem-score-width, 62px); max-width:var(--pickem-score-width, 62px); text-align:right; font-weight:950!important; }
   </style>
 </head>
 <body>
-  <main id="frame" class="frame hidden" aria-live="polite"><section class="pickem-card"><div class="pickem-header"><div class="pickem-title">Pickem standings</div></div><div id="pickemTableWrap" class="pickem-table-wrap"></div></section></main>
+  <main id="frame" class="frame hidden" aria-live="polite"><section class="pickem-card"><div class="pickem-header"><div class="pickem-title">PICK'EMS</div></div><div id="pickemTableWrap" class="pickem-table-wrap"></div></section></main>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
@@ -141,7 +141,7 @@
       if (!measuredScore) measuredScore = 46 * fontScale;
       const spare = Math.max(8, cellPadding * 2 + 8);
       const nameCap = Math.max(90, Math.min(window.innerWidth * 0.62, 360));
-      return { pos: Math.round(Math.max(34, Math.min(58, 38 * fontScale + cellPadding * 2))), name: Math.round(Math.max(70, Math.min(measuredName + spare, nameCap))), score: Math.round(Math.max(52, Math.min(measuredScore + spare, 86))) };
+      return { pos: Math.round(Math.max(46, Math.min(72, 50 * fontScale + cellPadding * 2))), name: Math.round(Math.max(70, Math.min(measuredName + spare, nameCap))), score: Math.round(Math.max(52, Math.min(measuredScore + spare, 86))) };
     }
 
     function getTeams(event) { return Object.entries(event.teams || {}).map(([id, team], index) => ({ id, name: team.name || `Team ${index + 1}`, order: Number(team.order || index + 1) })).sort((a, b) => a.order - b.order || a.name.localeCompare(b.name)); }
