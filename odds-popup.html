@@ -8,14 +8,14 @@
     :root { --panel:rgba(0,0,0,.5); --panel-strong:rgba(0,0,0,.58); --text:#fff; --muted:rgba(255,255,255,.72); --line:rgba(255,255,255,.16); --popup-border:rgba(255,255,255,.72); --table-grid:rgba(255,255,255,.46); --table-head-bg:rgba(255,255,255,.1); }
     html, body { margin:0; width:100%; height:100%; overflow:hidden; background:transparent; font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
     body.debug { background:#123; } .hidden { display:none!important; }
-    .frame { width:100vw; height:100vh; color:var(--text); text-shadow:0 2px 8px rgba(0,0,0,.55); }
+    .frame { width:100vw; height:100vh; color:var(--text); text-shadow:none; }
     .odds-card { width:100%; height:100%; display:flex; flex-direction:column; padding:var(--odds-padding, 10px); border:2px solid var(--popup-border); border-radius:14px; background:var(--panel); box-sizing:border-box; overflow:hidden; }
     .odds-header { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:8px; text-transform:uppercase; flex:none; }
-    .odds-title { font-size:calc(clamp(15px, 5vh, 26px) * var(--odds-font-scale, 1)); font-weight:950; letter-spacing:.06em; white-space:nowrap; }
+    .odds-title { font-size:calc(clamp(15px, 5vh, 26px) * var(--odds-header-font-scale, var(--odds-font-scale, 1))); font-weight:950; letter-spacing:.06em; white-space:nowrap; }
     .odds-table-wrap { flex:1; min-height:0; width:100%; overflow:hidden; }
     .odds-pop-table { width:max-content; max-width:100%; height:auto; border-collapse:collapse; table-layout:fixed; color:var(--text); font-variant-numeric:tabular-nums; --odds-grid:var(--table-grid); }
     .odds-pop-table th, .odds-pop-table td { height:var(--odds-row-height, 34px); border:1px solid var(--odds-grid); padding:calc(var(--odds-cell-padding, 6px) * 0.35) var(--odds-cell-padding, 6px); vertical-align:middle; line-height:1; background-clip:padding-box; white-space:nowrap; }
-    .odds-pop-table th { background:var(--table-head-bg); font-size:calc(clamp(9px, 3vh, 14px) * var(--odds-font-scale, 1)); font-weight:950; text-transform:uppercase; }
+    .odds-pop-table th { background:var(--table-head-bg); font-size:calc(clamp(9px, 3vh, 14px) * var(--odds-header-font-scale, var(--odds-font-scale, 1))); font-weight:950; text-transform:uppercase; }
     .odds-pop-table td { font-size:calc(clamp(11px, 4vh, 20px) * var(--odds-font-scale, 1)); font-weight:850; }
     .odds-pos-cell { width:var(--odds-pos-width, 42px); max-width:var(--odds-pos-width, 42px); text-align:center; font-weight:950!important; }
     .odds-team-cell { width:var(--odds-team-width, 150px); max-width:var(--odds-team-width, 150px); overflow:hidden; text-align:left; text-overflow:ellipsis; }
@@ -70,8 +70,9 @@
       document.documentElement.style.setProperty("--table-head-bg", rgba(line, 0.10));
     }
     function applyOddsPopupLayout(event) {
-      const layout = { oddsFontScale:100, oddsRowHeightPx:34, oddsPaddingPx:10, ...(event?.oddsOverlayLayout || {}) };
+      const layout = { oddsFontScale:100, oddsHeaderFontScale:100, oddsRowHeightPx:34, oddsPaddingPx:10, ...(event?.oddsOverlayLayout || {}) };
       document.documentElement.style.setProperty("--odds-font-scale", String(clampNumber(layout.oddsFontScale, 50, 200) / 100));
+      document.documentElement.style.setProperty("--odds-header-font-scale", String(clampNumber(layout.oddsHeaderFontScale, 50, 220) / 100));
       document.documentElement.style.setProperty("--odds-row-height", `${clampNumber(layout.oddsRowHeightPx, 16, 90)}px`);
       document.documentElement.style.setProperty("--odds-cell-padding", `${Math.max(1, Math.min(20, clampNumber(layout.oddsPaddingPx, 0, 40) / 2))}px`);
       document.documentElement.style.setProperty("--odds-padding", `${clampNumber(layout.oddsPaddingPx, 0, 40)}px`);
@@ -256,7 +257,7 @@
     function hideFrame() { frameEl.classList.add("hidden"); }
     function renderOdds(event) {
       const teams = getTeams(event); const completedThrough = getCompletedThrough(event); const holeCount = clampInt(event.holeCount || 18, 1, 36); const oddsRows = calculateWinnerOdds(event, teams, completedThrough, holeCount);
-      const layout = { oddsFontScale:100, oddsPaddingPx:10, ...(event?.oddsOverlayLayout || {}) };
+      const layout = { oddsFontScale:100, oddsHeaderFontScale:100, oddsPaddingPx:10, ...(event?.oddsOverlayLayout || {}) };
       const fontScale = clampNumber(layout.oddsFontScale, 50, 200) / 100;
       const cellPadding = Math.max(1, Math.min(24, clampNumber(layout.oddsPaddingPx, 0, 50) / 2));
       const widths = measureOddsColumnWidths(oddsRows, fontScale, cellPadding);

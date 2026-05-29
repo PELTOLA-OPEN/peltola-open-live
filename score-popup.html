@@ -8,15 +8,15 @@
     :root { --panel:rgba(0,0,0,.5); --panel-strong:rgba(0,0,0,.58); --text:#fff; --muted:rgba(255,255,255,.72); --line:rgba(255,255,255,.16); --popup-border:rgba(255,255,255,.72); --table-grid:rgba(255,255,255,.46); --table-head-bg:rgba(255,255,255,.1); }
     html, body { margin:0; width:100%; height:100%; overflow:hidden; background:transparent; font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
     body.debug { background:#123; } .hidden { display:none!important; }
-    .frame { width:100vw; height:100vh; color:var(--text); text-shadow:0 2px 8px rgba(0,0,0,.55); }
+    .frame { width:100vw; height:100vh; color:var(--text); text-shadow:none; }
     .scorecard-card { width:100%; height:100%; display:flex; flex-direction:column; padding:var(--scorecard-padding, 10px); border:2px solid var(--popup-border); border-radius:14px; background:var(--panel); box-sizing:border-box; overflow:hidden; }
     .scorecard-header { display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:8px; text-transform:uppercase; flex:none; }
-    .scorecard-title { min-width:0; overflow:hidden; font-size:calc(clamp(14px, 5.2vh, 30px) * var(--scorecard-font-scale, 1)); font-weight:950; letter-spacing:.06em; text-overflow:ellipsis; white-space:nowrap; }
-    .scorecard-through { flex:none; color:var(--muted); font-size:calc(clamp(10px, 3vh, 18px) * var(--scorecard-font-scale, 1)); font-weight:950; letter-spacing:.06em; white-space:nowrap; }
+    .scorecard-title { min-width:0; overflow:hidden; font-size:calc(clamp(14px, 5.2vh, 30px) * var(--scorecard-header-font-scale, var(--scorecard-font-scale, 1))); font-weight:950; letter-spacing:.06em; text-overflow:ellipsis; white-space:nowrap; }
+    .scorecard-through { flex:none; color:var(--muted); font-size:calc(clamp(10px, 3vh, 18px) * var(--scorecard-header-font-scale, var(--scorecard-font-scale, 1))); font-weight:950; letter-spacing:.06em; white-space:nowrap; }
     .scorecard-table-wrap { flex:1; min-height:0; width:100%; overflow:hidden; }
     .scorecard-table { width:max-content; max-width:100%; height:auto; border-collapse:collapse; table-layout:fixed; color:var(--text); font-variant-numeric:tabular-nums; --scorecard-grid:var(--table-grid); }
     .scorecard-table th, .scorecard-table td { height:var(--scorecard-row-height, 28px); border:1px solid var(--scorecard-grid); padding:calc(var(--scorecard-cell-padding, 3px) * 0.35) var(--scorecard-cell-padding, 3px); text-align:center; vertical-align:middle; line-height:1; background-clip:padding-box; }
-    .scorecard-table th { background:var(--table-head-bg); font-size:calc(clamp(8px, 2.5vh, 14px) * var(--scorecard-font-scale, 1)); font-weight:950; text-transform:uppercase; }
+    .scorecard-table th { background:var(--table-head-bg); font-size:calc(clamp(8px, 2.5vh, 14px) * var(--scorecard-header-font-scale, var(--scorecard-font-scale, 1))); font-weight:950; text-transform:uppercase; }
     .scorecard-table td { font-size:calc(clamp(9px, 3vh, 18px) * var(--scorecard-font-scale, 1)); font-weight:850; }
     .scorecard-player { width:var(--scorecard-player-width, 150px); max-width:var(--scorecard-player-width, 150px); text-align:left!important; padding-left:calc(var(--scorecard-cell-padding, 3px) * 2)!important; padding-right:calc(var(--scorecard-cell-padding, 3px) * 2)!important; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .scorecard-total { width:var(--scorecard-total-width, 52px); max-width:var(--scorecard-total-width, 52px); font-weight:950!important; }
@@ -79,8 +79,9 @@
       document.documentElement.style.setProperty("--table-head-bg", rgba(line, 0.10));
     }
     function applyScorecardPopupLayout(event) {
-      const layout = { scorecardFontScale:100, scorecardRowHeightPx:28, scorecardColumnWidthPx:24, scorecardPaddingPx:10, ...(event?.overlayLayout || {}) };
+      const layout = { scorecardFontScale:100, scorecardHeaderFontScale:100, scorecardRowHeightPx:28, scorecardColumnWidthPx:24, scorecardPaddingPx:10, ...(event?.overlayLayout || {}) };
       document.documentElement.style.setProperty("--scorecard-font-scale", String(clampNumber(layout.scorecardFontScale, 50, 200) / 100));
+      document.documentElement.style.setProperty("--scorecard-header-font-scale", String(clampNumber(layout.scorecardHeaderFontScale, 50, 220) / 100));
       document.documentElement.style.setProperty("--scorecard-row-height", `${clampNumber(layout.scorecardRowHeightPx, 14, 80)}px`);
       document.documentElement.style.setProperty("--scorecard-column-width", `${clampNumber(layout.scorecardColumnWidthPx, 14, 80)}px`);
       document.documentElement.style.setProperty("--scorecard-cell-padding", `${Math.max(1, Math.min(20, clampNumber(layout.scorecardPaddingPx, 0, 40) / 3))}px`);
@@ -303,7 +304,7 @@
       const holeCount = clampInt(event.holeCount || 18, 1, 36); const standings = assignPositions(calculateStandings(event, throughHole));
       scorecardTitleEl.textContent = event.name || "Peltola Open"; scorecardThroughEl.textContent = throughHole > 0 ? (throughHole === 1 ? "Through 1 hole" : `Through ${throughHole} holes`) : ""; scorecardThroughEl.classList.toggle("hidden", throughHole <= 0);
       const colorMode = getScorecardColorMode(event);
-      const layout = { scorecardFontScale:100, scorecardColumnWidthPx:24, scorecardPaddingPx:10, ...(event?.overlayLayout || {}) };
+      const layout = { scorecardFontScale:100, scorecardHeaderFontScale:100, scorecardColumnWidthPx:24, scorecardPaddingPx:10, ...(event?.overlayLayout || {}) };
       const fontScale = clampNumber(layout.scorecardFontScale, 50, 200) / 100;
       const cellPadding = Math.max(1, Math.min(20, clampNumber(layout.scorecardPaddingPx, 0, 40) / 3));
       const holeWidth = clampNumber(layout.scorecardColumnWidthPx, 14, 80);

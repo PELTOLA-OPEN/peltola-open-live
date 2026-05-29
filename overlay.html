@@ -246,7 +246,7 @@
       width: 100%;
       height: 100%;
       object-fit: contain;
-      filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.45));
+      filter: none;
     }
 
     .scorecard-pop {
@@ -263,7 +263,7 @@
       border: 2px solid var(--popup-border);
       border-radius: 16px;
       background: var(--panel);
-      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.46);
+      box-shadow: none;
       transition: opacity 260ms ease, transform 260ms ease;
     }
 
@@ -287,7 +287,7 @@
       border: 2px solid var(--popup-border);
       border-radius: 16px;
       background: var(--panel);
-      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.46);
+      box-shadow: none;
       transition: opacity 260ms ease, transform 260ms ease;
     }
 
@@ -307,7 +307,7 @@
 
     .odds-title {
       overflow: hidden;
-      font-size: calc(clamp(17px, 2vw, 30px) * var(--odds-font-scale, 1));
+      font-size: calc(clamp(17px, 2vw, 30px) * var(--odds-header-font-scale, var(--odds-font-scale, 1)));
       font-weight: 950;
       letter-spacing: 0.06em;
       text-overflow: ellipsis;
@@ -347,7 +347,7 @@
 
     .odds-pop-table th {
       background: var(--table-head-bg);
-      font-size: calc(clamp(10px, 0.9vw, 14px) * var(--odds-font-scale, 1));
+      font-size: calc(clamp(10px, 0.9vw, 14px) * var(--odds-header-font-scale, var(--odds-font-scale, 1)));
       font-weight: 950;
       text-transform: uppercase;
     }
@@ -392,7 +392,7 @@
 
     .scorecard-title {
       overflow: hidden;
-      font-size: calc(clamp(17px, 2vw, 30px) * var(--scorecard-font-scale, 1));
+      font-size: calc(clamp(17px, 2vw, 30px) * var(--scorecard-header-font-scale, var(--scorecard-font-scale, 1)));
       font-weight: 950;
       letter-spacing: 0.06em;
       text-overflow: ellipsis;
@@ -402,7 +402,7 @@
     .scorecard-through {
       flex: none;
       color: var(--muted);
-      font-size: calc(clamp(12px, 1.15vw, 18px) * var(--scorecard-font-scale, 1));
+      font-size: calc(clamp(12px, 1.15vw, 18px) * var(--scorecard-header-font-scale, var(--scorecard-font-scale, 1)));
       font-weight: 950;
       letter-spacing: 0.06em;
       white-space: nowrap;
@@ -436,7 +436,7 @@
 
     .scorecard-table th {
       background: var(--table-head-bg);
-      font-size: calc(clamp(10px, 0.9vw, 14px) * var(--scorecard-font-scale, 1));
+      font-size: calc(clamp(10px, 0.9vw, 14px) * var(--scorecard-header-font-scale, var(--scorecard-font-scale, 1)));
       font-weight: 950;
       text-transform: uppercase;
     }
@@ -532,7 +532,7 @@
       max-width: 90vw;
       max-height: 90vh;
       object-fit: contain;
-      filter: drop-shadow(0 16px 34px rgba(0, 0, 0, 0.45));
+      filter: none;
     }
 
     @media (max-width: 760px) {
@@ -598,11 +598,11 @@
       }
 
       .scorecard-title {
-        font-size: 16px;
+        font-size: calc(16px * var(--scorecard-header-font-scale, var(--scorecard-font-scale, 1)));
       }
 
       .scorecard-through {
-        font-size: 11px;
+        font-size: calc(11px * var(--scorecard-header-font-scale, var(--scorecard-font-scale, 1)));
       }
 
       .scorecard-table th,
@@ -663,13 +663,13 @@
         max-width: calc(100vw - 36px);
       }
 
-      .odds-title { font-size: 15px; }
+      .odds-title { font-size: calc(15px * var(--odds-header-font-scale, var(--odds-font-scale, 1))); }
       .odds-pop-table th,
       .odds-pop-table td {
         height: 25px;
         padding: 2px 4px;
       }
-      .odds-pop-table th { font-size: 9px; }
+      .odds-pop-table th { font-size: calc(9px * var(--odds-header-font-scale, var(--odds-font-scale, 1))); }
       .odds-pop-table td { font-size: 11px; }
       .odds-team-cell {
         width: var(--odds-team-width, auto);
@@ -926,6 +926,7 @@
         scorecardWidthScale: 100,
         scorecardHeightScale: 100,
         scorecardFontScale: 100,
+        scorecardHeaderFontScale: 100,
         scorecardRowHeightPx: 28,
         scorecardColumnWidthPx: 24,
         scorecardPaddingPx: 10,
@@ -938,6 +939,7 @@
         oddsWidthScale: 100,
         oddsHeightScale: 100,
         oddsFontScale: 100,
+        oddsHeaderFontScale: 100,
         oddsRowHeightPx: 34,
         oddsPaddingPx: 10,
         ...(event.oddsOverlayLayout || {})
@@ -965,6 +967,7 @@
       const widthFactor = clampNumber(layout.scorecardWidthScale, 50, 180) / 100;
       const heightFactor = clampNumber(layout.scorecardHeightScale, 50, 180) / 100;
       const scorecardFontScale = clampNumber(layout.scorecardFontScale || 100, 50, 200) / 100;
+      const scorecardHeaderFontScale = clampNumber(layout.scorecardHeaderFontScale || 100, 50, 220) / 100;
       const scorecardRowHeight = clampNumber(layout.scorecardRowHeightPx || 28, 14, 80);
       const scorecardColumnWidth = clampNumber(layout.scorecardColumnWidthPx || 24, 14, 80);
       const scorecardPadding = clampNumber(layout.scorecardPaddingPx || 10, 0, 40);
@@ -975,6 +978,7 @@
       const oddsWidthFactor = clampNumber(oddsLayout.oddsWidthScale, 50, 180) / 100;
       const oddsHeightFactor = clampNumber(oddsLayout.oddsHeightScale, 50, 180) / 100;
       const oddsFontScaleControl = clampNumber(oddsLayout.oddsFontScale || 100, 50, 200) / 100;
+      const oddsHeaderFontScaleControl = clampNumber(oddsLayout.oddsHeaderFontScale || 100, 50, 220) / 100;
       const oddsRowHeight = clampNumber(oddsLayout.oddsRowHeightPx || 34, 16, 90);
       const oddsPadding = clampNumber(oddsLayout.oddsPaddingPx || 10, 0, 40);
       const oddsCellPadding = Math.max(1, Math.min(20, oddsPadding / 2));
@@ -1008,6 +1012,7 @@
       document.documentElement.style.setProperty("--scorecard-width-factor", String(widthFactor));
       document.documentElement.style.setProperty("--scorecard-height-factor", String(heightFactor));
       document.documentElement.style.setProperty("--scorecard-font-scale", String(scorecardFontScale));
+      document.documentElement.style.setProperty("--scorecard-header-font-scale", String(scorecardHeaderFontScale));
       document.documentElement.style.setProperty("--scorecard-popup-padding", `${scorecardPadding}px`);
       document.documentElement.style.setProperty("--scorecard-cell-padding", `${scorecardCellPadding}px`);
       document.documentElement.style.setProperty("--scorecard-hole-width", `${baseHoleWidth}px`);
@@ -1024,6 +1029,7 @@
       document.documentElement.style.setProperty("--odds-width-factor", String(oddsWidthFactor));
       document.documentElement.style.setProperty("--odds-height-factor", String(oddsHeightFactor));
       document.documentElement.style.setProperty("--odds-font-scale", String(oddsFontScaleControl));
+      document.documentElement.style.setProperty("--odds-header-font-scale", String(oddsHeaderFontScaleControl));
       document.documentElement.style.setProperty("--odds-padding", `${oddsPadding}px`);
       document.documentElement.style.setProperty("--odds-cell-padding", `${oddsCellPadding}px`);
       document.documentElement.style.setProperty("--odds-cell-height", `${oddsRowHeight}px`);
@@ -1232,7 +1238,7 @@
       scorecardThroughEl.classList.toggle("hidden", throughHole <= 0);
 
       const colorMode = getScorecardColorMode(event);
-      const layout = { scorecardFontScale:100, scorecardColumnWidthPx:24, scorecardPaddingPx:10, ...(event.overlayLayout || {}) };
+      const layout = { scorecardFontScale:100, scorecardHeaderFontScale:100, scorecardColumnWidthPx:24, scorecardPaddingPx:10, ...(event.overlayLayout || {}) };
       const fontScale = clampNumber(layout.scorecardFontScale, 50, 200) / 100;
       const cellPadding = Math.max(1, Math.min(20, clampNumber(layout.scorecardPaddingPx, 0, 40) / 3));
       const holeWidth = clampNumber(layout.scorecardColumnWidthPx || 24, 14, 80);

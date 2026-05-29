@@ -544,6 +544,10 @@
               <input id="scorecardFontScale" type="number" min="50" max="200" step="1" />
               <input id="scorecardFontScaleRange" class="slider" type="range" min="50" max="200" step="1" />
             </label>
+            <label>Scorecard header font size, %
+              <input id="scorecardHeaderFontScale" type="number" min="50" max="220" step="1" />
+              <input id="scorecardHeaderFontScaleRange" class="slider" type="range" min="50" max="220" step="1" />
+            </label>
             <label>Scorecard row height, px
               <input id="scorecardRowHeightPx" type="number" min="14" max="80" step="1" />
               <input id="scorecardRowHeightPxRange" class="slider" type="range" min="14" max="80" step="1" />
@@ -589,6 +593,10 @@
             <label>Odds font size, %
               <input id="oddsFontScale" type="number" min="50" max="200" step="1" />
               <input id="oddsFontScaleRange" class="slider" type="range" min="50" max="200" step="1" />
+            </label>
+            <label>Odds header font size, %
+              <input id="oddsHeaderFontScale" type="number" min="50" max="220" step="1" />
+              <input id="oddsHeaderFontScaleRange" class="slider" type="range" min="50" max="220" step="1" />
             </label>
             <label>Odds row height, px
               <input id="oddsRowHeightPx" type="number" min="16" max="90" step="1" />
@@ -876,6 +884,8 @@
       scorecardHeightScaleRange: document.getElementById("scorecardHeightScaleRange"),
       scorecardFontScale: document.getElementById("scorecardFontScale"),
       scorecardFontScaleRange: document.getElementById("scorecardFontScaleRange"),
+      scorecardHeaderFontScale: document.getElementById("scorecardHeaderFontScale"),
+      scorecardHeaderFontScaleRange: document.getElementById("scorecardHeaderFontScaleRange"),
       scorecardRowHeightPx: document.getElementById("scorecardRowHeightPx"),
       scorecardRowHeightPxRange: document.getElementById("scorecardRowHeightPxRange"),
       scorecardColumnWidthPx: document.getElementById("scorecardColumnWidthPx"),
@@ -896,6 +906,8 @@
       oddsHeightScaleRange: document.getElementById("oddsHeightScaleRange"),
       oddsFontScale: document.getElementById("oddsFontScale"),
       oddsFontScaleRange: document.getElementById("oddsFontScaleRange"),
+      oddsHeaderFontScale: document.getElementById("oddsHeaderFontScale"),
+      oddsHeaderFontScaleRange: document.getElementById("oddsHeaderFontScaleRange"),
       oddsRowHeightPx: document.getElementById("oddsRowHeightPx"),
       oddsRowHeightPxRange: document.getElementById("oddsRowHeightPxRange"),
       oddsPaddingPx: document.getElementById("oddsPaddingPx"),
@@ -1034,6 +1046,7 @@
       [els.scorecardWidthScale, els.scorecardWidthScaleRange],
       [els.scorecardHeightScale, els.scorecardHeightScaleRange],
       [els.scorecardFontScale, els.scorecardFontScaleRange],
+      [els.scorecardHeaderFontScale, els.scorecardHeaderFontScaleRange],
       [els.scorecardRowHeightPx, els.scorecardRowHeightPxRange],
       [els.scorecardColumnWidthPx, els.scorecardColumnWidthPxRange],
       [els.scorecardPaddingPx, els.scorecardPaddingPxRange]
@@ -1056,6 +1069,7 @@
       [els.oddsWidthScale, els.oddsWidthScaleRange],
       [els.oddsHeightScale, els.oddsHeightScaleRange],
       [els.oddsFontScale, els.oddsFontScaleRange],
+      [els.oddsHeaderFontScale, els.oddsHeaderFontScaleRange],
       [els.oddsRowHeightPx, els.oddsRowHeightPxRange],
       [els.oddsPaddingPx, els.oddsPaddingPxRange]
     ].forEach(([numberInput, rangeInput]) => bindSyncedOverlayInput(numberInput, rangeInput, saveOddsOverlayLayoutLive));
@@ -1227,6 +1241,8 @@
       els.scorecardHeightScaleRange.value = overlayLayout.scorecardHeightScale;
       els.scorecardFontScale.value = overlayLayout.scorecardFontScale;
       els.scorecardFontScaleRange.value = overlayLayout.scorecardFontScale;
+      els.scorecardHeaderFontScale.value = overlayLayout.scorecardHeaderFontScale;
+      els.scorecardHeaderFontScaleRange.value = overlayLayout.scorecardHeaderFontScale;
       els.scorecardRowHeightPx.value = overlayLayout.scorecardRowHeightPx;
       els.scorecardRowHeightPxRange.value = overlayLayout.scorecardRowHeightPx;
       els.scorecardColumnWidthPx.value = overlayLayout.scorecardColumnWidthPx;
@@ -1246,6 +1262,8 @@
       els.oddsHeightScaleRange.value = oddsOverlayLayout.oddsHeightScale;
       els.oddsFontScale.value = oddsOverlayLayout.oddsFontScale;
       els.oddsFontScaleRange.value = oddsOverlayLayout.oddsFontScale;
+      els.oddsHeaderFontScale.value = oddsOverlayLayout.oddsHeaderFontScale;
+      els.oddsHeaderFontScaleRange.value = oddsOverlayLayout.oddsHeaderFontScale;
       els.oddsRowHeightPx.value = oddsOverlayLayout.oddsRowHeightPx;
       els.oddsRowHeightPxRange.value = oddsOverlayLayout.oddsRowHeightPx;
       els.oddsPaddingPx.value = oddsOverlayLayout.oddsPaddingPx;
@@ -2061,6 +2079,7 @@
         scorecardWidthScale: defaults.scorecardWidthScale,
         scorecardHeightScale: defaults.scorecardHeightScale,
         scorecardFontScale: defaults.scorecardFontScale,
+        scorecardHeaderFontScale: defaults.scorecardHeaderFontScale,
         scorecardRowHeightPx: defaults.scorecardRowHeightPx,
         scorecardColumnWidthPx: defaults.scorecardColumnWidthPx,
         scorecardPaddingPx: defaults.scorecardPaddingPx
@@ -2233,6 +2252,7 @@
         scorecardWidthScale: clampInt(els.scorecardWidthScale.value, 50, 180),
         scorecardHeightScale: clampInt(els.scorecardHeightScale.value, 50, 180),
         scorecardFontScale: clampInt(els.scorecardFontScale.value, 50, 200),
+        scorecardHeaderFontScale: clampInt(els.scorecardHeaderFontScale.value, 50, 220),
         scorecardRowHeightPx: clampInt(els.scorecardRowHeightPx.value, 14, 80),
         scorecardColumnWidthPx: clampInt(els.scorecardColumnWidthPx.value, 14, 80),
         scorecardPaddingPx: clampInt(els.scorecardPaddingPx.value, 0, 40)
@@ -2259,6 +2279,7 @@
         scorecardWidthScale: 100,
         scorecardHeightScale: 100,
         scorecardFontScale: 100,
+        scorecardHeaderFontScale: 100,
         scorecardRowHeightPx: 28,
         scorecardColumnWidthPx: 24,
         scorecardPaddingPx: 10
@@ -2273,6 +2294,7 @@
         oddsWidthScale: clampInt(els.oddsWidthScale.value, 50, 180),
         oddsHeightScale: clampInt(els.oddsHeightScale.value, 50, 180),
         oddsFontScale: clampInt(els.oddsFontScale.value, 50, 200),
+        oddsHeaderFontScale: clampInt(els.oddsHeaderFontScale.value, 50, 220),
         oddsRowHeightPx: clampInt(els.oddsRowHeightPx.value, 16, 90),
         oddsPaddingPx: clampInt(els.oddsPaddingPx.value, 0, 40)
       };
@@ -2290,6 +2312,7 @@
         oddsWidthScale: 100,
         oddsHeightScale: 100,
         oddsFontScale: 100,
+        oddsHeaderFontScale: 100,
         oddsRowHeightPx: 34,
         oddsPaddingPx: 10
       };
