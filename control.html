@@ -497,6 +497,10 @@
               <input id="tickerLogoScale" type="number" min="40" max="220" step="1" />
               <input id="tickerLogoScaleRange" class="slider" type="range" min="40" max="220" step="1" />
             </label>
+            <label>Logo rotation speed, seconds
+              <input id="logoRotationSeconds" type="number" min="1" max="30" step="0.5" />
+              <input id="logoRotationSecondsRange" class="slider" type="range" min="1" max="30" step="0.5" />
+            </label>
           </div>
           <div class="row" style="margin-top: 12px;">
             <button id="tickerMoveTargetBtn" class="primary" type="button">Move target: Ticker</button>
@@ -510,6 +514,9 @@
           <div class="row" style="margin-top: 12px;">
             <label class="row" style="display:flex; gap:8px;">
               <input id="showHelsinkiClock" type="checkbox" /> Show Helsinki 24h clock
+            </label>
+            <label class="row" style="display:flex; gap:8px;">
+              <input id="logoRotateEnabled" type="checkbox" /> Rotate logos clockwise
             </label>
             <label class="row" style="display:flex; gap:8px;">
               <input id="showStandings" type="checkbox" /> Show score overlay
@@ -867,6 +874,9 @@
       tickerFontScaleRange: document.getElementById("tickerFontScaleRange"),
       tickerLogoScale: document.getElementById("tickerLogoScale"),
       tickerLogoScaleRange: document.getElementById("tickerLogoScaleRange"),
+      logoRotationSeconds: document.getElementById("logoRotationSeconds"),
+      logoRotationSecondsRange: document.getElementById("logoRotationSecondsRange"),
+      logoRotateEnabled: document.getElementById("logoRotateEnabled"),
       tickerMoveTargetBtn: document.getElementById("tickerMoveTargetBtn"),
       tickerLeftBtn: document.getElementById("tickerLeftBtn"),
       tickerRightBtn: document.getElementById("tickerRightBtn"),
@@ -1042,6 +1052,7 @@
       [els.tickerHeightPx, els.tickerHeightPxRange],
       [els.tickerFontScale, els.tickerFontScaleRange],
       [els.tickerLogoScale, els.tickerLogoScaleRange],
+      [els.logoRotationSeconds, els.logoRotationSecondsRange],
       [els.scorecardCenterX, els.scorecardCenterXRange],
       [els.scorecardCenterY, els.scorecardCenterYRange],
       [els.scorecardScale, els.scorecardScaleRange],
@@ -1092,6 +1103,7 @@
     els.tickerDownBtn.addEventListener("click", () => nudgeTickerPosition(0, -10));
     els.resetTickerLayoutBtn.addEventListener("click", resetTickerLayout);
     els.showHelsinkiClock.addEventListener("change", () => quickUpdate({ showHelsinkiClock: els.showHelsinkiClock.checked }));
+    els.logoRotateEnabled.addEventListener("change", saveOverlayLayoutLive);
     els.resetScoringPositionBtn.addEventListener("click", resetScoringPosition);
     els.togglePublicPickemsBtn.addEventListener("click", togglePublicPickemEntries);
     els.overlayMode.addEventListener("change", () => quickUpdate({ overlayMode: els.overlayMode.value }));
@@ -1255,6 +1267,9 @@
       els.tickerFontScaleRange.value = overlayLayout.tickerFontScale;
       els.tickerLogoScale.value = overlayLayout.tickerLogoScale;
       els.tickerLogoScaleRange.value = overlayLayout.tickerLogoScale;
+      els.logoRotationSeconds.value = overlayLayout.logoRotationSeconds;
+      els.logoRotationSecondsRange.value = overlayLayout.logoRotationSeconds;
+      els.logoRotateEnabled.checked = overlayLayout.logoRotateEnabled === true;
       updateTickerMoveControls(overlayLayout);
       els.scorecardCenterX.value = overlayLayout.scorecardCenterX;
       els.scorecardCenterXRange.value = overlayLayout.scorecardCenterX;
@@ -2081,6 +2096,8 @@
         tickerHeightPx: defaults.tickerHeightPx,
         tickerFontScale: defaults.tickerFontScale,
         tickerLogoScale: defaults.tickerLogoScale,
+        logoRotationSeconds: defaults.logoRotationSeconds,
+        logoRotateEnabled: defaults.logoRotateEnabled,
         tickerOffsetX: defaults.tickerOffsetX,
         tickerOffsetY: defaults.tickerOffsetY,
         logoOffsetX: defaults.logoOffsetX,
@@ -2269,6 +2286,8 @@
         tickerHeightPx: clampInt(els.tickerHeightPx.value, 16, 120),
         tickerFontScale: clampInt(els.tickerFontScale.value, 50, 200),
         tickerLogoScale: clampInt(els.tickerLogoScale.value, 40, 220),
+        logoRotationSeconds: clampNumber(els.logoRotationSeconds.value, 1, 30),
+        logoRotateEnabled: els.logoRotateEnabled.checked === true,
         tickerOffsetX: clampInt(currentLayout.tickerOffsetX || 0, -300, 300),
         tickerOffsetY: clampInt(currentLayout.tickerOffsetY || 0, -300, 300),
         logoOffsetX: clampInt(currentLayout.logoOffsetX || 0, -600, 600),
@@ -2296,6 +2315,8 @@
         tickerHeightPx: 58,
         tickerFontScale: 100,
         tickerLogoScale: 100,
+        logoRotationSeconds: 6,
+        logoRotateEnabled: false,
         tickerOffsetX: 0,
         tickerOffsetY: 0,
         logoOffsetX: 0,

@@ -249,6 +249,15 @@
       filter: none;
     }
 
+    .ticker-logo.logo-rotating img {
+      animation: logo-clockwise-spin var(--logo-rotation-duration, 6s) linear infinite;
+    }
+
+    @keyframes logo-clockwise-spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
     .scorecard-pop {
       position: absolute;
       left: var(--scorecard-center-x, 50%);
@@ -549,8 +558,8 @@
     }
 
     @keyframes ad-pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.035); }
+      0%, 100% { transform: scale(0.965); }
+      50% { transform: scale(1.07); }
     }
 
     @keyframes ad-boomerang-in {
@@ -960,6 +969,8 @@
         tickerHeightPx: 58,
         tickerFontScale: 100,
         tickerLogoScale: 100,
+        logoRotationSeconds: 6,
+        logoRotateEnabled: false,
         tickerOffsetX: 0,
         tickerOffsetY: 0,
         logoOffsetX: 0,
@@ -1001,6 +1012,8 @@
       const tickerHeight = clampNumber(layout.tickerHeightPx, 16, 120) * overlayPageScale;
       const tickerFontScale = clampNumber(layout.tickerFontScale || 100, 50, 200) / 100;
       const tickerLogoScale = clampNumber(layout.tickerLogoScale || 100, 40, 220) / 100;
+      const logoRotationSeconds = clampNumber(layout.logoRotationSeconds || 6, 1, 30);
+      const logoRotateEnabled = layout.logoRotateEnabled === true;
       const tickerOffsetX = clampNumber(layout.tickerOffsetX || 0, -300, 300);
       const tickerOffsetY = clampNumber(layout.tickerOffsetY || 0, -300, 300);
       const logoOffsetX = clampNumber(layout.logoOffsetX || 0, -600, 600);
@@ -1045,6 +1058,8 @@
       document.documentElement.style.setProperty("--ticker-height", `${tickerHeight}px`);
       document.documentElement.style.setProperty("--ticker-font-scale", String(tickerFontScale));
       document.documentElement.style.setProperty("--ticker-logo-size", `${baseLogoSize}px`);
+      document.documentElement.style.setProperty("--logo-rotation-duration", `${logoRotationSeconds}s`);
+      tickerLogoEl.classList.toggle("logo-rotating", logoRotateEnabled);
       document.documentElement.style.setProperty("--ticker-offset-x", `${tickerOffsetX}px`);
       document.documentElement.style.setProperty("--ticker-offset-y", `${tickerOffsetY}px`);
       document.documentElement.style.setProperty("--logo-offset-x", `${logoOffsetX}px`);
