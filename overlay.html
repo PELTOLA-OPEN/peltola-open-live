@@ -232,7 +232,7 @@
 
     .ticker-logo {
       position: absolute;
-      left: calc(3vw + var(--logo-offset-x, 0px));
+      left: calc(3vw + var(--logo-base-offset-x, 132px) + var(--logo-offset-x, 0px));
       bottom: calc(4vh + var(--ticker-height, 58px) + 8px + var(--logo-offset-y, 0px));
       width: var(--ticker-logo-size, 72px);
       height: var(--ticker-logo-size, 72px);
@@ -623,7 +623,7 @@
       }
 
       .ticker-logo {
-        left: calc(8px + var(--logo-offset-x, 0px));
+        left: calc(8px + var(--logo-base-offset-x, 118px) + var(--logo-offset-x, 0px));
         bottom: calc(12px + var(--ticker-height, 44px) + 6px + var(--logo-offset-y, 0px));
       }
 
@@ -1259,19 +1259,18 @@
 
     function updateClockVisibility(event) {
       const showClock = event.showHelsinkiClock !== false;
-      if (!showClock) {
-        helsinkiClockEl.classList.add("hidden");
-        tickerLogoEl.classList.add("hidden");
-      }
-      if (showClock && !clockTimer) {
+      const showLogos = event.showTickerLogos !== false;
+      if (!showClock) helsinkiClockEl.classList.add("hidden");
+      if (!showLogos) tickerLogoEl.classList.add("hidden");
+      if ((showClock || showLogos) && !clockTimer) {
         updateHelsinkiClock();
         clockTimer = window.setInterval(updateHelsinkiClock, 1000);
       }
-      if (!showClock && clockTimer) {
+      if (!showClock && !showLogos && clockTimer) {
         window.clearInterval(clockTimer);
         clockTimer = null;
       }
-      if (showClock) updateHelsinkiClock();
+      if (showClock || showLogos) updateHelsinkiClock();
     }
 
     function updateHelsinkiClock() {
@@ -1284,15 +1283,14 @@
       }).formatToParts(new Date());
       const value = Object.fromEntries(parts.filter(part => part.type !== "literal").map(part => [part.type, part.value]));
       const showClock = latestEvent?.showHelsinkiClock !== false;
+      const showLogos = latestEvent?.showTickerLogos !== false;
       const second = Number(value.second || 0);
-      const showPrimaryLogo = showClock && second >= 0 && second < 10;
-      const showOuluLogo = showClock && second >= 30 && second < 40;
-      const showLogo = showPrimaryLogo || showOuluLogo;
+      const showOuluLogo = second >= 30;
       tickerLogoImgEl.src = showOuluLogo ? "oulu-logo.png" : "peltola-logo-round.png";
       tickerLogoImgEl.alt = showOuluLogo ? "Oulu 2026 logo" : "Peltola Open logo";
       helsinkiClockEl.textContent = `${value.hour}:${value.minute}:${value.second}`;
-      helsinkiClockEl.classList.toggle("hidden", !showClock || showLogo);
-      tickerLogoEl.classList.toggle("hidden", !showLogo);
+      helsinkiClockEl.classList.toggle("hidden", !showClock);
+      tickerLogoEl.classList.toggle("hidden", !showLogos);
     }
 
     function renderScorecardPop(event, throughHole) {

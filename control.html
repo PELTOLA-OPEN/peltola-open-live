@@ -516,6 +516,9 @@
               <input id="showHelsinkiClock" type="checkbox" /> Show Helsinki 24h clock
             </label>
             <label class="row" style="display:flex; gap:8px;">
+              <input id="showTickerLogos" type="checkbox" /> Show rotating logos
+            </label>
+            <label class="row" style="display:flex; gap:8px;">
               <input id="logoRotateEnabled" type="checkbox" /> Rotate logos clockwise
             </label>
             <label class="row" style="display:flex; gap:8px;">
@@ -877,6 +880,7 @@
       logoRotationSeconds: document.getElementById("logoRotationSeconds"),
       logoRotationSecondsRange: document.getElementById("logoRotationSecondsRange"),
       logoRotateEnabled: document.getElementById("logoRotateEnabled"),
+      showTickerLogos: document.getElementById("showTickerLogos"),
       tickerMoveTargetBtn: document.getElementById("tickerMoveTargetBtn"),
       tickerLeftBtn: document.getElementById("tickerLeftBtn"),
       tickerRightBtn: document.getElementById("tickerRightBtn"),
@@ -1103,6 +1107,7 @@
     els.tickerDownBtn.addEventListener("click", () => nudgeTickerPosition(0, -10));
     els.resetTickerLayoutBtn.addEventListener("click", resetTickerLayout);
     els.showHelsinkiClock.addEventListener("change", () => quickUpdate({ showHelsinkiClock: els.showHelsinkiClock.checked }));
+    els.showTickerLogos.addEventListener("change", () => quickUpdate({ showTickerLogos: els.showTickerLogos.checked }));
     els.logoRotateEnabled.addEventListener("change", saveOverlayLayoutLive);
     els.resetScoringPositionBtn.addEventListener("click", resetScoringPosition);
     els.togglePublicPickemsBtn.addEventListener("click", togglePublicPickemEntries);
@@ -1179,6 +1184,7 @@
           showScorecardPreview: false,
           showOddsPreview: false,
           showHelsinkiClock: true,
+          showTickerLogos: true,
           showHoleBug: false,
           showStandings: true,
           allowPublicPickems: true,
@@ -1344,6 +1350,7 @@
       els.popupOpacityRange.value = overlayTheme.popupOpacity;
       updatePopupToggleButtons();
       els.showHelsinkiClock.checked = eventState.showHelsinkiClock !== false;
+      els.showTickerLogos.checked = eventState.showTickerLogos !== false;
       els.showStandings.checked = eventState.showStandings !== false;
       updatePublicPickemButton();
 
@@ -1735,6 +1742,7 @@
         showOddsPreview: eventState.showOddsPreview === true,
         showAdPreview: eventState.showAdPreview === true,
         showHelsinkiClock: els.showHelsinkiClock.checked,
+        showTickerLogos: els.showTickerLogos.checked,
         showStandings: els.showStandings.checked,
         updatedAt: Date.now()
       };
