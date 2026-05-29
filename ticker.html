@@ -53,29 +53,30 @@
     }
 
     function applyOverlayTheme(event) {
+      const saved = event?.overlayTheme || {};
+      const legacyBackground = saved.backgroundColor || "#000000";
+      const legacyLine = saved.lineColor || "#ffffff";
+      const legacyText = saved.textColor || "#ffffff";
+      const legacyOpacity = saved.overlayOpacity ?? 50;
       const theme = {
-        backgroundColor: "#000000",
-        lineColor: "#ffffff",
-        textColor: "#ffffff",
-        overlayOpacity: 50,
-        ...(event?.overlayTheme || {})
+        tickerBackgroundColor: saved.tickerBackgroundColor || legacyBackground,
+        tickerStrongColor: saved.tickerStrongColor || saved.tickerBackgroundColor || legacyBackground,
+        tickerLineColor: saved.tickerLineColor || legacyLine,
+        tickerTextColor: saved.tickerTextColor || legacyText,
+        tickerOpacity: saved.tickerOpacity ?? legacyOpacity
       };
-      const background = hexToRgb(theme.backgroundColor, { r: 0, g: 0, b: 0 });
-      const line = hexToRgb(theme.lineColor, { r: 255, g: 255, b: 255 });
-      const text = hexToRgb(theme.textColor, { r: 255, g: 255, b: 255 });
-      const opacity = clampNumber(theme.overlayOpacity, 0, 100) / 100;
-      const strongOpacity = Math.min(1, opacity + 0.08);
+      const background = hexToRgb(theme.tickerBackgroundColor, { r: 0, g: 0, b: 0 });
+      const strong = hexToRgb(theme.tickerStrongColor, background);
+      const line = hexToRgb(theme.tickerLineColor, { r: 255, g: 255, b: 255 });
+      const text = hexToRgb(theme.tickerTextColor, { r: 255, g: 255, b: 255 });
+      const opacity = clampNumber(theme.tickerOpacity, 0, 100) / 100;
       document.documentElement.style.setProperty("--panel", rgba(background, opacity));
-      document.documentElement.style.setProperty("--panel-strong", rgba(background, strongOpacity));
+      document.documentElement.style.setProperty("--panel-strong", rgba(strong, opacity));
       document.documentElement.style.setProperty("--text", rgb(text));
       document.documentElement.style.setProperty("--muted", rgba(text, 0.72));
-      document.documentElement.style.setProperty("--line", rgba(line, 0.16));
+      document.documentElement.style.setProperty("--line", rgba(line, 0.20));
       document.documentElement.style.setProperty("--line-subtle", rgba(line, 0.08));
-      document.documentElement.style.setProperty("--popup-border", rgba(line, 0.72));
-      document.documentElement.style.setProperty("--table-grid", rgba(line, 0.46));
-      document.documentElement.style.setProperty("--table-head-bg", rgba(line, 0.10));
     }
-
     function hexToRgb(value, fallback) {
       const text = String(value || "").trim();
       const match = /^#?([0-9a-fA-F]{6})$/.exec(text);

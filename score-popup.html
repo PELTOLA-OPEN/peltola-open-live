@@ -53,20 +53,23 @@
     }
 
     function applyOverlayTheme(event) {
+      const saved = event?.overlayTheme || {};
+      const legacyBackground = saved.backgroundColor || "#000000";
+      const legacyLine = saved.lineColor || "#ffffff";
+      const legacyText = saved.textColor || "#ffffff";
+      const legacyOpacity = saved.overlayOpacity ?? 50;
       const theme = {
-        backgroundColor: "#000000",
-        lineColor: "#ffffff",
-        textColor: "#ffffff",
-        overlayOpacity: 50,
-        ...(event?.overlayTheme || {})
+        popupBackgroundColor: saved.popupBackgroundColor || legacyBackground,
+        popupLineColor: saved.popupLineColor || legacyLine,
+        popupTextColor: saved.popupTextColor || legacyText,
+        popupOpacity: saved.popupOpacity ?? legacyOpacity
       };
-      const background = hexToRgb(theme.backgroundColor, { r: 0, g: 0, b: 0 });
-      const line = hexToRgb(theme.lineColor, { r: 255, g: 255, b: 255 });
-      const text = hexToRgb(theme.textColor, { r: 255, g: 255, b: 255 });
-      const opacity = clampNumber(theme.overlayOpacity, 0, 100) / 100;
-      const strongOpacity = Math.min(1, opacity + 0.08);
+      const background = hexToRgb(theme.popupBackgroundColor, { r: 0, g: 0, b: 0 });
+      const line = hexToRgb(theme.popupLineColor, { r: 255, g: 255, b: 255 });
+      const text = hexToRgb(theme.popupTextColor, { r: 255, g: 255, b: 255 });
+      const opacity = clampNumber(theme.popupOpacity, 0, 100) / 100;
       document.documentElement.style.setProperty("--panel", rgba(background, opacity));
-      document.documentElement.style.setProperty("--panel-strong", rgba(background, strongOpacity));
+      document.documentElement.style.setProperty("--panel-strong", rgba(background, Math.min(1, opacity + 0.08)));
       document.documentElement.style.setProperty("--text", rgb(text));
       document.documentElement.style.setProperty("--muted", rgba(text, 0.72));
       document.documentElement.style.setProperty("--line", rgba(line, 0.16));
@@ -75,7 +78,6 @@
       document.documentElement.style.setProperty("--table-grid", rgba(line, 0.46));
       document.documentElement.style.setProperty("--table-head-bg", rgba(line, 0.10));
     }
-
     function applyScorecardPopupLayout(event) {
       const layout = { scorecardFontScale:100, scorecardRowHeightPx:28, scorecardColumnWidthPx:24, scorecardPaddingPx:10, ...(event?.overlayLayout || {}) };
       document.documentElement.style.setProperty("--scorecard-font-scale", String(clampNumber(layout.scorecardFontScale, 50, 200) / 100));
@@ -268,7 +270,7 @@
       applyScorecardPopupLayout(event);
       const preview = event.showScorecardPreview === true;
       if (preview) {
-        renderScorecard(event, getCompletedThrough(event) || clampInt((event.currentHole || 1) - 1, 0, clampInt(event.holeCount || 18, 1, 36)) || clampInt(event.holeCount || 18, 1, 36));
+        renderScorecard(event, getCompletedThrough(event) || clampInt((event.currentHole || 0) - 1, 0, clampInt(event.holeCount || 18, 1, 36)));
         showFrame(0);
         return;
       }
@@ -299,7 +301,7 @@
     function hideFrame() { frameEl.classList.add("hidden"); }
     function renderScorecard(event, throughHole) {
       const holeCount = clampInt(event.holeCount || 18, 1, 36); const standings = assignPositions(calculateStandings(event, throughHole));
-      scorecardTitleEl.textContent = event.name || "Peltola Open"; scorecardThroughEl.textContent = throughHole === 1 ? "Through 1 hole" : `Through ${throughHole} holes`;
+      scorecardTitleEl.textContent = event.name || "Peltola Open"; scorecardThroughEl.textContent = throughHole > 0 ? (throughHole === 1 ? "Through 1 hole" : `Through ${throughHole} holes`) : ""; scorecardThroughEl.classList.toggle("hidden", throughHole <= 0);
       const colorMode = getScorecardColorMode(event);
       const layout = { scorecardFontScale:100, scorecardColumnWidthPx:24, scorecardPaddingPx:10, ...(event?.overlayLayout || {}) };
       const fontScale = clampNumber(layout.scorecardFontScale, 50, 200) / 100;

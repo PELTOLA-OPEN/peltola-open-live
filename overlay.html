@@ -8,6 +8,11 @@
     :root {
       --panel: rgba(0, 0, 0, 0.5);
       --panel-strong: rgba(0, 0, 0, 0.5);
+      --ticker-panel: rgba(0, 0, 0, 0.5);
+      --ticker-panel-strong: rgba(0, 0, 0, 0.58);
+      --ticker-text: #ffffff;
+      --ticker-muted: rgba(255, 255, 255, 0.72);
+      --ticker-line: rgba(255, 255, 255, 0.16);
       --text: #ffffff;
       --muted: rgba(255, 255, 255, 0.72);
       --line: rgba(255, 255, 255, 0.16);
@@ -141,7 +146,8 @@
       display: flex;
       overflow: hidden;
       border-radius: 16px;
-      background: var(--panel);
+      background: var(--ticker-panel);
+      color: var(--ticker-text);
     }
 
     .ticker-viewport {
@@ -185,7 +191,7 @@
       align-self: stretch;
       width: 30px;
       margin: 0;
-      background: var(--panel-strong);
+      background: var(--ticker-panel-strong);
       border-radius: 0;
       opacity: 1;
     }
@@ -195,8 +201,8 @@
       place-items: center;
       min-width: clamp(104px, 10vw, 150px);
       padding: 0 12px;
-      border-right: 1px solid var(--line);
-      background: var(--panel-strong);
+      border-right: 1px solid var(--ticker-line);
+      background: var(--ticker-panel-strong);
       font-size: calc(clamp(11px, 1vw, 15px) * var(--overlay-page-scale, 1) * var(--ticker-font-scale, 1));
       font-weight: 950;
       letter-spacing: 0.06em;
@@ -212,8 +218,8 @@
       min-width: clamp(104px, 10vw, 150px);
       padding: 8px 12px;
       border-radius: 12px;
-      background: var(--panel-strong);
-      color: var(--text);
+      background: var(--ticker-panel-strong);
+      color: var(--ticker-text);
       font-size: calc(clamp(12px, 1.1vw, 17px) * var(--overlay-page-scale, 1) * var(--ticker-font-scale, 1));
       font-weight: 950;
       letter-spacing: 0.06em;
@@ -838,30 +844,47 @@
     }
 
     function applyOverlayTheme(event) {
+      const saved = event?.overlayTheme || {};
+      const legacyBackground = saved.backgroundColor || "#000000";
+      const legacyLine = saved.lineColor || "#ffffff";
+      const legacyText = saved.textColor || "#ffffff";
+      const legacyOpacity = saved.overlayOpacity ?? 50;
       const theme = {
-        backgroundColor: "#000000",
-        lineColor: "#ffffff",
-        textColor: "#ffffff",
-        overlayOpacity: 50,
-        ...(event.overlayTheme || {})
+        tickerBackgroundColor: saved.tickerBackgroundColor || legacyBackground,
+        tickerStrongColor: saved.tickerStrongColor || saved.tickerBackgroundColor || legacyBackground,
+        tickerLineColor: saved.tickerLineColor || legacyLine,
+        tickerTextColor: saved.tickerTextColor || legacyText,
+        tickerOpacity: saved.tickerOpacity ?? legacyOpacity,
+        popupBackgroundColor: saved.popupBackgroundColor || legacyBackground,
+        popupLineColor: saved.popupLineColor || legacyLine,
+        popupTextColor: saved.popupTextColor || legacyText,
+        popupOpacity: saved.popupOpacity ?? legacyOpacity
       };
-      const background = hexToRgb(theme.backgroundColor, { r: 0, g: 0, b: 0 });
-      const line = hexToRgb(theme.lineColor, { r: 255, g: 255, b: 255 });
-      const text = hexToRgb(theme.textColor, { r: 255, g: 255, b: 255 });
-      const opacity = clampNumber(theme.overlayOpacity, 0, 100) / 100;
-      const strongOpacity = Math.min(1, opacity + 0.08);
+      const tickerBackground = hexToRgb(theme.tickerBackgroundColor, { r: 0, g: 0, b: 0 });
+      const tickerStrong = hexToRgb(theme.tickerStrongColor, tickerBackground);
+      const tickerLine = hexToRgb(theme.tickerLineColor, { r: 255, g: 255, b: 255 });
+      const tickerText = hexToRgb(theme.tickerTextColor, { r: 255, g: 255, b: 255 });
+      const popupBackground = hexToRgb(theme.popupBackgroundColor, { r: 0, g: 0, b: 0 });
+      const popupLine = hexToRgb(theme.popupLineColor, { r: 255, g: 255, b: 255 });
+      const popupText = hexToRgb(theme.popupTextColor, { r: 255, g: 255, b: 255 });
+      const tickerOpacity = clampNumber(theme.tickerOpacity, 0, 100) / 100;
+      const popupOpacity = clampNumber(theme.popupOpacity, 0, 100) / 100;
 
-      document.documentElement.style.setProperty("--panel", rgba(background, opacity));
-      document.documentElement.style.setProperty("--panel-strong", rgba(background, strongOpacity));
-      document.documentElement.style.setProperty("--text", rgb(text));
-      document.documentElement.style.setProperty("--muted", rgba(text, 0.72));
-      document.documentElement.style.setProperty("--line", rgba(line, 0.16));
-      document.documentElement.style.setProperty("--line-subtle", rgba(line, 0.08));
-      document.documentElement.style.setProperty("--popup-border", rgba(line, 0.72));
-      document.documentElement.style.setProperty("--table-grid", rgba(line, 0.46));
-      document.documentElement.style.setProperty("--table-head-bg", rgba(line, 0.10));
+      document.documentElement.style.setProperty("--ticker-panel", rgba(tickerBackground, tickerOpacity));
+      document.documentElement.style.setProperty("--ticker-panel-strong", rgba(tickerStrong, tickerOpacity));
+      document.documentElement.style.setProperty("--ticker-text", rgb(tickerText));
+      document.documentElement.style.setProperty("--ticker-muted", rgba(tickerText, 0.72));
+      document.documentElement.style.setProperty("--ticker-line", rgba(tickerLine, 0.20));
+      document.documentElement.style.setProperty("--panel", rgba(popupBackground, popupOpacity));
+      document.documentElement.style.setProperty("--panel-strong", rgba(popupBackground, Math.min(1, popupOpacity + 0.08)));
+      document.documentElement.style.setProperty("--text", rgb(popupText));
+      document.documentElement.style.setProperty("--muted", rgba(popupText, 0.72));
+      document.documentElement.style.setProperty("--line", rgba(popupLine, 0.16));
+      document.documentElement.style.setProperty("--line-subtle", rgba(popupLine, 0.08));
+      document.documentElement.style.setProperty("--popup-border", rgba(popupLine, 0.72));
+      document.documentElement.style.setProperty("--table-grid", rgba(popupLine, 0.46));
+      document.documentElement.style.setProperty("--table-head-bg", rgba(popupLine, 0.10));
     }
-
     function hexToRgb(value, fallback) {
       const text = String(value || "").trim();
       const match = /^#?([0-9a-fA-F]{6})$/.exec(text);

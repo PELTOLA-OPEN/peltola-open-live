@@ -636,28 +636,62 @@
 
         <section class="card">
           <h2>Overlay colors</h2>
+
+          <h3>Ticker colors</h3>
           <div class="grid">
-            <label>Overlay background color
+            <label>Ticker base color
               <div class="color-control">
-                <input id="overlayBackgroundColor" type="color" />
-                <input id="overlayBackgroundColorText" type="text" inputmode="text" maxlength="7" placeholder="#000000" />
+                <input id="tickerBackgroundColor" type="color" />
+                <input id="tickerBackgroundColorText" type="text" inputmode="text" maxlength="7" placeholder="#000000" />
               </div>
             </label>
-            <label>Table line color
+            <label>Ticker contrast color
               <div class="color-control">
-                <input id="overlayLineColor" type="color" />
-                <input id="overlayLineColorText" type="text" inputmode="text" maxlength="7" placeholder="#ffffff" />
+                <input id="tickerStrongColor" type="color" />
+                <input id="tickerStrongColorText" type="text" inputmode="text" maxlength="7" placeholder="#111111" />
               </div>
             </label>
-            <label>Overlay text color
+            <label>Ticker line color
               <div class="color-control">
-                <input id="overlayTextColor" type="color" />
-                <input id="overlayTextColorText" type="text" inputmode="text" maxlength="7" placeholder="#ffffff" />
+                <input id="tickerLineColor" type="color" />
+                <input id="tickerLineColorText" type="text" inputmode="text" maxlength="7" placeholder="#ffffff" />
               </div>
             </label>
-            <label>Overlay opacity, %
-              <input id="overlayOpacity" type="number" min="0" max="100" step="1" />
-              <input id="overlayOpacityRange" class="slider" type="range" min="0" max="100" step="1" />
+            <label>Ticker text color
+              <div class="color-control">
+                <input id="tickerTextColor" type="color" />
+                <input id="tickerTextColorText" type="text" inputmode="text" maxlength="7" placeholder="#ffffff" />
+              </div>
+            </label>
+            <label>Ticker opacity, %
+              <input id="tickerOpacity" type="number" min="0" max="100" step="1" />
+              <input id="tickerOpacityRange" class="slider" type="range" min="0" max="100" step="1" />
+            </label>
+          </div>
+
+          <h3 style="margin-top: 18px;">Scorecard and odds colors</h3>
+          <div class="grid">
+            <label>Popup background color
+              <div class="color-control">
+                <input id="popupBackgroundColor" type="color" />
+                <input id="popupBackgroundColorText" type="text" inputmode="text" maxlength="7" placeholder="#000000" />
+              </div>
+            </label>
+            <label>Popup table line color
+              <div class="color-control">
+                <input id="popupLineColor" type="color" />
+                <input id="popupLineColorText" type="text" inputmode="text" maxlength="7" placeholder="#ffffff" />
+              </div>
+            </label>
+            <label>Popup text color
+              <div class="color-control">
+                <input id="popupTextColor" type="color" />
+                <input id="popupTextColorText" type="text" inputmode="text" maxlength="7" placeholder="#ffffff" />
+              </div>
+            </label>
+            <label>Popup opacity, %
+              <input id="popupOpacity" type="number" min="0" max="100" step="1" />
+              <input id="popupOpacityRange" class="slider" type="range" min="0" max="100" step="1" />
             </label>
           </div>
           <div class="row" style="margin-top: 12px;">
@@ -881,14 +915,24 @@
       resetScoringPositionBtn: document.getElementById("resetScoringPositionBtn"),
       togglePublicPickemsBtn: document.getElementById("togglePublicPickemsBtn"),
       showStandings: document.getElementById("showStandings"),
-      overlayBackgroundColor: document.getElementById("overlayBackgroundColor"),
-      overlayBackgroundColorText: document.getElementById("overlayBackgroundColorText"),
-      overlayLineColor: document.getElementById("overlayLineColor"),
-      overlayLineColorText: document.getElementById("overlayLineColorText"),
-      overlayTextColor: document.getElementById("overlayTextColor"),
-      overlayTextColorText: document.getElementById("overlayTextColorText"),
-      overlayOpacity: document.getElementById("overlayOpacity"),
-      overlayOpacityRange: document.getElementById("overlayOpacityRange"),
+      tickerBackgroundColor: document.getElementById("tickerBackgroundColor"),
+      tickerBackgroundColorText: document.getElementById("tickerBackgroundColorText"),
+      tickerStrongColor: document.getElementById("tickerStrongColor"),
+      tickerStrongColorText: document.getElementById("tickerStrongColorText"),
+      tickerLineColor: document.getElementById("tickerLineColor"),
+      tickerLineColorText: document.getElementById("tickerLineColorText"),
+      tickerTextColor: document.getElementById("tickerTextColor"),
+      tickerTextColorText: document.getElementById("tickerTextColorText"),
+      tickerOpacity: document.getElementById("tickerOpacity"),
+      tickerOpacityRange: document.getElementById("tickerOpacityRange"),
+      popupBackgroundColor: document.getElementById("popupBackgroundColor"),
+      popupBackgroundColorText: document.getElementById("popupBackgroundColorText"),
+      popupLineColor: document.getElementById("popupLineColor"),
+      popupLineColorText: document.getElementById("popupLineColorText"),
+      popupTextColor: document.getElementById("popupTextColor"),
+      popupTextColorText: document.getElementById("popupTextColorText"),
+      popupOpacity: document.getElementById("popupOpacity"),
+      popupOpacityRange: document.getElementById("popupOpacityRange"),
       resetOverlayThemeBtn: document.getElementById("resetOverlayThemeBtn"),
       addTeamBtn: document.getElementById("addTeamBtn"),
       eventStatus: document.getElementById("eventStatus"),
@@ -988,10 +1032,15 @@
       [els.scorecardColumnWidthPx, els.scorecardColumnWidthPxRange],
       [els.scorecardPaddingPx, els.scorecardPaddingPxRange]
     ].forEach(([numberInput, rangeInput]) => bindSyncedOverlayInput(numberInput, rangeInput, saveOverlayLayoutLive));
-    bindSyncedOverlayInput(els.overlayOpacity, els.overlayOpacityRange, saveOverlayThemeLive);
-    bindColorInputs(els.overlayBackgroundColor, els.overlayBackgroundColorText, saveOverlayThemeLive);
-    bindColorInputs(els.overlayLineColor, els.overlayLineColorText, saveOverlayThemeLive);
-    bindColorInputs(els.overlayTextColor, els.overlayTextColorText, saveOverlayThemeLive);
+    bindSyncedOverlayInput(els.tickerOpacity, els.tickerOpacityRange, saveOverlayThemeLive);
+    bindSyncedOverlayInput(els.popupOpacity, els.popupOpacityRange, saveOverlayThemeLive);
+    bindColorInputs(els.tickerBackgroundColor, els.tickerBackgroundColorText, saveOverlayThemeLive);
+    bindColorInputs(els.tickerStrongColor, els.tickerStrongColorText, saveOverlayThemeLive);
+    bindColorInputs(els.tickerLineColor, els.tickerLineColorText, saveOverlayThemeLive);
+    bindColorInputs(els.tickerTextColor, els.tickerTextColorText, saveOverlayThemeLive);
+    bindColorInputs(els.popupBackgroundColor, els.popupBackgroundColorText, saveOverlayThemeLive);
+    bindColorInputs(els.popupLineColor, els.popupLineColorText, saveOverlayThemeLive);
+    bindColorInputs(els.popupTextColor, els.popupTextColorText, saveOverlayThemeLive);
     els.resetOverlayThemeBtn.addEventListener("click", resetOverlayTheme);
     [
       [els.oddsCenterX, els.oddsCenterXRange],
@@ -1206,14 +1255,24 @@
       els.adHeightScale.value = adOverlayLayout.adHeightScale;
       els.adHeightScaleRange.value = adOverlayLayout.adHeightScale;
       const overlayTheme = getOverlayTheme();
-      els.overlayBackgroundColor.value = overlayTheme.backgroundColor;
-      els.overlayBackgroundColorText.value = overlayTheme.backgroundColor;
-      els.overlayLineColor.value = overlayTheme.lineColor;
-      els.overlayLineColorText.value = overlayTheme.lineColor;
-      els.overlayTextColor.value = overlayTheme.textColor;
-      els.overlayTextColorText.value = overlayTheme.textColor;
-      els.overlayOpacity.value = overlayTheme.overlayOpacity;
-      els.overlayOpacityRange.value = overlayTheme.overlayOpacity;
+      els.tickerBackgroundColor.value = overlayTheme.tickerBackgroundColor;
+      els.tickerBackgroundColorText.value = overlayTheme.tickerBackgroundColor;
+      els.tickerStrongColor.value = overlayTheme.tickerStrongColor;
+      els.tickerStrongColorText.value = overlayTheme.tickerStrongColor;
+      els.tickerLineColor.value = overlayTheme.tickerLineColor;
+      els.tickerLineColorText.value = overlayTheme.tickerLineColor;
+      els.tickerTextColor.value = overlayTheme.tickerTextColor;
+      els.tickerTextColorText.value = overlayTheme.tickerTextColor;
+      els.tickerOpacity.value = overlayTheme.tickerOpacity;
+      els.tickerOpacityRange.value = overlayTheme.tickerOpacity;
+      els.popupBackgroundColor.value = overlayTheme.popupBackgroundColor;
+      els.popupBackgroundColorText.value = overlayTheme.popupBackgroundColor;
+      els.popupLineColor.value = overlayTheme.popupLineColor;
+      els.popupLineColorText.value = overlayTheme.popupLineColor;
+      els.popupTextColor.value = overlayTheme.popupTextColor;
+      els.popupTextColorText.value = overlayTheme.popupTextColor;
+      els.popupOpacity.value = overlayTheme.popupOpacity;
+      els.popupOpacityRange.value = overlayTheme.popupOpacity;
       updatePopupToggleButtons();
       els.showHelsinkiClock.checked = eventState.showHelsinkiClock !== false;
       els.showStandings.checked = eventState.showStandings !== false;
@@ -2075,27 +2134,63 @@
     }
 
     function readOverlayThemeInputs() {
+      const tickerBackgroundColor = normalizeHexColor(els.tickerBackgroundColorText.value, normalizeHexColor(els.tickerBackgroundColor.value, "#000000"));
+      const tickerStrongColor = normalizeHexColor(els.tickerStrongColorText.value, normalizeHexColor(els.tickerStrongColor.value, "#111111"));
+      const tickerLineColor = normalizeHexColor(els.tickerLineColorText.value, normalizeHexColor(els.tickerLineColor.value, "#ffffff"));
+      const tickerTextColor = normalizeHexColor(els.tickerTextColorText.value, normalizeHexColor(els.tickerTextColor.value, "#ffffff"));
+      const popupBackgroundColor = normalizeHexColor(els.popupBackgroundColorText.value, normalizeHexColor(els.popupBackgroundColor.value, "#000000"));
+      const popupLineColor = normalizeHexColor(els.popupLineColorText.value, normalizeHexColor(els.popupLineColor.value, "#ffffff"));
+      const popupTextColor = normalizeHexColor(els.popupTextColorText.value, normalizeHexColor(els.popupTextColor.value, "#ffffff"));
+      const tickerOpacity = clampInt(els.tickerOpacity.value, 0, 100);
+      const popupOpacity = clampInt(els.popupOpacity.value, 0, 100);
       return {
-        backgroundColor: normalizeHexColor(els.overlayBackgroundColorText.value, normalizeHexColor(els.overlayBackgroundColor.value, "#000000")),
-        lineColor: normalizeHexColor(els.overlayLineColorText.value, normalizeHexColor(els.overlayLineColor.value, "#ffffff")),
-        textColor: normalizeHexColor(els.overlayTextColorText.value, normalizeHexColor(els.overlayTextColor.value, "#ffffff")),
-        overlayOpacity: clampInt(els.overlayOpacity.value, 0, 100)
+        tickerBackgroundColor,
+        tickerStrongColor,
+        tickerLineColor,
+        tickerTextColor,
+        tickerOpacity,
+        popupBackgroundColor,
+        popupLineColor,
+        popupTextColor,
+        popupOpacity,
+        backgroundColor: popupBackgroundColor,
+        lineColor: popupLineColor,
+        textColor: popupTextColor,
+        overlayOpacity: popupOpacity
       };
     }
 
     function getOverlayTheme() {
       const defaults = getDefaultOverlayTheme();
       const saved = eventState?.overlayTheme || {};
+      const legacyBackground = normalizeHexColor(saved.backgroundColor, defaults.popupBackgroundColor);
+      const legacyLine = normalizeHexColor(saved.lineColor, defaults.popupLineColor);
+      const legacyText = normalizeHexColor(saved.textColor, defaults.popupTextColor);
+      const legacyOpacity = clampInt(saved.overlayOpacity ?? defaults.popupOpacity, 0, 100);
       return {
-        backgroundColor: normalizeHexColor(saved.backgroundColor, defaults.backgroundColor),
-        lineColor: normalizeHexColor(saved.lineColor, defaults.lineColor),
-        textColor: normalizeHexColor(saved.textColor, defaults.textColor),
-        overlayOpacity: clampInt(saved.overlayOpacity ?? defaults.overlayOpacity, 0, 100)
+        tickerBackgroundColor: normalizeHexColor(saved.tickerBackgroundColor, legacyBackground),
+        tickerStrongColor: normalizeHexColor(saved.tickerStrongColor, normalizeHexColor(saved.tickerBackgroundColor, legacyBackground)),
+        tickerLineColor: normalizeHexColor(saved.tickerLineColor, legacyLine),
+        tickerTextColor: normalizeHexColor(saved.tickerTextColor, legacyText),
+        tickerOpacity: clampInt(saved.tickerOpacity ?? legacyOpacity, 0, 100),
+        popupBackgroundColor: normalizeHexColor(saved.popupBackgroundColor, legacyBackground),
+        popupLineColor: normalizeHexColor(saved.popupLineColor, legacyLine),
+        popupTextColor: normalizeHexColor(saved.popupTextColor, legacyText),
+        popupOpacity: clampInt(saved.popupOpacity ?? legacyOpacity, 0, 100)
       };
     }
 
     function getDefaultOverlayTheme() {
       return {
+        tickerBackgroundColor: "#000000",
+        tickerStrongColor: "#111111",
+        tickerLineColor: "#ffffff",
+        tickerTextColor: "#ffffff",
+        tickerOpacity: 50,
+        popupBackgroundColor: "#000000",
+        popupLineColor: "#ffffff",
+        popupTextColor: "#ffffff",
+        popupOpacity: 50,
         backgroundColor: "#000000",
         lineColor: "#ffffff",
         textColor: "#ffffff",
