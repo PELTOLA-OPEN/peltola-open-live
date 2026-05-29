@@ -426,6 +426,72 @@
       text-align: center;
     }
 
+
+    .history-wrap {
+      display: grid;
+      gap: 14px;
+    }
+
+    .history-mode-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      max-width: 520px;
+    }
+
+    .history-mode-btn {
+      min-height: 42px;
+      border: 1px solid rgba(51, 163, 255, 0.34);
+      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.42);
+      color: var(--text);
+      font: inherit;
+      font-size: 13px;
+      font-weight: 950;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .history-mode-btn.active {
+      border-color: rgba(51, 163, 255, 0.8);
+      color: var(--accent);
+      background: rgba(51, 163, 255, 0.16);
+    }
+
+    .history-entry {
+      display: grid;
+      gap: 10px;
+      width: max-content;
+      max-width: 100%;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(0, 0, 0, 0.28);
+    }
+
+    .history-entry-title {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 18px;
+      color: var(--text);
+      font-weight: 950;
+      text-transform: uppercase;
+    }
+
+    .history-entry-date {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .history-pickem-table .score-cell,
+    .history-pickem-table .birdie-cell {
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+
     @media (max-width: 760px) {
       body {
         display: block;
@@ -552,6 +618,7 @@
         <button id="viewScorecardBtn" class="view-tab active" type="button">Scorecard</button>
         <button id="viewPickemsBtn" class="view-tab" type="button">Pickems</button>
         <button id="viewOddsBtn" class="view-tab" type="button">Odds</button>
+        <button id="viewHistoryBtn" class="view-tab" type="button">History</button>
       </nav>
       <section id="scorecardPanel">
         <div id="tableWrap" class="table-wrap"></div>
@@ -561,6 +628,9 @@
       </section>
       <section id="oddsPanel" class="hide">
         <div id="oddsWrap" class="odds-wrap"></div>
+      </section>
+      <section id="historyPanel" class="hide">
+        <div id="historyWrap" class="history-wrap"></div>
       </section>
     </section>
     <div id="status" class="status"></div>
@@ -586,11 +656,15 @@
     const viewScorecardBtn = document.getElementById("viewScorecardBtn");
     const viewPickemsBtn = document.getElementById("viewPickemsBtn");
     const viewOddsBtn = document.getElementById("viewOddsBtn");
+    const viewHistoryBtn = document.getElementById("viewHistoryBtn");
     const scorecardPanel = document.getElementById("scorecardPanel");
     const pickemsPanel = document.getElementById("pickemsPanel");
     const oddsPanel = document.getElementById("oddsPanel");
+    const historyPanel = document.getElementById("historyPanel");
+    const historyWrapEl = document.getElementById("historyWrap");
 
     let activeView = "scorecard";
+    let historyMode = "scorecards";
     let latestEvent = null;
     let firebaseLoaded = false;
     let firebaseError = null;
@@ -610,8 +684,12 @@
       history.replaceState(null, "", `${location.pathname}${location.search}#odds`);
       setActiveView("odds");
     });
+    viewHistoryBtn.addEventListener("click", () => {
+      history.replaceState(null, "", `${location.pathname}${location.search}#history`);
+      setActiveView("history");
+    });
 
-    setActiveView(location.hash === "#pickems" ? "pickems" : location.hash === "#odds" ? "odds" : "scorecard");
+    setActiveView(location.hash === "#pickems" ? "pickems" : location.hash === "#odds" ? "odds" : location.hash === "#history" ? "history" : "scorecard");
 
     onValue(
       ref(db, `events/${eventId}`),
@@ -629,13 +707,15 @@
     );
 
     function setActiveView(view) {
-      activeView = view === "pickems" || view === "odds" ? view : "scorecard";
+      activeView = view === "pickems" || view === "odds" || view === "history" ? view : "scorecard";
       scorecardPanel.classList.toggle("hide", activeView !== "scorecard");
       pickemsPanel.classList.toggle("hide", activeView !== "pickems");
       oddsPanel.classList.toggle("hide", activeView !== "odds");
+      historyPanel.classList.toggle("hide", activeView !== "history");
       viewScorecardBtn.classList.toggle("active", activeView === "scorecard");
       viewPickemsBtn.classList.toggle("active", activeView === "pickems");
       viewOddsBtn.classList.toggle("active", activeView === "odds");
+      viewHistoryBtn.classList.toggle("active", activeView === "history");
       renderEvent();
     }
 
@@ -647,6 +727,7 @@
           tableWrapEl.innerHTML = "";
           pickemsWrapEl.innerHTML = "";
           oddsWrapEl.innerHTML = "";
+          historyWrapEl.innerHTML = "";
           statusEl.textContent = `Firebase error: ${getErrorMessage(firebaseError)}`;
           return;
         }
@@ -657,6 +738,7 @@
           tableWrapEl.innerHTML = `<p class="status">Loading event data... Refresh the page if nothing shows up within 5 sec.</p>`;
           pickemsWrapEl.innerHTML = `<p class="status">Loading event data... Refresh the page if nothing shows up within 5 sec.</p>`;
           oddsWrapEl.innerHTML = `<p class="status">Loading event data... Refresh the page if nothing shows up within 5 sec.</p>`;
+          historyWrapEl.innerHTML = `<p class="status">Loading event data... Refresh the page if nothing shows up within 5 sec.</p>`;
           statusEl.textContent = "Connecting to Firebase...";
           return;
         }
@@ -668,6 +750,7 @@
           tableWrapEl.innerHTML = "";
           pickemsWrapEl.innerHTML = "";
           oddsWrapEl.innerHTML = "";
+          historyWrapEl.innerHTML = "";
           statusEl.textContent = "Open the control panel first to create this event.";
           return;
         }
@@ -678,6 +761,7 @@
           tableWrapEl.innerHTML = "";
           pickemsWrapEl.innerHTML = "";
           oddsWrapEl.innerHTML = "";
+          historyWrapEl.innerHTML = "";
           statusEl.textContent = "Event data is not in the expected format.";
           return;
         }
@@ -689,9 +773,157 @@
 
         if (activeView === "pickems") renderPickems(event);
         else if (activeView === "odds") renderOdds(event);
+        else if (activeView === "history") renderHistory(event);
         else renderScorecard(event);
       } catch (error) {
         showRuntimeError(error);
+      }
+    }
+
+
+    function renderHistory(event) {
+      const historyRows = Object.entries(event.history || {})
+        .map(([id, record]) => ({ id, ...record }))
+        .filter(record => isPlainObject(record.snapshot))
+        .sort((a, b) => Number(b.savedAt || 0) - Number(a.savedAt || 0));
+
+      if (!historyRows.length) {
+        historyWrapEl.innerHTML = `
+          <div class="history-mode-tabs">
+            <button class="history-mode-btn active" type="button">Scorecards</button>
+            <button class="history-mode-btn" type="button">Pick'ems</button>
+          </div>
+          <p class="status">No completed rounds saved yet.</p>
+        `;
+        bindHistoryModeButtons();
+        return;
+      }
+
+      const entries = historyRows.map(record => {
+        const snapshot = record.snapshot;
+        const title = record.name || snapshot.name || "Peltola Open";
+        const date = formatSavedDate(record.savedAt);
+        const body = historyMode === "pickems" ? renderHistoryPickems(snapshot) : renderHistoryScorecard(snapshot);
+        return `
+          <article class="history-entry">
+            <div class="history-entry-title">
+              <span>${escapeHtml(title)}</span>
+              <span class="history-entry-date">${escapeHtml(date)}</span>
+            </div>
+            ${body}
+          </article>
+        `;
+      }).join("");
+
+      historyWrapEl.innerHTML = `
+        <div class="history-mode-tabs">
+          <button id="historyScorecardsBtn" class="history-mode-btn ${historyMode === "scorecards" ? "active" : ""}" type="button">Scorecards</button>
+          <button id="historyPickemsBtn" class="history-mode-btn ${historyMode === "pickems" ? "active" : ""}" type="button">Pick'ems</button>
+        </div>
+        ${entries}
+      `;
+      bindHistoryModeButtons();
+    }
+
+    function bindHistoryModeButtons() {
+      const scorecardsBtn = document.getElementById("historyScorecardsBtn") || historyWrapEl.querySelector(".history-mode-btn:first-child");
+      const pickemsBtn = document.getElementById("historyPickemsBtn") || historyWrapEl.querySelector(".history-mode-btn:nth-child(2)");
+      if (scorecardsBtn) scorecardsBtn.addEventListener("click", () => { historyMode = "scorecards"; renderEvent(); });
+      if (pickemsBtn) pickemsBtn.addEventListener("click", () => { historyMode = "pickems"; renderEvent(); });
+    }
+
+    function renderHistoryScorecard(event) {
+      const holeCount = clampInt(event.holeCount || 18, 1, 36);
+      const completedThrough = getCompletedThrough(event) || holeCount;
+      const standings = assignPositions(calculateStandings(event, completedThrough));
+      const colorMode = getScorecardColorMode(event);
+      const headerCells = Array.from({ length: holeCount }, (_, index) => `<th class="hole">${index + 1}</th>`).join("");
+      const parCells = Array.from({ length: holeCount }, (_, index) => {
+        const par = Number(event.holes?.[String(index + 1)]?.par || 0);
+        return `<td class="hole">${par || "-"}</td>`;
+      }).join("");
+      const rows = standings.map(team => {
+        const holeCells = Array.from({ length: holeCount }, (_, index) => {
+          const hole = index + 1;
+          const holeKey = String(hole);
+          const score = Number(event.teams?.[team.id]?.scores?.[holeKey]);
+          const par = Number(event.holes?.[holeKey]?.par || 0);
+          if (!Number.isFinite(score) || score <= 0 || !Number.isFinite(par) || par <= 0) return `<td class="hole empty-cell">·</td>`;
+          return renderScoreHoleCell(score, par, colorMode);
+        }).join("");
+        return `
+          <tr>
+            <td class="player">${escapeHtml(team.positionLabel)} - ${escapeHtml(team.name)}</td>
+            ${holeCells}
+            <td class="total">${formatToPar(team.toPar)}</td>
+          </tr>
+        `;
+      }).join("");
+      return `
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th class="player">Team</th>${headerCells}<th class="total">Total</th></tr></thead>
+            <tbody>
+              <tr class="par-row"><td class="player">Par</td>${parCells}<td class="total"></td></tr>
+              ${rows || `<tr><td class="player">No teams</td><td colspan="${holeCount + 1}"></td></tr>`}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function renderHistoryPickems(event) {
+      const teams = getTeams(event);
+      const pickems = getPickems(event, teams);
+      if (!teams.length || !pickems.length) return `<p class="status">No pick'ems saved for this round.</p>`;
+      const completedThrough = getCompletedThrough(event) || clampInt(event.holeCount || 18, 1, 36);
+      const actualStandings = assignPositions(calculateStandings(event, completedThrough));
+      const actualRanges = buildActualRanges(actualStandings);
+      const actualBirdies = countBirdies(event, completedThrough);
+      const scoringRules = getPickemScoringRules(event);
+      const rows = assignPickemPositions(pickems.map(pickem => scorePickem(pickem, teams, actualRanges, actualBirdies, scoringRules)));
+      return `
+        <div class="table-wrap">
+          <table class="pickem-summary history-pickem-table">
+            <thead>
+              <tr>
+                <th class="pos-cell">Pos</th>
+                <th class="name-cell">Name</th>
+                <th class="score-cell">Score</th>
+                <th class="birdie-cell">Birdie prediction</th>
+                <th class="birdie-cell">Birdies</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.map(row => `
+                <tr>
+                  <td class="pos-cell">${escapeHtml(row.positionLabel)}</td>
+                  <td class="name-cell">${escapeHtml(row.name)}</td>
+                  <td class="score-cell">${formatPickemScore(row.finalScore)}</td>
+                  <td class="birdie-cell">${row.birdiesPrediction}</td>
+                  <td class="birdie-cell">${actualBirdies}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function formatSavedDate(timestamp) {
+      const time = Number(timestamp || 0);
+      if (!Number.isFinite(time) || time <= 0) return "Saved time unknown";
+      try {
+        return new Intl.DateTimeFormat("en-GB", {
+          timeZone: "Europe/Helsinki",
+          year: "numeric",
+          month: "short",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit"
+        }).format(new Date(time));
+      } catch (_) {
+        return new Date(time).toLocaleString();
       }
     }
 
