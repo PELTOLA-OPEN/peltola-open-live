@@ -537,6 +537,20 @@
       max-height: 90vh;
       object-fit: contain;
       filter: none;
+      transform-origin: center center;
+    }
+
+    .ad-pop.show img {
+      animation: ad-pulse 1400ms ease-in-out 2000ms infinite;
+    }
+
+    .ad-pop.exiting img {
+      animation: none;
+    }
+
+    @keyframes ad-pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.035); }
     }
 
     @keyframes ad-boomerang-in {
