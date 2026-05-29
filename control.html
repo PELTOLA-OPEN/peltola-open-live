@@ -180,7 +180,7 @@
 
     .tabs {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       gap: 8px;
       margin: 14px 0;
     }
@@ -345,6 +345,22 @@
       font-variant-numeric: tabular-nums;
     }
 
+    .history-admin-list { display: grid; gap: 12px; }
+
+    .history-admin-card {
+      display: grid;
+      grid-template-columns: minmax(180px, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--panel-2);
+    }
+
+    .history-admin-title { font-weight: 950; }
+    .history-admin-meta { margin-top: 3px; color: var(--muted); font-size: 12px; font-weight: 750; }
+
     @media (max-width: 760px) {
       .tabs { grid-template-columns: 1fr; }
       .pickem-top { grid-template-columns: 1fr; }
@@ -422,6 +438,7 @@
         <button id="overlayTabBtn" class="tab-btn" type="button">Overlay</button>
         <button id="scoringTabBtn" class="tab-btn" type="button">Scoring</button>
         <button id="pickemsTabBtn" class="tab-btn" type="button">Pickems</button>
+        <button id="historyTabBtn" class="tab-btn" type="button">History</button>
       </nav>
 
       <section id="setupTab">
@@ -857,6 +874,17 @@
         </section>
       </section>
 
+      <section id="historyTab" class="hide">
+        <section class="card">
+          <div class="row between">
+            <h2>History</h2>
+            <span id="historyCountLabel" class="muted"></span>
+          </div>
+          <div id="historyAdminList" class="history-admin-list"></div>
+          <div id="historyStatus" class="status"></div>
+        </section>
+      </section>
+
     </section>
   </main>
 
@@ -912,10 +940,15 @@
       overlayTabBtn: document.getElementById("overlayTabBtn"),
       scoringTabBtn: document.getElementById("scoringTabBtn"),
       pickemsTabBtn: document.getElementById("pickemsTabBtn"),
+      historyTabBtn: document.getElementById("historyTabBtn"),
       setupTab: document.getElementById("setupTab"),
       overlayTab: document.getElementById("overlayTab"),
       scoringTab: document.getElementById("scoringTab"),
       pickemsTab: document.getElementById("pickemsTab"),
+      historyTab: document.getElementById("historyTab"),
+      historyAdminList: document.getElementById("historyAdminList"),
+      historyStatus: document.getElementById("historyStatus"),
+      historyCountLabel: document.getElementById("historyCountLabel"),
       eventName: document.getElementById("eventName"),
       holeCount: document.getElementById("holeCount"),
       overlayMode: document.getElementById("overlayMode"),
@@ -1123,6 +1156,7 @@
     els.overlayTabBtn.addEventListener("click", () => setActiveTab("overlay"));
     els.scoringTabBtn.addEventListener("click", () => setActiveTab("scoring"));
     els.pickemsTabBtn.addEventListener("click", () => setActiveTab("pickems"));
+    els.historyTabBtn.addEventListener("click", () => setActiveTab("history"));
     els.saveEventBtn.addEventListener("click", saveEventSettings);
     els.resetOverlayLayoutBtn.addEventListener("click", resetOverlayLayout);
     els.resetOddsOverlayLayoutBtn.addEventListener("click", resetOddsOverlayLayout);
@@ -1300,10 +1334,12 @@
       els.overlayTab.classList.toggle("hide", tab !== "overlay");
       els.scoringTab.classList.toggle("hide", tab !== "scoring");
       els.pickemsTab.classList.toggle("hide", tab !== "pickems");
+      els.historyTab.classList.toggle("hide", tab !== "history");
       els.setupTabBtn.classList.toggle("active", tab === "setup");
       els.overlayTabBtn.classList.toggle("active", tab === "overlay");
       els.scoringTabBtn.classList.toggle("active", tab === "scoring");
       els.pickemsTabBtn.classList.toggle("active", tab === "pickems");
+      els.historyTabBtn.classList.toggle("active", tab === "history");
       applyAccessMode();
       render();
     }
@@ -1318,11 +1354,13 @@
       els.setupTabBtn.classList.toggle("hide", scoringOnly);
       els.overlayTabBtn.classList.toggle("hide", scoringOnly);
       els.pickemsTabBtn.classList.toggle("hide", scoringOnly);
+      els.historyTabBtn.classList.toggle("hide", scoringOnly);
       els.scoringTabBtn.classList.toggle("active", scoringOnly || activeTab === "scoring");
       if (scoringOnly) {
         els.setupTab.classList.add("hide");
         els.overlayTab.classList.add("hide");
         els.pickemsTab.classList.add("hide");
+        els.historyTab.classList.add("hide");
         els.scoringTab.classList.remove("hide");
       }
     }
@@ -1905,6 +1943,77 @@
       }
     }
 
+
+    function renderHistoryAdmin() {
+      if (!els.historyAdminList || !eventState) return;
+      const records = Object.entries(eventState.history || {})
+        .map(([id, record]) => ({ id, ...record }))
+        .filter(record => record && typeof record === "object" && record.snapshot)
+        .sort((a, b) => Number(b.savedAt || 0) - Number(a.savedAt || 0));
+
+      if (els.historyCountLabel) {
+        els.historyCountLabel.textContent = records.length ? `${records.length} saved round${records.length === 1 ? "" : "s"}` : "No saved rounds";
+      }
+
+      if (!records.length) {
+        els.historyAdminList.innerHTML = `<p class="muted">No completed rounds saved yet.</p>`;
+        if (els.historyStatus) els.historyStatus.textContent = "";
+        return;
+      }
+
+      els.historyAdminList.innerHTML = records.map(record => {
+        const title = record.name || record.snapshot?.name || "Peltola Open";
+        const date = formatHistorySavedDate(record.savedAt || record.snapshot?.savedAt);
+        const teams = Object.keys(record.snapshot?.teams || {}).length;
+        const pickems = Object.keys(record.snapshot?.pickems || {}).length;
+        return `
+          <article class="history-admin-card" data-history-id="${escapeAttribute(record.id)}">
+            <div>
+              <div class="history-admin-title">${escapeHtml(title)}</div>
+              <div class="history-admin-meta">${escapeHtml(date)} · ${teams} team${teams === 1 ? "" : "s"} · ${pickems} pick'em${pickems === 1 ? "" : "s"}</div>
+            </div>
+            <button class="danger delete-history" type="button">Delete</button>
+          </article>
+        `;
+      }).join("");
+
+      els.historyAdminList.querySelectorAll(".delete-history").forEach(button => {
+        button.addEventListener("click", () => {
+          const card = button.closest(".history-admin-card");
+          const id = card?.dataset?.historyId;
+          const title = card?.querySelector(".history-admin-title")?.textContent || "this saved round";
+          deleteHistoryRecord(id, title);
+        });
+      });
+    }
+
+    async function deleteHistoryRecord(historyId, title = "this saved round") {
+      if (!signedIn || !historyId) return;
+      if (!window.confirm(`Delete saved history record "${title}"? This cannot be undone.`)) return;
+      try {
+        await remove(ref(db, `events/${eventId}/history/${historyId}`));
+        if (els.historyStatus) els.historyStatus.textContent = "History record deleted.";
+      } catch (error) {
+        if (els.historyStatus) els.historyStatus.textContent = readableFirebaseError(error);
+      }
+    }
+
+    function formatHistorySavedDate(timestamp) {
+      const time = Number(timestamp || 0);
+      if (!Number.isFinite(time) || time <= 0) return "Saved time unknown";
+      try {
+        return new Intl.DateTimeFormat("en-GB", {
+          timeZone: "Europe/Helsinki",
+          year: "numeric",
+          month: "short",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit"
+        }).format(new Date(time));
+      } catch (_) {
+        return new Date(time).toLocaleString();
+      }
+    }
 
     async function saveCompletedRoundToHistory(pendingUpdates = {}) {
       if (!signedIn || !eventState) return;
