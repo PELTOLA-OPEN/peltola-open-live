@@ -390,6 +390,112 @@
       font-weight: 950 !important;
     }
 
+
+    .pickem-pop {
+      position: absolute;
+      left: var(--pickem-center-x, 50%);
+      top: var(--pickem-center-y, 42%);
+      display: inline-block;
+      width: max-content;
+      max-width: 94vw;
+      max-height: 76vh;
+      transform: translate(-50%, -50%) translateY(24px) scale(var(--pickem-hidden-scale, 0.96)) scaleX(var(--pickem-width-factor, 1)) scaleY(var(--pickem-height-factor, 1));
+      transform-origin: center center;
+      opacity: 0;
+      padding: var(--pickem-padding, 16px);
+      border: 2px solid var(--popup-border);
+      border-radius: 16px;
+      background: var(--panel);
+      box-shadow: none;
+      transition: opacity 260ms ease, transform 260ms ease;
+    }
+
+    .pickem-pop.show {
+      transform: translate(-50%, -50%) translateY(0) scale(var(--pickem-show-scale, 1)) scaleX(var(--pickem-width-factor, 1)) scaleY(var(--pickem-height-factor, 1));
+      opacity: 1;
+    }
+
+    .pickem-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: flex-start;
+      gap: 10px;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+
+    .pickem-title {
+      overflow: hidden;
+      font-size: calc(clamp(17px, 2vw, 30px) * var(--pickem-header-font-scale, var(--pickem-font-scale, 1)));
+      font-weight: 950;
+      letter-spacing: 0.06em;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .pickem-table-wrap {
+      display: inline-block;
+      overflow: hidden;
+      width: var(--pickem-table-width, max-content);
+      max-width: calc(94vw - 32px);
+    }
+
+    .pickem-pop-table {
+      width: var(--pickem-table-width, auto);
+      border-collapse: collapse;
+      table-layout: fixed;
+      color: white;
+      font-variant-numeric: tabular-nums;
+      --pickem-grid: var(--table-grid);
+    }
+
+    .pickem-pop-table th,
+    .pickem-pop-table td {
+      height: var(--pickem-cell-height, clamp(28px, 2.6vw, 39px));
+      border: 1px solid var(--pickem-grid);
+      padding: calc(var(--pickem-cell-padding, 3px) * 0.55) var(--pickem-cell-padding, 3px);
+      vertical-align: middle;
+      line-height: 1;
+      background-clip: padding-box;
+      white-space: nowrap;
+    }
+
+    .pickem-pop-table th {
+      background: var(--table-head-bg);
+      font-size: calc(clamp(10px, 0.9vw, 14px) * var(--pickem-header-font-scale, var(--pickem-font-scale, 1)));
+      font-weight: 950;
+      text-transform: uppercase;
+    }
+
+    .pickem-pop-table td {
+      font-size: calc(clamp(12px, 1.2vw, 19px) * var(--pickem-font-scale, 1));
+      font-weight: 850;
+    }
+
+    .pickem-pos-cell {
+      width: var(--pickem-pos-width, 32px);
+      min-width: var(--pickem-pos-width, 32px);
+      text-align: center;
+      font-weight: 950 !important;
+    }
+
+    .pickem-name-cell {
+      width: var(--pickem-name-width, auto);
+      min-width: var(--pickem-name-width, auto);
+      max-width: var(--pickem-name-width, var(--pickem-name-max, min(260px, 32vw)));
+      overflow: hidden;
+      text-align: left;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .pickem-score-cell {
+      width: var(--pickem-score-width, 54px);
+      min-width: var(--pickem-score-width, 54px);
+      text-align: right;
+      font-weight: 950 !important;
+    }
+
     .scorecard-header {
       display: flex;
       align-items: baseline;
@@ -778,6 +884,13 @@
       <div id="oddsTableWrap" class="odds-table-wrap"></div>
     </section>
 
+    <section id="pickemPop" class="pickem-pop hidden" aria-live="polite">
+      <div class="pickem-header">
+        <div id="pickemTitle" class="pickem-title">Pickem standings</div>
+      </div>
+      <div id="pickemTableWrap" class="pickem-table-wrap"></div>
+    </section>
+
     <section id="adPop" class="ad-pop hidden" aria-live="polite">
       <img src="peltola-ad.png" alt="Peltola Open ad" />
     </section>
@@ -814,6 +927,9 @@
     const oddsTitleEl = document.getElementById("oddsTitle");
     const oddsSubtitleEl = document.getElementById("oddsSubtitle");
     const oddsTableWrapEl = document.getElementById("oddsTableWrap");
+    const pickemPopEl = document.getElementById("pickemPop");
+    const pickemTitleEl = document.getElementById("pickemTitle");
+    const pickemTableWrapEl = document.getElementById("pickemTableWrap");
     const helsinkiClockEl = document.getElementById("helsinkiClock");
     const tickerLogoEl = document.getElementById("tickerLogo");
     const tickerLogoImgEl = document.getElementById("tickerLogoImg");
@@ -822,14 +938,18 @@
     let lastFlashSequence = null;
     let scorecardHideTimer = null;
     let oddsHideTimer = null;
+    let pickemHideTimer = null;
     let adHideTimer = null;
     let scorecardPreviewActive = false;
     let oddsPreviewActive = false;
+    let pickemPreviewActive = false;
     let adPreviewActive = false;
     let flashActive = false;
     let oddsFlashActive = false;
+    let pickemFlashActive = false;
     let adFlashActive = false;
     let lastOddsFlashSequence = null;
+    let lastPickemFlashSequence = null;
     let lastAdFlashSequence = null;
     let clockTimer = null;
     let latestEvent = null;
@@ -873,9 +993,11 @@
 
       maybeShowScorecardFlash(event);
       maybeShowOddsFlash(event);
+      maybeShowPickemFlash(event);
       maybeShowAdFlash(event);
       updateScorecardPreview(event);
       updateOddsPreview(event);
+      updatePickemPreview(event);
       updateAdPreview(event);
     }
 
@@ -886,6 +1008,7 @@
       tickerLogoEl.classList.add("hidden");
       if (!scorecardPreviewActive && !flashActive) scorecardPopEl.classList.add("hidden");
       if (!oddsPreviewActive && !oddsFlashActive) oddsPopEl.classList.add("hidden");
+      if (!pickemPreviewActive && !pickemFlashActive) pickemPopEl.classList.add("hidden");
       if (!adPreviewActive && !adFlashActive) adPopEl.classList.add("hidden");
       if (clockTimer) {
         window.clearInterval(clockTimer);
@@ -999,6 +1122,18 @@
         oddsPaddingPx: 10,
         ...(event.oddsOverlayLayout || {})
       };
+      const pickemLayout = {
+        pickemCenterX: 50,
+        pickemCenterY: 42,
+        pickemScale: 100,
+        pickemWidthScale: 100,
+        pickemHeightScale: 100,
+        pickemFontScale: 100,
+        pickemHeaderFontScale: 100,
+        pickemRowHeightPx: 34,
+        pickemPaddingPx: 10,
+        ...(event.pickemOverlayLayout || {})
+      };
       const adLayout = {
         adCenterX: 50,
         adCenterY: 50,
@@ -1039,6 +1174,16 @@
       const oddsRowHeight = clampNumber(oddsLayout.oddsRowHeightPx || 34, 16, 90);
       const oddsPadding = clampNumber(oddsLayout.oddsPaddingPx || 10, 0, 40);
       const oddsCellPadding = Math.max(1, Math.min(20, oddsPadding / 2));
+      const pickemCenterX = clampNumber(pickemLayout.pickemCenterX, 0, 100);
+      const pickemCenterY = clampNumber(pickemLayout.pickemCenterY, 0, 100);
+      const pickemScale = (clampNumber(pickemLayout.pickemScale, 50, 150) / 100) * overlayPageScale;
+      const pickemWidthFactor = clampNumber(pickemLayout.pickemWidthScale, 50, 180) / 100;
+      const pickemHeightFactor = clampNumber(pickemLayout.pickemHeightScale, 50, 180) / 100;
+      const pickemFontScaleControl = clampNumber(pickemLayout.pickemFontScale || 100, 50, 200) / 100;
+      const pickemHeaderFontScaleControl = clampNumber(pickemLayout.pickemHeaderFontScale || 100, 50, 220) / 100;
+      const pickemRowHeight = clampNumber(pickemLayout.pickemRowHeightPx || 34, 16, 90);
+      const pickemPadding = clampNumber(pickemLayout.pickemPaddingPx || 10, 0, 40);
+      const pickemCellPadding = Math.max(1, Math.min(20, pickemPadding / 2));
       const adCenterX = clampNumber(adLayout.adCenterX, 0, 100);
       const adCenterY = clampNumber(adLayout.adCenterY, 0, 100);
       const adScale = (clampNumber(adLayout.adScale, 20, 200) / 100) * overlayPageScale;
@@ -1094,6 +1239,18 @@
       document.documentElement.style.setProperty("--odds-cell-height", `${oddsRowHeight}px`);
       document.documentElement.style.setProperty("--odds-team-max", `${Math.min(260, viewportWidth * 0.32)}px`);
       document.documentElement.style.setProperty("--odds-team-mobile-max", "136px");
+      document.documentElement.style.setProperty("--pickem-center-x", `${pickemCenterX}%`);
+      document.documentElement.style.setProperty("--pickem-center-y", `${pickemCenterY}%`);
+      document.documentElement.style.setProperty("--pickem-show-scale", String(pickemScale));
+      document.documentElement.style.setProperty("--pickem-hidden-scale", String(pickemScale * 0.96));
+      document.documentElement.style.setProperty("--pickem-width-factor", String(pickemWidthFactor));
+      document.documentElement.style.setProperty("--pickem-height-factor", String(pickemHeightFactor));
+      document.documentElement.style.setProperty("--pickem-font-scale", String(pickemFontScaleControl));
+      document.documentElement.style.setProperty("--pickem-header-font-scale", String(pickemHeaderFontScaleControl));
+      document.documentElement.style.setProperty("--pickem-padding", `${pickemPadding}px`);
+      document.documentElement.style.setProperty("--pickem-cell-padding", `${pickemCellPadding}px`);
+      document.documentElement.style.setProperty("--pickem-cell-height", `${pickemRowHeight}px`);
+      document.documentElement.style.setProperty("--pickem-name-max", `${Math.min(260, viewportWidth * 0.32)}px`);
       document.documentElement.style.setProperty("--ad-center-x", `${adCenterX}%`);
       document.documentElement.style.setProperty("--ad-center-y", `${adCenterY}%`);
       document.documentElement.style.setProperty("--ad-show-scale", String(adScale));
@@ -1138,6 +1295,23 @@
       lastOddsFlashSequence = flash.sequence;
       renderOddsPop(event);
       showOddsPop(durationMs);
+    }
+
+    function maybeShowPickemFlash(event) {
+      const flash = event.overlayFlash;
+      if (!flash || flash.type !== "pickem" || !flash.sequence) return;
+      if (flash.sequence === lastPickemFlashSequence) return;
+
+      const durationMs = Number(flash.durationMs || 10000);
+      const triggeredAt = Number(flash.triggeredAt || 0);
+      if (triggeredAt && Date.now() - triggeredAt > durationMs + 1500) {
+        lastPickemFlashSequence = flash.sequence;
+        return;
+      }
+
+      lastPickemFlashSequence = flash.sequence;
+      renderPickemPop(event);
+      showPickemPop(durationMs);
     }
 
     function maybeShowAdFlash(event) {
@@ -1196,6 +1370,26 @@
       }, 320);
     }
 
+    function showPickemPop(durationMs = 10000, persistent = false) {
+      window.clearTimeout(pickemHideTimer);
+      pickemPopEl.classList.remove("hidden");
+      requestAnimationFrame(() => pickemPopEl.classList.add("show"));
+
+      if (persistent) return;
+      pickemFlashActive = true;
+      pickemHideTimer = window.setTimeout(() => {
+        pickemFlashActive = false;
+        if (!pickemPreviewActive) hidePickemPop();
+      }, durationMs);
+    }
+
+    function hidePickemPop() {
+      pickemPopEl.classList.remove("show");
+      window.setTimeout(() => {
+        if (!pickemPreviewActive && !pickemFlashActive) pickemPopEl.classList.add("hidden");
+      }, 320);
+    }
+
     function showAdPop(durationMs = 10000, persistent = false) {
       window.clearTimeout(adHideTimer);
       if (persistent && adPopEl.classList.contains("show") && !adPopEl.classList.contains("exiting")) return;
@@ -1244,6 +1438,17 @@
         showOddsPop(0, true);
       } else if (!oddsFlashActive) {
         hideOddsPop();
+      }
+    }
+
+    function updatePickemPreview(event) {
+      const previewEnabled = event.showPickemPreview === true;
+      pickemPreviewActive = previewEnabled;
+      if (previewEnabled) {
+        renderPickemPop(event);
+        showPickemPop(0, true);
+      } else if (!pickemFlashActive) {
+        hidePickemPop();
       }
     }
 
@@ -1432,6 +1637,73 @@
             </tr>
           </thead>
           <tbody>${rows || `<tr><td class="odds-pos-cell">--</td><td class="odds-team-cell">Add teams</td><td class="odds-value-cell">--</td></tr>`}</tbody>
+        </table>
+      `;
+    }
+
+    function renderPickemPop(event) {
+      const teams = getTeams(event);
+      const pickems = getPickems(event, teams);
+      const completedThrough = getCompletedThrough(event);
+      const actualStandings = assignPositions(calculateStandings(event, completedThrough));
+      const actualRanges = buildActualRanges(actualStandings);
+      const actualBirdies = countBirdies(event, completedThrough);
+      const scoringRules = getPickemScoringRules(event);
+      const rowsData = assignPickemPositions(pickems.map(pickem => scorePickem(pickem, teams, actualRanges, actualBirdies, scoringRules)));
+
+      pickemTitleEl.textContent = "Pickem standings";
+
+      const viewportWidth = Math.max(320, window.innerWidth || 720);
+      const mobile = viewportWidth <= 700;
+      const textFontSize = mobile ? 11 : Math.max(12, Math.min(19, viewportWidth * 0.012));
+      const headerFontSize = mobile ? 9 : Math.max(10, Math.min(14, viewportWidth * 0.009));
+      const namesToMeasure = rowsData.length ? rowsData.map(row => String(row.name || "")) : ["Add pickems"];
+      namesToMeasure.push("Name");
+      let measuredNameWidth = 0;
+      try {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.font = `850 ${textFontSize}px system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif`;
+          measuredNameWidth = Math.max(measuredNameWidth, ...namesToMeasure.map(name => ctx.measureText(name).width));
+          ctx.font = `950 ${headerFontSize}px system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif`;
+          measuredNameWidth = Math.max(measuredNameWidth, ctx.measureText("Name").width);
+        }
+      } catch (_) {}
+      if (!measuredNameWidth) {
+        const longestNameLength = Math.max(4, ...namesToMeasure.map(name => name.length));
+        measuredNameWidth = longestNameLength * (mobile ? 5.9 : 8.6);
+      }
+      const namePadding = mobile ? 12 : 16;
+      const nameWidthCap = mobile ? Math.min(170, viewportWidth * 0.48) : Math.min(300, viewportWidth * 0.26);
+      const pickemNameWidth = Math.round(Math.max(52, Math.min(measuredNameWidth + namePadding, nameWidthCap)));
+      const pickemPosWidth = mobile ? 32 : 42;
+      const pickemScoreWidth = mobile ? 50 : 64;
+      const pickemTableWidth = pickemPosWidth + pickemNameWidth + pickemScoreWidth + 3;
+
+      const rows = rowsData.map(row => `
+        <tr>
+          <td class="pickem-pos-cell">${escapeHtml(row.positionLabel)}</td>
+          <td class="pickem-name-cell">${escapeHtml(row.name)}</td>
+          <td class="pickem-score-cell">${formatPickemScore(row.finalScore)}</td>
+        </tr>
+      `).join("");
+
+      pickemTableWrapEl.innerHTML = `
+        <table class="pickem-pop-table" style="--pickem-table-width: ${pickemTableWidth}px; --pickem-pos-width: ${pickemPosWidth}px; --pickem-name-width: ${pickemNameWidth}px; --pickem-score-width: ${pickemScoreWidth}px;">
+          <colgroup>
+            <col style="width: ${pickemPosWidth}px;" />
+            <col style="width: ${pickemNameWidth}px;" />
+            <col style="width: ${pickemScoreWidth}px;" />
+          </colgroup>
+          <thead>
+            <tr>
+              <th class="pickem-pos-cell">Pos</th>
+              <th class="pickem-name-cell">Name</th>
+              <th class="pickem-score-cell">Score</th>
+            </tr>
+          </thead>
+          <tbody>${rows || `<tr><td class="pickem-pos-cell">--</td><td class="pickem-name-cell">Add pickems</td><td class="pickem-score-cell">--</td></tr>`}</tbody>
         </table>
       `;
     }
@@ -1668,6 +1940,7 @@
           id,
           name: pickem.name || `Participant ${index + 1}`,
           order: Number(pickem.order || index + 1),
+          birdiesPrediction: clampInt(pickem.birdiesPrediction || 0, 0, 999),
           picks: normalizePickemPicks(pickem.picks, teams)
         }))
         .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name));
@@ -1680,6 +1953,120 @@
         if (!normalized.includes(team.id)) normalized.push(team.id);
       }
       return normalized;
+    }
+
+    function scorePickem(pickem, teams, actualRanges, actualBirdies, scoringRules = getDefaultPickemScoringRules()) {
+      let placementPenalty = 0;
+      let exactCorrect = 0;
+      pickem.picks.forEach((teamId, index) => {
+        const predictedPosition = index + 1;
+        const range = actualRanges.get(teamId);
+        let penalty = teams.length;
+        if (range) {
+          if (predictedPosition < range.start) penalty = range.start - predictedPosition;
+          else if (predictedPosition > range.end) penalty = predictedPosition - range.end;
+          else penalty = 0;
+        }
+        if (penalty === 0) exactCorrect += 1;
+        placementPenalty += penalty;
+      });
+      const birdieDiff = Math.abs((pickem.birdiesPrediction || 0) - actualBirdies);
+      const birdiePenalty = calculateBirdiePenalty(birdieDiff, scoringRules);
+      const finalScore = placementPenalty + (scoringRules.birdieMode === "score" ? birdiePenalty : 0);
+      return { ...pickem, placementPenalty, birdieDiff, birdiePenalty, finalScore, exactCorrect };
+    }
+
+    function calculateBirdiePenalty(birdieDiff, scoringRules = getDefaultPickemScoringRules()) {
+      const diff = Math.max(0, Number(birdieDiff) || 0);
+      if (scoringRules.birdiePenaltyMode === "threshold") {
+        const thresholds = [...(scoringRules.thresholds || [])]
+          .map(row => ({ maxDiff: clampInt(row.maxDiff, 0, 999), penalty: clampNumber(row.penalty, 0, 999) }))
+          .sort((a, b) => a.maxDiff - b.maxDiff);
+        for (const row of thresholds) if (diff <= row.maxDiff) return row.penalty;
+        if (thresholds.length) return thresholds[thresholds.length - 1].penalty + Math.max(0, diff - thresholds[thresholds.length - 1].maxDiff);
+        return diff;
+      }
+      return diff * clampNumber(scoringRules.linearPenaltyPerBirdie, 0, 20);
+    }
+
+    function buildActualRanges(standings) {
+      const ranges = new Map();
+      let index = 0;
+      while (index < standings.length) {
+        const start = index + 1;
+        const key = `${standings[index].toPar}|${standings[index].strokes}`;
+        let endIndex = index;
+        while (endIndex + 1 < standings.length && `${standings[endIndex + 1].toPar}|${standings[endIndex + 1].strokes}` === key) endIndex += 1;
+        const end = endIndex + 1;
+        for (let i = index; i <= endIndex; i += 1) ranges.set(standings[i].id, { start, end });
+        index = endIndex + 1;
+      }
+      return ranges;
+    }
+
+    function assignPickemPositions(rows) {
+      const sorted = [...rows].sort((a, b) =>
+        a.finalScore - b.finalScore ||
+        a.birdieDiff - b.birdieDiff ||
+        b.exactCorrect - a.exactCorrect ||
+        a.name.localeCompare(b.name)
+      );
+      let previousKey = null;
+      let previousRank = 0;
+      return sorted.map((row, index) => {
+        const key = `${row.finalScore}|${row.birdieDiff}`;
+        const rank = previousKey !== null && key === previousKey ? previousRank : index + 1;
+        previousKey = key;
+        previousRank = rank;
+        return { ...row, rank, positionLabel: formatOrdinal(rank) };
+      });
+    }
+
+    function getPickemScoringRules(event) {
+      const defaults = getDefaultPickemScoringRules();
+      const saved = event.pickemScoring || {};
+      const savedThresholds = Array.isArray(saved.thresholds) ? saved.thresholds : [];
+      const thresholds = defaults.thresholds.map((threshold, index) => ({
+        maxDiff: clampInt(savedThresholds[index]?.maxDiff ?? threshold.maxDiff, 0, 999),
+        penalty: clampNumber(savedThresholds[index]?.penalty ?? threshold.penalty, 0, 999)
+      })).sort((a, b) => a.maxDiff - b.maxDiff);
+      return {
+        birdieMode: saved.birdieMode === "score" ? "score" : defaults.birdieMode,
+        birdiePenaltyMode: saved.birdiePenaltyMode === "threshold" ? "threshold" : defaults.birdiePenaltyMode,
+        linearPenaltyPerBirdie: clampNumber(saved.linearPenaltyPerBirdie ?? defaults.linearPenaltyPerBirdie, 0, 20),
+        thresholds
+      };
+    }
+
+    function getDefaultPickemScoringRules() {
+      return {
+        birdieMode: "tiebreak",
+        birdiePenaltyMode: "linear",
+        linearPenaltyPerBirdie: 1,
+        thresholds: [
+          { maxDiff: 1, penalty: 0 },
+          { maxDiff: 2, penalty: 1 },
+          { maxDiff: 4, penalty: 2 }
+        ]
+      };
+    }
+
+    function countBirdies(event, completedThrough) {
+      let birdies = 0;
+      for (const team of Object.values(event.teams || {})) {
+        for (let hole = 1; hole <= completedThrough; hole += 1) {
+          const score = Number(team.scores?.[String(hole)]);
+          const par = Number(event.holes?.[String(hole)]?.par || 0);
+          if (Number.isFinite(score) && Number.isFinite(par) && score - par === -1) birdies += 1;
+        }
+      }
+      return birdies;
+    }
+
+    function formatPickemScore(value) {
+      const number = Number(value);
+      if (!Number.isFinite(number)) return "0";
+      return Number.isInteger(number) ? String(number) : number.toFixed(2).replace(/\.?0+$/, "");
     }
 
     function formatToPar(value) {

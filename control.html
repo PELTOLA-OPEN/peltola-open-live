@@ -405,6 +405,8 @@
         <div id="scorePopupUrl" class="url-box"></div>
         <p class="muted" style="margin-top:12px;">Live odds popup overlay.</p>
         <div id="oddsPopupUrl" class="url-box"></div>
+        <p class="muted" style="margin-top:12px;">Pickem popup overlay.</p>
+        <div id="pickemPopupUrl" class="url-box"></div>
         <p class="muted" style="margin-top:12px;">Ad popup overlay.</p>
         <div id="adPopupUrl" class="url-box"></div>
         <p class="muted" style="margin-top:12px;">Legacy combined overlay.</p>
@@ -622,6 +624,52 @@
             <button id="toggleOddsPreviewBtn" class="toggle-off" type="button">Odds popup preview: OFF</button>
           </div>
         </section>
+
+        <section class="card">
+          <h2>Pickem overlay adjustments</h2>
+          <div class="grid">
+            <label>Popup pickem center X, %
+              <input id="pickemCenterX" type="number" min="0" max="100" step="1" />
+              <input id="pickemCenterXRange" class="slider" type="range" min="0" max="100" step="1" />
+            </label>
+            <label>Popup pickem center Y, %
+              <input id="pickemCenterY" type="number" min="0" max="100" step="1" />
+              <input id="pickemCenterYRange" class="slider" type="range" min="0" max="100" step="1" />
+            </label>
+            <label>Popup pickem size, %
+              <input id="pickemScale" type="number" min="50" max="150" step="1" />
+              <input id="pickemScaleRange" class="slider" type="range" min="50" max="150" step="1" />
+            </label>
+            <label>Popup pickem width scale, %
+              <input id="pickemWidthScale" type="number" min="50" max="180" step="1" />
+              <input id="pickemWidthScaleRange" class="slider" type="range" min="50" max="180" step="1" />
+            </label>
+            <label>Popup pickem height scale, %
+              <input id="pickemHeightScale" type="number" min="50" max="180" step="1" />
+              <input id="pickemHeightScaleRange" class="slider" type="range" min="50" max="180" step="1" />
+            </label>
+            <label>Pickem font size, %
+              <input id="pickemFontScale" type="number" min="50" max="200" step="1" />
+              <input id="pickemFontScaleRange" class="slider" type="range" min="50" max="200" step="1" />
+            </label>
+            <label>Pickem header font size, %
+              <input id="pickemHeaderFontScale" type="number" min="50" max="220" step="1" />
+              <input id="pickemHeaderFontScaleRange" class="slider" type="range" min="50" max="220" step="1" />
+            </label>
+            <label>Pickem row height, px
+              <input id="pickemRowHeightPx" type="number" min="16" max="90" step="1" />
+              <input id="pickemRowHeightPxRange" class="slider" type="range" min="16" max="90" step="1" />
+            </label>
+            <label>Pickem padding, px
+              <input id="pickemPaddingPx" type="number" min="0" max="40" step="1" />
+              <input id="pickemPaddingPxRange" class="slider" type="range" min="0" max="40" step="1" />
+            </label>
+          </div>
+          <div class="row" style="margin-top: 12px;">
+            <button id="resetPickemOverlayLayoutBtn" type="button">Reset pickem overlay adjustments</button>
+            <button id="togglePickemPreviewBtn" class="toggle-off" type="button">Pickem popup preview: OFF</button>
+          </div>
+        </section>
         <section class="card">
           <h2>Ad adjustment</h2>
           <div class="grid">
@@ -738,6 +786,7 @@
           <div class="row between" style="margin-top: 12px;">
             <button id="showScorecardBtn" class="primary" type="button">Show scorecard 10s</button>
             <button id="showAdBtn" class="primary" type="button">Show ad 10s</button>
+            <button id="showPickemBtn" class="primary" type="button">Show pickem 10s</button>
             <button id="showOddsBtn" class="primary" type="button">Show odds 10s</button>
           </div>
           <div id="scoreStatus" class="status"></div>
@@ -837,6 +886,7 @@
     let overlayLayoutSaveTimer = null;
     let oddsOverlayLayoutSaveTimer = null;
     let adOverlayLayoutSaveTimer = null;
+    let pickemOverlayLayoutSaveTimer = null;
     let overlayThemeSaveTimer = null;
 
     const els = {
@@ -855,6 +905,7 @@
       tickerOverlayUrl: document.getElementById("tickerOverlayUrl"),
       scorePopupUrl: document.getElementById("scorePopupUrl"),
       oddsPopupUrl: document.getElementById("oddsPopupUrl"),
+      pickemPopupUrl: document.getElementById("pickemPopupUrl"),
       adPopupUrl: document.getElementById("adPopupUrl"),
       scorecardUrl: document.getElementById("scorecardUrl"),
       setupTabBtn: document.getElementById("setupTabBtn"),
@@ -930,6 +981,26 @@
       oddsPaddingPxRange: document.getElementById("oddsPaddingPxRange"),
       resetOddsOverlayLayoutBtn: document.getElementById("resetOddsOverlayLayoutBtn"),
       toggleOddsPreviewBtn: document.getElementById("toggleOddsPreviewBtn"),
+      pickemCenterX: document.getElementById("pickemCenterX"),
+      pickemCenterXRange: document.getElementById("pickemCenterXRange"),
+      pickemCenterY: document.getElementById("pickemCenterY"),
+      pickemCenterYRange: document.getElementById("pickemCenterYRange"),
+      pickemScale: document.getElementById("pickemScale"),
+      pickemScaleRange: document.getElementById("pickemScaleRange"),
+      pickemWidthScale: document.getElementById("pickemWidthScale"),
+      pickemWidthScaleRange: document.getElementById("pickemWidthScaleRange"),
+      pickemHeightScale: document.getElementById("pickemHeightScale"),
+      pickemHeightScaleRange: document.getElementById("pickemHeightScaleRange"),
+      pickemFontScale: document.getElementById("pickemFontScale"),
+      pickemFontScaleRange: document.getElementById("pickemFontScaleRange"),
+      pickemHeaderFontScale: document.getElementById("pickemHeaderFontScale"),
+      pickemHeaderFontScaleRange: document.getElementById("pickemHeaderFontScaleRange"),
+      pickemRowHeightPx: document.getElementById("pickemRowHeightPx"),
+      pickemRowHeightPxRange: document.getElementById("pickemRowHeightPxRange"),
+      pickemPaddingPx: document.getElementById("pickemPaddingPx"),
+      pickemPaddingPxRange: document.getElementById("pickemPaddingPxRange"),
+      resetPickemOverlayLayoutBtn: document.getElementById("resetPickemOverlayLayoutBtn"),
+      togglePickemPreviewBtn: document.getElementById("togglePickemPreviewBtn"),
       adCenterX: document.getElementById("adCenterX"),
       adCenterXRange: document.getElementById("adCenterXRange"),
       adCenterY: document.getElementById("adCenterY"),
@@ -977,6 +1048,7 @@
       nextHoleBtn: document.getElementById("nextHoleBtn"),
       showScorecardBtn: document.getElementById("showScorecardBtn"),
       showAdBtn: document.getElementById("showAdBtn"),
+      showPickemBtn: document.getElementById("showPickemBtn"),
       showOddsBtn: document.getElementById("showOddsBtn"),
       scoreHoleTitle: document.getElementById("scoreHoleTitle"),
       scoreHoleSub: document.getElementById("scoreHoleSub"),
@@ -1009,6 +1081,10 @@
     const oddsPopupUrl = new URL("odds-popup.html", location.href);
     oddsPopupUrl.searchParams.set("event", eventId);
     els.oddsPopupUrl.textContent = oddsPopupUrl.href;
+
+    const pickemPopupUrl = new URL("pickem-popup.html", location.href);
+    pickemPopupUrl.searchParams.set("event", eventId);
+    if (els.pickemPopupUrl) els.pickemPopupUrl.textContent = pickemPopupUrl.href;
 
     const adPopupUrl = new URL("ad-popup.html", location.href);
     adPopupUrl.searchParams.set("event", eventId);
@@ -1050,6 +1126,7 @@
     els.saveEventBtn.addEventListener("click", saveEventSettings);
     els.resetOverlayLayoutBtn.addEventListener("click", resetOverlayLayout);
     els.resetOddsOverlayLayoutBtn.addEventListener("click", resetOddsOverlayLayout);
+    els.resetPickemOverlayLayoutBtn.addEventListener("click", resetPickemOverlayLayout);
     els.resetAdOverlayLayoutBtn.addEventListener("click", resetAdOverlayLayout);
     [
       [els.overlayPageScale, els.overlayPageScaleRange],
@@ -1091,6 +1168,17 @@
       [els.oddsPaddingPx, els.oddsPaddingPxRange]
     ].forEach(([numberInput, rangeInput]) => bindSyncedOverlayInput(numberInput, rangeInput, saveOddsOverlayLayoutLive));
     [
+      [els.pickemCenterX, els.pickemCenterXRange],
+      [els.pickemCenterY, els.pickemCenterYRange],
+      [els.pickemScale, els.pickemScaleRange],
+      [els.pickemWidthScale, els.pickemWidthScaleRange],
+      [els.pickemHeightScale, els.pickemHeightScaleRange],
+      [els.pickemFontScale, els.pickemFontScaleRange],
+      [els.pickemHeaderFontScale, els.pickemHeaderFontScaleRange],
+      [els.pickemRowHeightPx, els.pickemRowHeightPxRange],
+      [els.pickemPaddingPx, els.pickemPaddingPxRange]
+    ].forEach(([numberInput, rangeInput]) => bindSyncedOverlayInput(numberInput, rangeInput, savePickemOverlayLayoutLive));
+    [
       [els.adCenterX, els.adCenterXRange],
       [els.adCenterY, els.adCenterYRange],
       [els.adScale, els.adScaleRange],
@@ -1099,6 +1187,7 @@
     ].forEach(([numberInput, rangeInput]) => bindSyncedOverlayInput(numberInput, rangeInput, saveAdOverlayLayoutLive));
     els.toggleScorecardPreviewBtn.addEventListener("click", toggleScorecardPreview);
     els.toggleOddsPreviewBtn.addEventListener("click", toggleOddsPreview);
+    els.togglePickemPreviewBtn.addEventListener("click", togglePickemPreview);
     els.toggleAdPreviewBtn.addEventListener("click", toggleAdPreview);
     els.tickerMoveTargetBtn.addEventListener("click", toggleTickerMoveTarget);
     els.tickerLeftBtn.addEventListener("click", () => nudgeTickerPosition(-10, 0));
@@ -1120,6 +1209,7 @@
     els.nextHoleBtn.addEventListener("click", () => moveScoringHole(1));
     els.showScorecardBtn.addEventListener("click", showScorecardNow);
     els.showAdBtn.addEventListener("click", showAdNow);
+    els.showPickemBtn.addEventListener("click", showPickemNow);
     els.showOddsBtn.addEventListener("click", showOddsNow);
     els.addPickemBtn.addEventListener("click", addPickem);
     els.savePickemScoringRulesBtn.addEventListener("click", savePickemScoringRules);
@@ -1179,6 +1269,7 @@
           scorecardColorMode: "circle",
           overlayLayout: getDefaultOverlayLayout(),
           oddsOverlayLayout: getDefaultOddsOverlayLayout(),
+          pickemOverlayLayout: getDefaultPickemOverlayLayout(),
           adOverlayLayout: getDefaultAdOverlayLayout(),
           overlayTheme: getDefaultOverlayTheme(),
           showScorecardPreview: false,
@@ -1316,6 +1407,25 @@
       els.oddsRowHeightPxRange.value = oddsOverlayLayout.oddsRowHeightPx;
       els.oddsPaddingPx.value = oddsOverlayLayout.oddsPaddingPx;
       els.oddsPaddingPxRange.value = oddsOverlayLayout.oddsPaddingPx;
+      const pickemOverlayLayout = getPickemOverlayLayout();
+      els.pickemCenterX.value = pickemOverlayLayout.pickemCenterX;
+      els.pickemCenterXRange.value = pickemOverlayLayout.pickemCenterX;
+      els.pickemCenterY.value = pickemOverlayLayout.pickemCenterY;
+      els.pickemCenterYRange.value = pickemOverlayLayout.pickemCenterY;
+      els.pickemScale.value = pickemOverlayLayout.pickemScale;
+      els.pickemScaleRange.value = pickemOverlayLayout.pickemScale;
+      els.pickemWidthScale.value = pickemOverlayLayout.pickemWidthScale;
+      els.pickemWidthScaleRange.value = pickemOverlayLayout.pickemWidthScale;
+      els.pickemHeightScale.value = pickemOverlayLayout.pickemHeightScale;
+      els.pickemHeightScaleRange.value = pickemOverlayLayout.pickemHeightScale;
+      els.pickemFontScale.value = pickemOverlayLayout.pickemFontScale;
+      els.pickemFontScaleRange.value = pickemOverlayLayout.pickemFontScale;
+      els.pickemHeaderFontScale.value = pickemOverlayLayout.pickemHeaderFontScale;
+      els.pickemHeaderFontScaleRange.value = pickemOverlayLayout.pickemHeaderFontScale;
+      els.pickemRowHeightPx.value = pickemOverlayLayout.pickemRowHeightPx;
+      els.pickemRowHeightPxRange.value = pickemOverlayLayout.pickemRowHeightPx;
+      els.pickemPaddingPx.value = pickemOverlayLayout.pickemPaddingPx;
+      els.pickemPaddingPxRange.value = pickemOverlayLayout.pickemPaddingPx;
       const adOverlayLayout = getAdOverlayLayout();
       els.adCenterX.value = adOverlayLayout.adCenterX;
       els.adCenterXRange.value = adOverlayLayout.adCenterX;
@@ -1736,10 +1846,12 @@
         scorecardColorMode: els.scorecardColorMode.value,
         overlayLayout: readOverlayLayoutInputs(),
         oddsOverlayLayout: readOddsOverlayLayoutInputs(),
+        pickemOverlayLayout: readPickemOverlayLayoutInputs(),
         adOverlayLayout: readAdOverlayLayoutInputs(),
         overlayTheme: readOverlayThemeInputs(),
         showScorecardPreview: eventState.showScorecardPreview === true,
         showOddsPreview: eventState.showOddsPreview === true,
+        showPickemPreview: eventState.showPickemPreview === true,
         showAdPreview: eventState.showAdPreview === true,
         showHelsinkiClock: els.showHelsinkiClock.checked,
         showTickerLogos: els.showTickerLogos.checked,
@@ -1838,6 +1950,21 @@
       els.scoreStatus.textContent = "Showing odds for 10 seconds.";
     }
 
+    async function showPickemNow() {
+      if (!signedIn || !eventState) return;
+      const now = Date.now();
+      await update(eventRef, {
+        overlayFlash: {
+          type: "pickem",
+          sequence: now,
+          triggeredAt: now,
+          durationMs: 10000
+        },
+        updatedAt: now
+      });
+      els.scoreStatus.textContent = "Showing pickem standings for 10 seconds.";
+    }
+
     async function showAdNow() {
       if (!signedIn || !eventState) return;
       const now = Date.now();
@@ -1856,6 +1983,7 @@
     function updatePopupToggleButtons() {
       updateToggleButton(els.toggleScorecardPreviewBtn, eventState?.showScorecardPreview === true, "Scorecard popup preview");
       updateToggleButton(els.toggleOddsPreviewBtn, eventState?.showOddsPreview === true, "Odds popup preview");
+      updateToggleButton(els.togglePickemPreviewBtn, eventState?.showPickemPreview === true, "Pickem popup preview");
       updateToggleButton(els.toggleAdPreviewBtn, eventState?.showAdPreview === true, "Ad preview");
     }
 
@@ -1878,6 +2006,13 @@
       const nextValue = eventState.showOddsPreview !== true;
       await update(eventRef, { showOddsPreview: nextValue, updatedAt: Date.now() });
       els.eventStatus.textContent = nextValue ? "Odds popup preview enabled." : "Odds popup preview disabled.";
+    }
+
+    async function togglePickemPreview() {
+      if (!signedIn || !eventState) return;
+      const nextValue = eventState.showPickemPreview !== true;
+      await update(eventRef, { showPickemPreview: nextValue, updatedAt: Date.now() });
+      els.eventStatus.textContent = nextValue ? "Pickem popup preview enabled." : "Pickem popup preview disabled.";
     }
 
     async function toggleAdPreview() {
@@ -1921,6 +2056,7 @@
         overlayFlash: null,
         overlayFlashShownHoles: null,
         showOddsPreview: false,
+        showPickemPreview: false,
         showAdPreview: false,
         updatedAt: Date.now()
       };
@@ -2163,6 +2299,29 @@
       els.eventStatus.textContent = "Odds overlay adjustments reset.";
     }
 
+    function savePickemOverlayLayoutLive() {
+      if (!signedIn || !eventState) return;
+      window.clearTimeout(pickemOverlayLayoutSaveTimer);
+      pickemOverlayLayoutSaveTimer = window.setTimeout(async () => {
+        try {
+          await update(eventRef, {
+            pickemOverlayLayout: readPickemOverlayLayoutInputs(),
+            updatedAt: Date.now()
+          });
+          els.eventStatus.textContent = "Pickem overlay adjustments saved.";
+        } catch (error) {
+          els.eventStatus.textContent = readableFirebaseError(error);
+        }
+      }, 180);
+    }
+
+    async function resetPickemOverlayLayout() {
+      if (!signedIn) return;
+      const defaults = getDefaultPickemOverlayLayout();
+      await update(eventRef, { pickemOverlayLayout: defaults, updatedAt: Date.now() });
+      els.eventStatus.textContent = "Pickem overlay adjustments reset.";
+    }
+
     function saveAdOverlayLayoutLive() {
       if (!signedIn || !eventState) return;
       window.clearTimeout(adOverlayLayoutSaveTimer);
@@ -2371,6 +2530,38 @@
         oddsHeaderFontScale: 100,
         oddsRowHeightPx: 34,
         oddsPaddingPx: 10
+      };
+    }
+
+    function readPickemOverlayLayoutInputs() {
+      return {
+        pickemCenterX: clampNumber(els.pickemCenterX.value, 0, 100),
+        pickemCenterY: clampNumber(els.pickemCenterY.value, 0, 100),
+        pickemScale: clampInt(els.pickemScale.value, 50, 150),
+        pickemWidthScale: clampInt(els.pickemWidthScale.value, 50, 180),
+        pickemHeightScale: clampInt(els.pickemHeightScale.value, 50, 180),
+        pickemFontScale: clampInt(els.pickemFontScale.value, 50, 200),
+        pickemHeaderFontScale: clampInt(els.pickemHeaderFontScale.value, 50, 220),
+        pickemRowHeightPx: clampInt(els.pickemRowHeightPx.value, 16, 90),
+        pickemPaddingPx: clampInt(els.pickemPaddingPx.value, 0, 40)
+      };
+    }
+
+    function getPickemOverlayLayout() {
+      return { ...getDefaultPickemOverlayLayout(), ...(eventState?.pickemOverlayLayout || {}) };
+    }
+
+    function getDefaultPickemOverlayLayout() {
+      return {
+        pickemCenterX: 50,
+        pickemCenterY: 42,
+        pickemScale: 100,
+        pickemWidthScale: 100,
+        pickemHeightScale: 100,
+        pickemFontScale: 100,
+        pickemHeaderFontScale: 100,
+        pickemRowHeightPx: 34,
+        pickemPaddingPx: 10
       };
     }
 

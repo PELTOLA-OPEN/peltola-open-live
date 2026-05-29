@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Peltola Open Pickem Popup</title>
+  <style>
+    :root { --panel:rgba(0,0,0,.5); --panel-strong:rgba(0,0,0,.58); --text:#fff; --muted:rgba(255,255,255,.72); --line:rgba(255,255,255,.16); --popup-border:rgba(255,255,255,.72); --table-grid:rgba(255,255,255,.46); --table-head-bg:rgba(255,255,255,.1); }
+    html, body { margin:0; width:100%; height:100%; overflow:hidden; background:transparent; font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    body.debug { background:#123; } .hidden { display:none!important; }
+    .frame { width:100vw; height:100vh; color:var(--text); text-shadow:none; }
+    .pickem-card { width:100%; height:100%; display:flex; flex-direction:column; padding:var(--pickem-padding, 10px); border:2px solid var(--popup-border); border-radius:14px; background:var(--panel); box-sizing:border-box; overflow:hidden; }
+    .pickem-header { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:8px; text-transform:uppercase; flex:none; }
+    .pickem-title { font-size:calc(clamp(15px, 5vh, 26px) * var(--pickem-header-font-scale, var(--pickem-font-scale, 1))); font-weight:950; letter-spacing:.06em; white-space:nowrap; }
+    .pickem-table-wrap { flex:1; min-height:0; width:100%; overflow:hidden; }
+    .pickem-pop-table { width:max-content; max-width:100%; height:auto; border-collapse:collapse; table-layout:fixed; color:var(--text); font-variant-numeric:tabular-nums; --pickem-grid:var(--table-grid); }
+    .pickem-pop-table th, .pickem-pop-table td { height:var(--pickem-row-height, 34px); border:1px solid var(--pickem-grid); padding:calc(var(--pickem-cell-padding, 6px) * 0.35) var(--pickem-cell-padding, 6px); vertical-align:middle; line-height:1; background-clip:padding-box; white-space:nowrap; }
+    .pickem-pop-table th { background:var(--table-head-bg); font-size:calc(clamp(9px, 3vh, 14px) * var(--pickem-header-font-scale, var(--pickem-font-scale, 1))); font-weight:950; text-transform:uppercase; }
+    .pickem-pop-table td { font-size:calc(clamp(11px, 4vh, 20px) * var(--pickem-font-scale, 1)); font-weight:850; }
+    .pickem-pos-cell { width:var(--pickem-pos-width, 42px); max-width:var(--pickem-pos-width, 42px); text-align:center; font-weight:950!important; }
+    .pickem-name-cell { width:var(--pickem-name-width, 150px); max-width:var(--pickem-name-width, 150px); overflow:hidden; text-align:left; text-overflow:ellipsis; }
+    .pickem-score-cell { width:var(--pickem-score-width, 62px); max-width:var(--pickem-score-width, 62px); text-align:right; font-weight:950!important; }
+  </style>
+</head>
+<body>
+  <main id="frame" class="frame hidden" aria-live="polite"><section class="pickem-card"><div class="pickem-header"><div class="pickem-title">Pickem standings</div></div><div id="pickemTableWrap" class="pickem-table-wrap"></div></section></main>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+    import { firebaseConfig } from "./firebase-config.js";
+
+    const params = new URLSearchParams(location.search);
+    const eventId = params.get("event") || "2026";
+    if (params.get("debug") === "1") document.body.classList.add("debug");
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const frameEl = document.getElementById("frame");
+    const pickemTableWrapEl = document.getElementById("pickemTableWrap");
+    let hideTimer = null;
+    let lastFlashSequence = null;
+    let flashActiveUntil = 0;
+
+    onValue(ref(db, `events/${eventId}`), snapshot => renderController(snapshot.val()), error => console.error(error));
+
+    function isUsableEvent(event) { return Boolean(event) && typeof event === "object" && (event.teams || event.holes || event.name || event.overlayLayout); }
+
+    function renderController(event) {
+      if (!isUsableEvent(event)) { hideFrame(); return; }
+      applyOverlayTheme(event);
+      applyPickemPopupLayout(event);
+      if (event.showPickemPreview === true) { renderPickem(event); showFrame(0); return; }
+      if (!maybeShowPickemFlash(event)) hideFrame();
+    }
+
+    function maybeShowPickemFlash(event) {
+      const flash = event.overlayFlash;
+      if (!flash || flash.type !== "pickem" || !flash.sequence) return false;
+      const durationMs = Number(flash.durationMs || 10000);
+      const triggeredAt = Number(flash.triggeredAt || 0);
+      const now = Date.now();
+      if (triggeredAt && now - triggeredAt > durationMs + 1500) { lastFlashSequence = flash.sequence; flashActiveUntil = 0; return false; }
+      if (flash.sequence === lastFlashSequence && now < flashActiveUntil) return true;
+      if (flash.sequence === lastFlashSequence) return false;
+      lastFlashSequence = flash.sequence;
+      flashActiveUntil = now + durationMs;
+      renderPickem(event);
+      showFrame(durationMs);
+      return true;
+    }
+
+    function showFrame(durationMs) { window.clearTimeout(hideTimer); frameEl.classList.remove("hidden"); if (durationMs) hideTimer = window.setTimeout(hideFrame, durationMs); }
+    function hideFrame() { frameEl.classList.add("hidden"); }
+
+    function applyOverlayTheme(event) {
+      const saved = event?.overlayTheme || {};
+      const legacyBackground = saved.backgroundColor || "#000000";
+      const legacyLine = saved.lineColor || "#ffffff";
+      const legacyText = saved.textColor || "#ffffff";
+      const legacyOpacity = saved.overlayOpacity ?? 50;
+      const theme = {
+        popupBackgroundColor: saved.popupBackgroundColor || legacyBackground,
+        popupLineColor: saved.popupLineColor || legacyLine,
+        popupTextColor: saved.popupTextColor || legacyText,
+        popupOpacity: saved.popupOpacity ?? legacyOpacity
+      };
+      const background = hexToRgb(theme.popupBackgroundColor, { r: 0, g: 0, b: 0 });
+      const line = hexToRgb(theme.popupLineColor, { r: 255, g: 255, b: 255 });
+      const text = hexToRgb(theme.popupTextColor, { r: 255, g: 255, b: 255 });
+      const opacity = clampNumber(theme.popupOpacity, 0, 100) / 100;
+      document.documentElement.style.setProperty("--panel", rgba(background, opacity));
+      document.documentElement.style.setProperty("--text", rgb(text));
+      document.documentElement.style.setProperty("--muted", rgba(text, 0.72));
+      document.documentElement.style.setProperty("--popup-border", rgba(line, 0.72));
+      document.documentElement.style.setProperty("--table-grid", rgba(line, 0.46));
+      document.documentElement.style.setProperty("--table-head-bg", rgba(line, 0.10));
+    }
+
+    function applyPickemPopupLayout(event) {
+      const layout = { pickemFontScale:100, pickemHeaderFontScale:100, pickemRowHeightPx:34, pickemPaddingPx:10, ...(event?.pickemOverlayLayout || {}) };
+      document.documentElement.style.setProperty("--pickem-font-scale", String(clampNumber(layout.pickemFontScale, 50, 200) / 100));
+      document.documentElement.style.setProperty("--pickem-header-font-scale", String(clampNumber(layout.pickemHeaderFontScale, 50, 220) / 100));
+      document.documentElement.style.setProperty("--pickem-row-height", `${clampNumber(layout.pickemRowHeightPx, 16, 90)}px`);
+      document.documentElement.style.setProperty("--pickem-cell-padding", `${Math.max(1, Math.min(20, clampNumber(layout.pickemPaddingPx, 0, 40) / 2))}px`);
+      document.documentElement.style.setProperty("--pickem-padding", `${clampNumber(layout.pickemPaddingPx, 0, 40)}px`);
+    }
+
+    function renderPickem(event) {
+      const teams = getTeams(event);
+      const pickems = getPickems(event, teams);
+      const completedThrough = getCompletedThrough(event);
+      const actualStandings = assignPositions(calculateStandings(event, completedThrough));
+      const actualRanges = buildActualRanges(actualStandings);
+      const actualBirdies = countBirdies(event, completedThrough);
+      const scoringRules = getPickemScoringRules(event);
+      const rowsData = assignPickemPositions(pickems.map(pickem => scorePickem(pickem, teams, actualRanges, actualBirdies, scoringRules)));
+      const layout = { pickemFontScale:100, pickemPaddingPx:10, ...(event?.pickemOverlayLayout || {}) };
+      const fontScale = clampNumber(layout.pickemFontScale, 50, 200) / 100;
+      const cellPadding = Math.max(1, Math.min(24, clampNumber(layout.pickemPaddingPx, 0, 50) / 2));
+      const widths = measurePickemColumnWidths(rowsData, fontScale, cellPadding);
+      const rows = rowsData.map(row => `<tr><td class="pickem-pos-cell">${escapeHtml(row.positionLabel)}</td><td class="pickem-name-cell">${escapeHtml(row.name)}</td><td class="pickem-score-cell">${formatPickemScore(row.finalScore)}</td></tr>`).join("");
+      pickemTableWrapEl.innerHTML = `<table class="pickem-pop-table" style="--pickem-pos-width:${widths.pos}px; --pickem-name-width:${widths.name}px; --pickem-score-width:${widths.score}px;"><colgroup><col style="width:${widths.pos}px" /><col style="width:${widths.name}px" /><col style="width:${widths.score}px" /></colgroup><thead><tr><th class="pickem-pos-cell">Pos</th><th class="pickem-name-cell">Name</th><th class="pickem-score-cell">Score</th></tr></thead><tbody>${rows || `<tr><td class="pickem-pos-cell">--</td><td class="pickem-name-cell">Add pickems</td><td class="pickem-score-cell">--</td></tr>`}</tbody></table>`;
+    }
+
+    function measurePickemColumnWidths(rows, fontScale, cellPadding) {
+      const labels = rows.length ? rows.map(row => String(row.name || "")) : ["Add pickems"];
+      labels.push("Name");
+      let measuredName = 0;
+      let measuredScore = 0;
+      try {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          const baseSize = Math.max(11, Math.min(20, window.innerHeight * 0.04)) * fontScale;
+          ctx.font = `850 ${baseSize}px system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif`;
+          measuredName = Math.max(...labels.map(label => ctx.measureText(label).width));
+          measuredScore = Math.max(ctx.measureText("Score").width, ctx.measureText("000").width);
+        }
+      } catch (_) {}
+      if (!measuredName) measuredName = Math.max(...labels.map(label => label.length)) * 9 * fontScale;
+      if (!measuredScore) measuredScore = 46 * fontScale;
+      const spare = Math.max(8, cellPadding * 2 + 8);
+      const nameCap = Math.max(90, Math.min(window.innerWidth * 0.62, 360));
+      return { pos: Math.round(Math.max(34, Math.min(58, 38 * fontScale + cellPadding * 2))), name: Math.round(Math.max(70, Math.min(measuredName + spare, nameCap))), score: Math.round(Math.max(52, Math.min(measuredScore + spare, 86))) };
+    }
+
+    function getTeams(event) { return Object.entries(event.teams || {}).map(([id, team], index) => ({ id, name: team.name || `Team ${index + 1}`, order: Number(team.order || index + 1) })).sort((a, b) => a.order - b.order || a.name.localeCompare(b.name)); }
+    function getPickems(event, teams) { return Object.entries(event.pickems || {}).map(([id, pickem], index) => ({ id, name: pickem.name || `Participant ${index + 1}`, order: Number(pickem.order || index + 1), birdiesPrediction: clampInt(pickem.birdiesPrediction || 0, 0, 999), picks: normalizePickemPicks(pickem.picks, teams) })).sort((a, b) => a.order - b.order || a.name.localeCompare(b.name)); }
+    function normalizePickemPicks(picks, teams) { const validIds = new Set(teams.map(team => team.id)); const normalized = Array.isArray(picks) ? picks.filter(teamId => validIds.has(teamId)) : []; for (const team of teams) if (!normalized.includes(team.id)) normalized.push(team.id); return normalized.slice(0, teams.length); }
+    function getCompletedThrough(event) { const teams = Object.values(event?.teams || {}); if (!teams.length) return 0; const holeCount = clampInt(event.holeCount || 18, 1, 36); let completedThrough = 0; for (let hole = 1; hole <= holeCount; hole += 1) { const everyTeamHasScore = teams.every(team => { const score = Number(team.scores?.[String(hole)]); return Number.isFinite(score) && score > 0; }); if (!everyTeamHasScore) break; completedThrough = hole; } return completedThrough; }
+    function calculateStandings(event, completedThrough) { const holes = event?.holes || {}; const teams = event?.teams || {}; return Object.entries(teams).map(([teamId, team], index) => { let strokes = 0; let par = 0; for (let hole = 1; hole <= completedThrough; hole += 1) { const score = Number(team.scores?.[String(hole)]); const holePar = Number(holes[String(hole)]?.par || 0); if (Number.isFinite(score) && score > 0) { strokes += score; par += holePar; } } return { id: teamId, name: team.name || `Team ${index + 1}`, order: Number(team.order || index + 1), strokes, par, toPar: strokes - par }; }).sort((a, b) => completedThrough ? a.toPar - b.toPar || a.strokes - b.strokes || a.order - b.order || a.name.localeCompare(b.name) : a.order - b.order || a.name.localeCompare(b.name)); }
+    function assignPositions(standings) { let previousKey = null; let previousRank = 0; return standings.map((team, index) => { const key = `${team.toPar}|${team.strokes}`; const rank = previousKey !== null && key === previousKey ? previousRank : index + 1; previousKey = key; previousRank = rank; return { ...team, rank, positionLabel: formatOrdinal(rank) }; }); }
+    function buildActualRanges(standings) { const ranges = new Map(); let index = 0; while (index < standings.length) { const start = index + 1; const key = `${standings[index].toPar}|${standings[index].strokes}`; let endIndex = index; while (endIndex + 1 < standings.length && `${standings[endIndex + 1].toPar}|${standings[endIndex + 1].strokes}` === key) endIndex += 1; const end = endIndex + 1; for (let i = index; i <= endIndex; i += 1) ranges.set(standings[i].id, { start, end }); index = endIndex + 1; } return ranges; }
+    function scorePickem(pickem, teams, actualRanges, actualBirdies, scoringRules = getDefaultPickemScoringRules()) { let placementPenalty = 0; let exactCorrect = 0; pickem.picks.forEach((teamId, index) => { const predictedPosition = index + 1; const range = actualRanges.get(teamId); let penalty = teams.length; if (range) { if (predictedPosition < range.start) penalty = range.start - predictedPosition; else if (predictedPosition > range.end) penalty = predictedPosition - range.end; else penalty = 0; } if (penalty === 0) exactCorrect += 1; placementPenalty += penalty; }); const birdieDiff = Math.abs((pickem.birdiesPrediction || 0) - actualBirdies); const birdiePenalty = calculateBirdiePenalty(birdieDiff, scoringRules); const finalScore = placementPenalty + (scoringRules.birdieMode === "score" ? birdiePenalty : 0); return { ...pickem, placementPenalty, birdieDiff, birdiePenalty, finalScore, exactCorrect }; }
+    function calculateBirdiePenalty(birdieDiff, scoringRules = getDefaultPickemScoringRules()) { const diff = Math.max(0, Number(birdieDiff) || 0); if (scoringRules.birdiePenaltyMode === "threshold") { const thresholds = [...(scoringRules.thresholds || [])].map(row => ({ maxDiff: clampInt(row.maxDiff, 0, 999), penalty: clampNumber(row.penalty, 0, 999) })).sort((a, b) => a.maxDiff - b.maxDiff); for (const row of thresholds) if (diff <= row.maxDiff) return row.penalty; if (thresholds.length) return thresholds[thresholds.length - 1].penalty + Math.max(0, diff - thresholds[thresholds.length - 1].maxDiff); return diff; } return diff * clampNumber(scoringRules.linearPenaltyPerBirdie, 0, 20); }
+    function assignPickemPositions(rows) { const sorted = [...rows].sort((a, b) => a.finalScore - b.finalScore || a.birdieDiff - b.birdieDiff || b.exactCorrect - a.exactCorrect || a.name.localeCompare(b.name)); let previousKey = null; let previousRank = 0; return sorted.map((row, index) => { const key = `${row.finalScore}|${row.birdieDiff}`; const rank = previousKey !== null && key === previousKey ? previousRank : index + 1; previousKey = key; previousRank = rank; return { ...row, rank, positionLabel: formatOrdinal(rank) }; }); }
+    function getPickemScoringRules(event) { const defaults = getDefaultPickemScoringRules(); const saved = event.pickemScoring || {}; const savedThresholds = Array.isArray(saved.thresholds) ? saved.thresholds : []; const thresholds = defaults.thresholds.map((threshold, index) => ({ maxDiff: clampInt(savedThresholds[index]?.maxDiff ?? threshold.maxDiff, 0, 999), penalty: clampNumber(savedThresholds[index]?.penalty ?? threshold.penalty, 0, 999) })).sort((a, b) => a.maxDiff - b.maxDiff); return { birdieMode: saved.birdieMode === "score" ? "score" : defaults.birdieMode, birdiePenaltyMode: saved.birdiePenaltyMode === "threshold" ? "threshold" : defaults.birdiePenaltyMode, linearPenaltyPerBirdie: clampNumber(saved.linearPenaltyPerBirdie ?? defaults.linearPenaltyPerBirdie, 0, 20), thresholds }; }
+    function getDefaultPickemScoringRules() { return { birdieMode: "tiebreak", birdiePenaltyMode: "linear", linearPenaltyPerBirdie: 1, thresholds: [{ maxDiff: 1, penalty: 0 }, { maxDiff: 2, penalty: 1 }, { maxDiff: 4, penalty: 2 }] }; }
+    function countBirdies(event, completedThrough) { let birdies = 0; for (const team of Object.values(event.teams || {})) { for (let hole = 1; hole <= completedThrough; hole += 1) { const score = Number(team.scores?.[String(hole)]); const par = Number(event.holes?.[String(hole)]?.par || 0); if (Number.isFinite(score) && Number.isFinite(par) && score - par === -1) birdies += 1; } } return birdies; }
+    function formatOrdinal(value) { const v = Math.abs(Number(value)); const mod100 = v % 100; if (mod100 >= 11 && mod100 <= 13) return `${v}th`; switch (v % 10) { case 1: return `${v}st`; case 2: return `${v}nd`; case 3: return `${v}rd`; default: return `${v}th`; } }
+    function formatPickemScore(value) { const number = Number(value); if (!Number.isFinite(number)) return "0"; return Number.isInteger(number) ? String(number) : number.toFixed(2).replace(/\.?0+$/, ""); }
+    function hexToRgb(value, fallback) { const text = String(value || "").trim(); const match = /^#?([0-9a-fA-F]{6})$/.exec(text); if (!match) return fallback; const hex = match[1]; return { r: parseInt(hex.slice(0, 2), 16), g: parseInt(hex.slice(2, 4), 16), b: parseInt(hex.slice(4, 6), 16) }; }
+    function rgba(color, alpha) { return `rgba(${color.r}, ${color.g}, ${color.b}, ${clampNumber(alpha, 0, 1)})`; }
+    function rgb(color) { return `rgb(${color.r}, ${color.g}, ${color.b})`; }
+    function clampInt(value, min, max) { const number = Number.parseInt(value, 10); if (!Number.isFinite(number)) return min; return Math.max(min, Math.min(max, number)); }
+    function clampNumber(value, min, max) { const number = Number(value); if (!Number.isFinite(number)) return min; return Math.max(min, Math.min(max, number)); }
+    function escapeHtml(value) { return String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char])); }
+  </script>
+</body>
+</html>
