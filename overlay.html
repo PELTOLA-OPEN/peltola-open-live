@@ -743,8 +743,7 @@
       max-height: 72vh;
       object-fit: contain;
       opacity: 0;
-      animation-duration: 13s;
-      animation-delay: 1000ms;
+      animation-duration: 14s;
       animation-fill-mode: forwards;
       animation-timing-function: linear;
     }
@@ -753,6 +752,8 @@
     .mahamies-pop.show .mahamies-map-arrow { animation-name: mahamies-map-arrow; }
     .mahamies-pop.show .mahamies-ulkoa { animation-name: mahamies-ulkoa; }
     .mahamies-pop.show .mahamies-valikoima { animation-name: mahamies-valikoima; }
+    .mahamies-pop.exiting .mahamies-stage img { animation: none !important; opacity: 0; }
+    .mahamies-pop.exiting .mahamies-valikoima { opacity: 1 !important; }
 
     @keyframes mahamies-slide-in {
       0% {
@@ -785,41 +786,41 @@
     }
 
     @keyframes mahamies-map-base {
-      0%, 3.076% { opacity: 1; }
-      3.077%, 6.153% { opacity: 0; }
-      6.154%, 9.230% { opacity: 1; }
-      9.231%, 12.307% { opacity: 0; }
-      12.308%, 15.384% { opacity: 1; }
-      15.385%, 18.461% { opacity: 0; }
-      18.462%, 21.538% { opacity: 1; }
-      21.539%, 24.615% { opacity: 0; }
-      24.616%, 27.692% { opacity: 1; }
-      27.693%, 100% { opacity: 0; }
+      0%, 9.999% { opacity: 1; }
+      10.000%, 12.856% { opacity: 0; }
+      12.857%, 15.713% { opacity: 1; }
+      15.714%, 18.570% { opacity: 0; }
+      18.571%, 21.427% { opacity: 1; }
+      21.428%, 24.284% { opacity: 0; }
+      24.285%, 27.141% { opacity: 1; }
+      27.142%, 29.998% { opacity: 0; }
+      29.999%, 32.855% { opacity: 1; }
+      32.856%, 100% { opacity: 0; }
     }
 
     @keyframes mahamies-map-arrow {
-      0%, 3.076% { opacity: 0; }
-      3.077%, 6.153% { opacity: 1; }
-      6.154%, 9.230% { opacity: 0; }
-      9.231%, 12.307% { opacity: 1; }
-      12.308%, 15.384% { opacity: 0; }
-      15.385%, 18.461% { opacity: 1; }
-      18.462%, 21.538% { opacity: 0; }
-      21.539%, 24.615% { opacity: 1; }
-      24.616%, 27.692% { opacity: 0; }
-      27.693%, 30.769% { opacity: 1; }
-      30.770%, 100% { opacity: 0; }
+      0%, 9.999% { opacity: 0; }
+      10.000%, 12.856% { opacity: 1; }
+      12.857%, 15.713% { opacity: 0; }
+      15.714%, 18.570% { opacity: 1; }
+      18.571%, 21.427% { opacity: 0; }
+      21.428%, 24.284% { opacity: 1; }
+      24.285%, 27.141% { opacity: 0; }
+      27.142%, 29.998% { opacity: 1; }
+      29.999%, 32.855% { opacity: 0; }
+      32.856%, 35.712% { opacity: 1; }
+      35.713%, 100% { opacity: 0; }
     }
 
     @keyframes mahamies-ulkoa {
-      0%, 30.76% { opacity: 0; }
-      30.77%, 61.53% { opacity: 1; }
-      61.54%, 100% { opacity: 0; }
+      0%, 35.713% { opacity: 0; }
+      35.714%, 64.284% { opacity: 1; }
+      64.285%, 100% { opacity: 0; }
     }
 
     @keyframes mahamies-valikoima {
-      0%, 61.53% { opacity: 0; }
-      61.54%, 100% { opacity: 1; }
+      0%, 64.284% { opacity: 0; }
+      64.285%, 100% { opacity: 1; }
     }
 
     @media (max-width: 760px) {
