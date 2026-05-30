@@ -180,7 +180,7 @@
 
     .tabs {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(6, 1fr);
       gap: 8px;
       margin: 14px 0;
     }
@@ -361,6 +361,69 @@
     .history-admin-title { font-weight: 950; }
     .history-admin-meta { margin-top: 3px; color: var(--muted); font-size: 12px; font-weight: 750; }
 
+
+
+    .control-scorecard-wrap {
+      width: 100%;
+      overflow-x: auto;
+      border-radius: 12px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .control-scorecard-table {
+      width: max-content;
+      min-width: 100%;
+      border-collapse: collapse;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .control-scorecard-table th,
+    .control-scorecard-table td {
+      height: 32px;
+      padding: 3px 6px;
+      border: 1px solid var(--border);
+      text-align: center;
+      vertical-align: middle;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .control-scorecard-table th {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 950;
+      text-transform: uppercase;
+    }
+
+    .control-scorecard-table .team-cell {
+      min-width: 150px;
+      max-width: 260px;
+      text-align: left;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .control-scorecard-table .hole-cell {
+      width: 34px;
+      min-width: 34px;
+    }
+
+    .control-scorecard-table .total-cell {
+      width: 54px;
+      min-width: 54px;
+      font-weight: 950;
+    }
+
+    .control-scorecard-subtitle {
+      margin-top: -4px;
+      margin-bottom: 12px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
     @media (max-width: 760px) {
       .tabs { grid-template-columns: 1fr; }
       .pickem-top { grid-template-columns: 1fr; }
@@ -368,6 +431,69 @@
     }
 
     .hide { display: none !important; }
+
+
+
+    .control-scorecard-wrap {
+      width: 100%;
+      overflow-x: auto;
+      border-radius: 12px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .control-scorecard-table {
+      width: max-content;
+      min-width: 100%;
+      border-collapse: collapse;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .control-scorecard-table th,
+    .control-scorecard-table td {
+      height: 32px;
+      padding: 3px 6px;
+      border: 1px solid var(--border);
+      text-align: center;
+      vertical-align: middle;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .control-scorecard-table th {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 950;
+      text-transform: uppercase;
+    }
+
+    .control-scorecard-table .team-cell {
+      min-width: 150px;
+      max-width: 260px;
+      text-align: left;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .control-scorecard-table .hole-cell {
+      width: 34px;
+      min-width: 34px;
+    }
+
+    .control-scorecard-table .total-cell {
+      width: 54px;
+      min-width: 54px;
+      font-weight: 950;
+    }
+
+    .control-scorecard-subtitle {
+      margin-top: -4px;
+      margin-bottom: 12px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+    }
 
     @media (max-width: 760px) {
       .team-card { grid-template-columns: 1fr; align-items: stretch; }
@@ -437,6 +563,7 @@
         <button id="setupTabBtn" class="tab-btn active" type="button">Setup</button>
         <button id="overlayTabBtn" class="tab-btn" type="button">Overlay</button>
         <button id="scoringTabBtn" class="tab-btn" type="button">Scoring</button>
+        <button id="scorecardTabBtn" class="tab-btn" type="button">Scorecard</button>
         <button id="pickemsTabBtn" class="tab-btn" type="button">Pickems</button>
         <button id="historyTabBtn" class="tab-btn" type="button">History</button>
       </nav>
@@ -802,11 +929,23 @@
           <div id="scoreList" class="score-list"></div>
           <div class="row between" style="margin-top: 12px;">
             <button id="showScorecardBtn" class="primary" type="button">Show scorecard 10s</button>
-            <button id="showAdBtn" class="primary" type="button">Show ad 10s</button>
+            <button id="showAdBtn" class="primary" type="button">Show Taskis ad 10s</button>
+            <button id="showMahamiesAdBtn" class="primary" type="button">Show Mahamies ad 13s</button>
             <button id="showPickemBtn" class="primary" type="button">Show pick'ems 10s</button>
             <button id="showOddsBtn" class="primary" type="button">Show odds 10s</button>
           </div>
           <div id="scoreStatus" class="status"></div>
+        </section>
+      </section>
+
+      <section id="scorecardTab" class="hide">
+        <section class="card">
+          <div class="row between">
+            <h2>Live scorecard</h2>
+            <span id="controlScorecardStatus" class="muted"></span>
+          </div>
+          <div id="controlScorecardSubtitle" class="control-scorecard-subtitle"></div>
+          <div id="controlScorecardWrap" class="control-scorecard-wrap"></div>
         </section>
       </section>
 
@@ -939,15 +1078,20 @@
       setupTabBtn: document.getElementById("setupTabBtn"),
       overlayTabBtn: document.getElementById("overlayTabBtn"),
       scoringTabBtn: document.getElementById("scoringTabBtn"),
+      scorecardTabBtn: document.getElementById("scorecardTabBtn"),
       pickemsTabBtn: document.getElementById("pickemsTabBtn"),
       historyTabBtn: document.getElementById("historyTabBtn"),
       setupTab: document.getElementById("setupTab"),
       overlayTab: document.getElementById("overlayTab"),
       scoringTab: document.getElementById("scoringTab"),
+      scorecardTab: document.getElementById("scorecardTab"),
       pickemsTab: document.getElementById("pickemsTab"),
       historyTab: document.getElementById("historyTab"),
       historyAdminList: document.getElementById("historyAdminList"),
       historyStatus: document.getElementById("historyStatus"),
+      controlScorecardWrap: document.getElementById("controlScorecardWrap"),
+      controlScorecardSubtitle: document.getElementById("controlScorecardSubtitle"),
+      controlScorecardStatus: document.getElementById("controlScorecardStatus"),
       historyCountLabel: document.getElementById("historyCountLabel"),
       eventName: document.getElementById("eventName"),
       holeCount: document.getElementById("holeCount"),
@@ -1081,6 +1225,7 @@
       nextHoleBtn: document.getElementById("nextHoleBtn"),
       showScorecardBtn: document.getElementById("showScorecardBtn"),
       showAdBtn: document.getElementById("showAdBtn"),
+      showMahamiesAdBtn: document.getElementById("showMahamiesAdBtn"),
       showPickemBtn: document.getElementById("showPickemBtn"),
       showOddsBtn: document.getElementById("showOddsBtn"),
       scoreHoleTitle: document.getElementById("scoreHoleTitle"),
@@ -1155,6 +1300,7 @@
     els.setupTabBtn.addEventListener("click", () => setActiveTab("setup"));
     els.overlayTabBtn.addEventListener("click", () => setActiveTab("overlay"));
     els.scoringTabBtn.addEventListener("click", () => setActiveTab("scoring"));
+    els.scorecardTabBtn.addEventListener("click", () => setActiveTab("scorecard"));
     els.pickemsTabBtn.addEventListener("click", () => setActiveTab("pickems"));
     els.historyTabBtn.addEventListener("click", () => setActiveTab("history"));
     els.saveEventBtn.addEventListener("click", saveEventSettings);
@@ -1243,6 +1389,7 @@
     els.nextHoleBtn.addEventListener("click", () => moveScoringHole(1));
     els.showScorecardBtn.addEventListener("click", showScorecardNow);
     els.showAdBtn.addEventListener("click", showAdNow);
+    els.showMahamiesAdBtn.addEventListener("click", showMahamiesAdNow);
     els.showPickemBtn.addEventListener("click", showPickemNow);
     els.showOddsBtn.addEventListener("click", showOddsNow);
     els.addPickemBtn.addEventListener("click", addPickem);
@@ -1328,16 +1475,18 @@
     }
 
     function setActiveTab(tab) {
-      if (isScoringOnlyUser()) tab = "scoring";
+      if (isScoringOnlyUser() && !["scoring", "scorecard"].includes(tab)) tab = "scoring";
       activeTab = tab;
       els.setupTab.classList.toggle("hide", tab !== "setup");
       els.overlayTab.classList.toggle("hide", tab !== "overlay");
       els.scoringTab.classList.toggle("hide", tab !== "scoring");
+      els.scorecardTab.classList.toggle("hide", tab !== "scorecard");
       els.pickemsTab.classList.toggle("hide", tab !== "pickems");
       els.historyTab.classList.toggle("hide", tab !== "history");
       els.setupTabBtn.classList.toggle("active", tab === "setup");
       els.overlayTabBtn.classList.toggle("active", tab === "overlay");
       els.scoringTabBtn.classList.toggle("active", tab === "scoring");
+      els.scorecardTabBtn.classList.toggle("active", tab === "scorecard");
       els.pickemsTabBtn.classList.toggle("active", tab === "pickems");
       els.historyTabBtn.classList.toggle("active", tab === "history");
       applyAccessMode();
@@ -1350,18 +1499,21 @@
 
     function applyAccessMode() {
       const scoringOnly = isScoringOnlyUser();
-      if (scoringOnly && activeTab !== "scoring") activeTab = "scoring";
+      if (scoringOnly && !["scoring", "scorecard"].includes(activeTab)) activeTab = "scoring";
       els.setupTabBtn.classList.toggle("hide", scoringOnly);
       els.overlayTabBtn.classList.toggle("hide", scoringOnly);
       els.pickemsTabBtn.classList.toggle("hide", scoringOnly);
       els.historyTabBtn.classList.toggle("hide", scoringOnly);
-      els.scoringTabBtn.classList.toggle("active", scoringOnly || activeTab === "scoring");
+      els.scorecardTabBtn.classList.remove("hide");
+      els.scoringTabBtn.classList.toggle("active", activeTab === "scoring");
+      els.scorecardTabBtn.classList.toggle("active", activeTab === "scorecard");
       if (scoringOnly) {
         els.setupTab.classList.add("hide");
         els.overlayTab.classList.add("hide");
         els.pickemsTab.classList.add("hide");
         els.historyTab.classList.add("hide");
-        els.scoringTab.classList.remove("hide");
+        els.scoringTab.classList.toggle("hide", activeTab !== "scoring");
+        els.scorecardTab.classList.toggle("hide", activeTab !== "scorecard");
       }
     }
 
@@ -1505,6 +1657,7 @@
       renderTeams(setupTeams);
       renderParGrid(holeCount);
       renderScoring(currentHole, holeCount);
+      renderControlScorecard();
       renderPickems(setupTeams);
       renderPickemScoringRules();
       renderHistoryAdmin();
@@ -1515,6 +1668,7 @@
       els.teams.innerHTML = "";
       els.parGrid.innerHTML = "";
       els.scoreList.innerHTML = `<p class="muted">${escapeHtml(message)}</p>`;
+      if (els.controlScorecardWrap) els.controlScorecardWrap.innerHTML = `<p class="muted">${escapeHtml(message)}</p>`;
       els.pickems.innerHTML = `<p class="muted">${escapeHtml(message)}</p>`;
       if (els.historyAdminList) els.historyAdminList.innerHTML = `<p class="muted">${escapeHtml(message)}</p>`;
       if (els.historyCountLabel) els.historyCountLabel.textContent = "";
@@ -1947,6 +2101,58 @@
     }
 
 
+
+    function renderControlScorecard() {
+      if (!els.controlScorecardWrap || !eventState) return;
+      const holeCount = clampInt(eventState.holeCount || 18, 1, 36);
+      const completedThrough = getCompletedThrough();
+      const standings = getLiveStandings(completedThrough);
+      els.controlScorecardStatus.textContent = completedThrough ? `Through ${completedThrough} hole${completedThrough === 1 ? "" : "s"}` : "Before round";
+      els.controlScorecardSubtitle.textContent = eventState.name || "Peltola Open";
+
+      const headerCells = Array.from({ length: holeCount }, (_, index) => `<th class="hole-cell">${index + 1}</th>`).join("");
+      const parCells = Array.from({ length: holeCount }, (_, index) => `<td class="hole-cell">${getPar(index + 1)}</td>`).join("");
+      const rows = assignControlPositions(standings).map(team => {
+        const holeCells = Array.from({ length: holeCount }, (_, index) => {
+          const hole = index + 1;
+          const holeKey = String(hole);
+          const score = Number(eventState.teams?.[team.id]?.scores?.[holeKey]);
+          const par = getPar(hole);
+          if (!Number.isFinite(score) || score <= 0) return `<td class="hole-cell muted">·</td>`;
+          const relative = score - par;
+          return `<td class="hole-cell ${escapeAttribute(getControlScoreClass(relative))}">${score}</td>`;
+        }).join("");
+        return `
+          <tr>
+            <td class="team-cell">${escapeHtml(team.positionLabel)} - ${escapeHtml(team.name)}</td>
+            ${holeCells}
+            <td class="total-cell">${completedThrough ? formatToPar(team.toPar) : "--"}</td>
+          </tr>
+        `;
+      }).join("");
+      els.controlScorecardWrap.innerHTML = `
+        <table class="control-scorecard-table">
+          <thead><tr><th class="team-cell">Team</th>${headerCells}<th class="total-cell">Total</th></tr></thead>
+          <tbody>
+            <tr><td class="team-cell muted">Par</td>${parCells}<td class="total-cell"></td></tr>
+            ${rows || `<tr><td class="team-cell">Add teams</td><td colspan="${holeCount + 1}"></td></tr>`}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function assignControlPositions(standings) {
+      let previousKey = null;
+      let previousRank = 0;
+      return standings.map((team, index) => {
+        const key = `${team.toPar}|${team.strokes}`;
+        const rank = previousKey !== null && key === previousKey ? previousRank : index + 1;
+        previousKey = key;
+        previousRank = rank;
+        return { ...team, rank, positionLabel: formatOrdinal(rank) };
+      });
+    }
+
     function renderHistoryAdmin() {
       if (!els.historyAdminList || !eventState) return;
       const records = Object.entries(eventState.history || {})
@@ -2147,6 +2353,22 @@
         updatedAt: now
       });
       els.scoreStatus.textContent = "Showing ad for 10 seconds.";
+    }
+
+
+    async function showMahamiesAdNow() {
+      if (!signedIn || !eventState) return;
+      const now = Date.now();
+      await update(eventRef, {
+        overlayFlash: {
+          type: "mahamiesAd",
+          sequence: now,
+          triggeredAt: now,
+          durationMs: 13000
+        },
+        updatedAt: now
+      });
+      els.scoreStatus.textContent = "Showing Mahamies ad for 13 seconds.";
     }
 
     function updatePopupToggleButtons() {
@@ -2856,6 +3078,19 @@
       if (relative === 3) return "score-over-three";
       if (relative >= 4) return "score-over-four";
       return "";
+    }
+
+
+    function formatOrdinal(value) {
+      const v = Math.abs(Number(value));
+      const mod100 = v % 100;
+      if (mod100 >= 11 && mod100 <= 13) return `${v}th`;
+      switch (v % 10) {
+        case 1: return `${v}st`;
+        case 2: return `${v}nd`;
+        case 3: return `${v}rd`;
+        default: return `${v}th`;
+      }
     }
 
     function formatToPar(value) {

@@ -192,7 +192,7 @@
       align-self: stretch;
       width: 30px;
       margin: 0;
-      background: var(--ticker-panel-strong);
+      background: var(--ticker-info-panel);
       border-radius: 0;
       opacity: 1;
     }
@@ -251,6 +251,19 @@
 
     .ticker-logo.logo-rotating img {
       animation: logo-clockwise-spin var(--logo-rotation-duration, 6s) linear infinite;
+    }
+
+    .ticker-logo.logo-morph img {
+      animation-name: logo-clockwise-spin, logo-morph-swap;
+      animation-duration: var(--logo-rotation-duration, 6s), 520ms;
+      animation-timing-function: linear, ease-in-out;
+      animation-iteration-count: infinite, 1;
+    }
+
+    @keyframes logo-morph-swap {
+      0% { opacity: 1; transform: scale(1) rotate(0deg); }
+      45% { opacity: 0.15; transform: scale(0.72) rotate(90deg); }
+      100% { opacity: 1; transform: scale(1) rotate(0deg); }
     }
 
     @keyframes logo-clockwise-spin {
@@ -694,6 +707,82 @@
       }
     }
 
+
+
+    .mahamies-pop {
+      position: absolute;
+      left: var(--ad-center-x, 50%);
+      top: var(--ad-center-y, 50%);
+      width: min(92vw, calc(var(--ad-base-width, min(55vw, 1000px)) * var(--ad-width-factor, 1)));
+      max-height: 92vh;
+      transform: translate(-50%, -50%) scale(var(--ad-show-scale, 1)) scaleY(var(--ad-height-factor, 1));
+      transform-origin: center center;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .mahamies-pop.show {
+      opacity: 1;
+    }
+
+    .mahamies-card {
+      width: 100%;
+      display: grid;
+      justify-items: center;
+      gap: min(1.8vh, 14px);
+    }
+
+    .mahamies-header-img {
+      display: block;
+      width: min(68%, 660px);
+      max-height: 16vh;
+      object-fit: contain;
+    }
+
+    .mahamies-stage {
+      position: relative;
+      width: 100%;
+      display: grid;
+      place-items: center;
+    }
+
+    .mahamies-stage img {
+      grid-area: 1 / 1;
+      width: 100%;
+      max-height: 72vh;
+      object-fit: contain;
+      opacity: 0;
+      animation-duration: 13s;
+      animation-fill-mode: forwards;
+      animation-timing-function: linear;
+    }
+
+    .mahamies-pop.show .mahamies-map-base { animation-name: mahamies-map-base; }
+    .mahamies-pop.show .mahamies-map-arrow { animation-name: mahamies-map-arrow; }
+    .mahamies-pop.show .mahamies-ulkoa { animation-name: mahamies-ulkoa; }
+    .mahamies-pop.show .mahamies-valikoima { animation-name: mahamies-valikoima; }
+
+    @keyframes mahamies-map-base {
+      0%, 2.69%, 5.38%, 8.08%, 10.77%, 13.46%, 16.15%, 18.85%, 21.54%, 24.23%, 26.92%, 29.62%, 32.31%, 35.00%, 37.69% { opacity: 1; }
+      1.35%, 4.04%, 6.73%, 9.42%, 12.12%, 14.81%, 17.50%, 20.19%, 22.88%, 25.58%, 28.27%, 30.96%, 33.65%, 36.35%, 38.46%, 100% { opacity: 0; }
+    }
+
+    @keyframes mahamies-map-arrow {
+      0%, 1.34%, 4.03%, 6.72%, 9.41%, 12.11%, 14.80%, 17.49%, 20.18%, 22.87%, 25.57%, 28.26%, 30.95%, 33.64%, 36.34%, 38.46%, 100% { opacity: 0; }
+      1.35%, 4.04%, 6.73%, 9.42%, 12.12%, 14.81%, 17.50%, 20.19%, 22.88%, 25.58%, 28.27%, 30.96%, 33.65%, 36.35%, 37.69% { opacity: 1; }
+    }
+
+    @keyframes mahamies-ulkoa {
+      0%, 38.45% { opacity: 0; }
+      38.46%, 69.23% { opacity: 1; }
+      69.24%, 100% { opacity: 0; }
+    }
+
+    @keyframes mahamies-valikoima {
+      0%, 69.22% { opacity: 0; }
+      69.23%, 100% { opacity: 1; }
+    }
+
     @media (max-width: 760px) {
       body.debug {
         background: #102018;
@@ -892,7 +981,19 @@
     </section>
 
     <section id="adPop" class="ad-pop hidden" aria-live="polite">
-      <img src="peltola-ad.png" alt="Peltola Open ad" />
+      <img src="peltola-ad.png" alt="Taskis ad" />
+    </section>
+
+    <section id="mahamiesPop" class="mahamies-pop hidden" aria-live="polite">
+      <div class="mahamies-card">
+        <img class="mahamies-header-img" src="mahamies-header.png" alt="Mahamies ad header" />
+        <div class="mahamies-stage">
+          <img class="mahamies-map-base" src="mahamies-map.png" alt="Mahamies map" />
+          <img class="mahamies-map-arrow" src="mahamies-map-arrow.png" alt="Mahamies map with arrow" />
+          <img class="mahamies-ulkoa" src="mahamies-ulkoa.png" alt="Mahamies ulkoa" />
+          <img class="mahamies-valikoima" src="mahamies-valikoima.png" alt="Mahamies valikoima" />
+        </div>
+      </div>
     </section>
   </main>
 
@@ -934,12 +1035,14 @@
     const tickerLogoEl = document.getElementById("tickerLogo");
     const tickerLogoImgEl = document.getElementById("tickerLogoImg");
     const adPopEl = document.getElementById("adPop");
+    const mahamiesPopEl = document.getElementById("mahamiesPop");
 
     let lastFlashSequence = null;
     let scorecardHideTimer = null;
     let oddsHideTimer = null;
     let pickemHideTimer = null;
     let adHideTimer = null;
+    let mahamiesAdHideTimer = null;
     let scorecardPreviewActive = false;
     let oddsPreviewActive = false;
     let pickemPreviewActive = false;
@@ -951,6 +1054,8 @@
     let lastOddsFlashSequence = null;
     let lastPickemFlashSequence = null;
     let lastAdFlashSequence = null;
+    let lastMahamiesAdFlashSequence = null;
+    let lastLogoSrc = "peltola-logo-round.png";
     let clockTimer = null;
     let latestEvent = null;
     let firebaseLoaded = false;
@@ -995,6 +1100,7 @@
       maybeShowOddsFlash(event);
       maybeShowPickemFlash(event);
       maybeShowAdFlash(event);
+      maybeShowMahamiesAdFlash(event);
       updateScorecardPreview(event);
       updateOddsPreview(event);
       updatePickemPreview(event);
@@ -1010,6 +1116,7 @@
       if (!oddsPreviewActive && !oddsFlashActive) oddsPopEl.classList.add("hidden");
       if (!pickemPreviewActive && !pickemFlashActive) pickemPopEl.classList.add("hidden");
       if (!adPreviewActive && !adFlashActive) adPopEl.classList.add("hidden");
+      mahamiesPopEl.classList.add("hidden");
       if (clockTimer) {
         window.clearInterval(clockTimer);
         clockTimer = null;
@@ -1330,6 +1437,23 @@
       showAdPop(durationMs);
     }
 
+
+    function maybeShowMahamiesAdFlash(event) {
+      const flash = event.overlayFlash;
+      if (!flash || flash.type !== "mahamiesAd" || !flash.sequence) return;
+      if (flash.sequence === lastMahamiesAdFlashSequence) return;
+
+      const durationMs = Number(flash.durationMs || 13000);
+      const triggeredAt = Number(flash.triggeredAt || 0);
+      if (triggeredAt && Date.now() - triggeredAt > durationMs + 1500) {
+        lastMahamiesAdFlashSequence = flash.sequence;
+        return;
+      }
+
+      lastMahamiesAdFlashSequence = flash.sequence;
+      showMahamiesAdPop(durationMs);
+    }
+
     function showScorecardPop(durationMs = 10000, persistent = false) {
       window.clearTimeout(scorecardHideTimer);
       scorecardPopEl.classList.remove("hidden");
@@ -1417,6 +1541,20 @@
       }, 720);
     }
 
+
+    function showMahamiesAdPop(durationMs = 13000) {
+      window.clearTimeout(mahamiesAdHideTimer);
+      mahamiesPopEl.classList.remove("hidden");
+      void mahamiesPopEl.offsetWidth;
+      requestAnimationFrame(() => mahamiesPopEl.classList.add("show"));
+      mahamiesAdHideTimer = window.setTimeout(() => hideMahamiesAdPop(), durationMs);
+    }
+
+    function hideMahamiesAdPop() {
+      mahamiesPopEl.classList.remove("show");
+      window.setTimeout(() => mahamiesPopEl.classList.add("hidden"), 320);
+    }
+
     function updateScorecardPreview(event) {
       const previewEnabled = event.showScorecardPreview === true;
       scorecardPreviewActive = previewEnabled;
@@ -1491,7 +1629,15 @@
       const showLogos = latestEvent?.showTickerLogos !== false;
       const second = Number(value.second || 0);
       const showOuluLogo = second >= 30;
-      tickerLogoImgEl.src = showOuluLogo ? "oulu-logo.png" : "peltola-logo-round.png";
+      const nextLogoSrc = showOuluLogo ? "oulu-logo.png" : "peltola-logo-round.png";
+      if (nextLogoSrc !== lastLogoSrc) {
+        tickerLogoEl.classList.remove("logo-morph");
+        void tickerLogoEl.offsetWidth;
+        tickerLogoEl.classList.add("logo-morph");
+        window.setTimeout(() => tickerLogoEl.classList.remove("logo-morph"), 560);
+        lastLogoSrc = nextLogoSrc;
+      }
+      tickerLogoImgEl.src = nextLogoSrc;
       tickerLogoImgEl.alt = showOuluLogo ? "Oulu 2026 logo" : "Peltola Open logo";
       helsinkiClockEl.textContent = `${value.hour}:${value.minute}:${value.second}`;
       helsinkiClockEl.classList.toggle("hidden", !showClock);
