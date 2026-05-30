@@ -253,19 +253,6 @@
       animation: logo-clockwise-spin var(--logo-rotation-duration, 6s) linear infinite;
     }
 
-    .ticker-logo.logo-morph img {
-      animation-name: logo-clockwise-spin, logo-morph-swap;
-      animation-duration: var(--logo-rotation-duration, 6s), 520ms;
-      animation-timing-function: linear, ease-in-out;
-      animation-iteration-count: infinite, 1;
-    }
-
-    @keyframes logo-morph-swap {
-      0% { opacity: 1; transform: scale(1) rotate(0deg); }
-      45% { opacity: 0.15; transform: scale(0.72) rotate(90deg); }
-      100% { opacity: 1; transform: scale(1) rotate(0deg); }
-    }
-
     @keyframes logo-clockwise-spin {
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
@@ -754,7 +741,7 @@
       opacity: 0;
       animation-duration: 13s;
       animation-fill-mode: forwards;
-      animation-timing-function: linear;
+      animation-timing-function: step-end;
     }
 
     .mahamies-pop.show .mahamies-map-base { animation-name: mahamies-map-base; }
@@ -1631,10 +1618,6 @@
       const showOuluLogo = second >= 30;
       const nextLogoSrc = showOuluLogo ? "oulu-logo.png" : "peltola-logo-round.png";
       if (nextLogoSrc !== lastLogoSrc) {
-        tickerLogoEl.classList.remove("logo-morph");
-        void tickerLogoEl.offsetWidth;
-        tickerLogoEl.classList.add("logo-morph");
-        window.setTimeout(() => tickerLogoEl.classList.remove("logo-morph"), 560);
         lastLogoSrc = nextLogoSrc;
       }
       tickerLogoImgEl.src = nextLogoSrc;

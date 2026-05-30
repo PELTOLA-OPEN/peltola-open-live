@@ -23,7 +23,7 @@
     .ticker-info { display:grid; place-items:center; min-width:clamp(104px, 18vh, 150px); padding:0 12px; border-right:1px solid var(--line); background:var(--info-panel); font-size:calc(clamp(11px, 2.2vh, 15px) * var(--overlay-page-scale) * var(--ticker-font-scale, 1)); font-weight:950; letter-spacing:.06em; text-align:center; text-transform:uppercase; white-space:nowrap; }
     .helsinki-clock { position:absolute; left:0; bottom:calc(var(--ticker-height) + 8px); min-width:clamp(104px, 18vh, 150px); padding:8px 12px; border-radius:12px; background:var(--panel); color:var(--text); font-size:calc(clamp(12px, 2.4vh, 17px) * var(--overlay-page-scale) * var(--ticker-font-scale, 1)); font-weight:950; letter-spacing:.06em; line-height:1; text-align:center; white-space:nowrap; }
     .ticker-logo { position:absolute; left:calc(var(--logo-base-offset-x, 132px) + var(--logo-offset-x, 0px)); bottom:calc(var(--ticker-height) + 8px + var(--logo-offset-y, 0px)); width:var(--ticker-logo-size); height:var(--ticker-logo-size); display:grid; place-items:center; }
-    .ticker-logo img { display:block; width:100%; height:100%; object-fit:contain; filter:none; } .ticker-logo.logo-rotating img { animation: logo-clockwise-spin var(--logo-rotation-duration, 6s) linear infinite; } .ticker-logo.logo-morph img { animation-name: logo-clockwise-spin, logo-morph-swap; animation-duration: var(--logo-rotation-duration, 6s), 520ms; animation-timing-function: linear, ease-in-out; animation-iteration-count: infinite, 1; } @keyframes logo-morph-swap { 0% { opacity:1; transform:scale(1) rotate(0deg); } 45% { opacity:0.15; transform:scale(0.72) rotate(90deg); } 100% { opacity:1; transform:scale(1) rotate(0deg); } } @keyframes logo-clockwise-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .ticker-logo img { display:block; width:100%; height:100%; object-fit:contain; filter:none; } .ticker-logo.logo-rotating img { animation: logo-clockwise-spin var(--logo-rotation-duration, 6s) linear infinite; } @keyframes logo-clockwise-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     @keyframes ticker-scroll { from { transform:translateX(0); } to { transform:translateX(-50%); } }
   </style>
 </head>
@@ -293,10 +293,6 @@
       const showOuluLogo = second >= 30;
       const nextLogoSrc = showOuluLogo ? "oulu-logo.png" : "peltola-logo-round.png";
       if (nextLogoSrc !== lastLogoSrc) {
-        tickerLogoEl.classList.remove("logo-morph");
-        void tickerLogoEl.offsetWidth;
-        tickerLogoEl.classList.add("logo-morph");
-        window.setTimeout(() => tickerLogoEl.classList.remove("logo-morph"), 560);
         lastLogoSrc = nextLogoSrc;
       }
       tickerLogoImgEl.src = nextLogoSrc;
