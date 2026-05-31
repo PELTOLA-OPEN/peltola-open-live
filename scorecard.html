@@ -371,16 +371,21 @@
     }
 
     .odds-wrap > .table-wrap {
-      width: 100%;
-      max-width: 100%;
+      width: 50%;
+      max-width: 50%;
       overflow-x: hidden;
+    }
+
+    .odds-wrap .odds-note {
+      width: 50%;
+      max-width: 50%;
     }
 
 
     .odds-wrap {
       display: grid;
       gap: 12px;
-      width: min(520px, calc(100vw - 72px));
+      width: min(960px, calc(100vw - 72px));
       max-width: 100%;
     }
 
@@ -593,6 +598,11 @@
       }
 
       .odds-wrap { width: 100%; }
+      .odds-wrap > .table-wrap,
+      .odds-wrap .odds-note {
+        width: 100%;
+        max-width: 100%;
+      }
       .odds-table th,
       .odds-table td {
         height: 30px;

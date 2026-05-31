@@ -66,6 +66,32 @@
 
     .between { justify-content: space-between; }
 
+    .scoring-action-box {
+      margin-top: 12px;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .scoring-action-row {
+      display: grid;
+      gap: 8px;
+      align-items: stretch;
+    }
+
+    .scoring-action-row.overlay-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .scoring-action-row.ad-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+    .scoring-action-row button {
+      width: 100%;
+      min-width: 0;
+      padding-left: 7px;
+      padding-right: 7px;
+      font-size: clamp(10px, 2.1vw, 14px);
+      line-height: 1.08;
+    }
+
     label {
       display: grid;
       gap: 6px;
@@ -502,6 +528,13 @@
       }
       .total-score { grid-column: 2 / -1; }
       .hole-nav { grid-template-columns: 52px 1fr 52px; }
+      .scoring-action-box { padding: 8px; border-radius: 14px; }
+      .scoring-action-row { gap: 6px; }
+      .scoring-action-row button {
+        min-height: 40px;
+        padding: 7px 4px;
+        font-size: 10px;
+      }
     }
   </style>
 </head>
@@ -927,12 +960,18 @@
             <button id="nextHoleBtn" type="button">→</button>
           </div>
           <div id="scoreList" class="score-list"></div>
-          <div class="row between" style="margin-top: 12px;">
-            <button id="showScorecardBtn" class="primary" type="button">Show scorecard 10s</button>
-            <button id="showAdBtn" class="primary" type="button">Show Taskis ad 10s</button>
-            <button id="showMahamiesAdBtn" class="primary" type="button">Show Mahamies ad 14s</button>
-            <button id="showPickemBtn" class="primary" type="button">Show pick'ems 10s</button>
-            <button id="showOddsBtn" class="primary" type="button">Show odds 10s</button>
+          <div class="scoring-action-box">
+            <div class="scoring-action-row overlay-row">
+              <button id="showScorecardBtn" class="primary" type="button">Show scorecard 10s</button>
+              <button id="showPickemBtn" class="primary" type="button">Show pick'ems 10s</button>
+              <button id="showOddsBtn" class="primary" type="button">Show odds 10s</button>
+            </div>
+          </div>
+          <div class="scoring-action-box">
+            <div class="scoring-action-row ad-row">
+              <button id="showAdBtn" class="primary" type="button">Show Taskis ad 10s</button>
+              <button id="showMahamiesAdBtn" class="primary" type="button">Show Mahamies ad 14s</button>
+            </div>
           </div>
           <div id="scoreStatus" class="status"></div>
         </section>
