@@ -456,6 +456,51 @@
       .pickem-picks { grid-template-columns: 1fr; }
     }
 
+
+
+    .control-scorecard-table .team-cell {
+      position: sticky;
+      left: 0;
+      z-index: 3;
+      background: var(--panel-2);
+    }
+
+    .control-scorecard-table thead .team-cell {
+      z-index: 5;
+      background: #232c36;
+    }
+
+    .control-scorecard-table .total-cell {
+      position: sticky;
+      right: 0;
+      z-index: 3;
+      background: var(--panel-2);
+    }
+
+    .control-scorecard-table thead .total-cell {
+      z-index: 5;
+      background: #232c36;
+    }
+
+    @media (max-width: 760px) {
+      .control-scorecard-table .team-cell {
+        min-width: 132px;
+        max-width: 132px;
+        width: 132px;
+      }
+
+      .control-scorecard-table .hole-cell {
+        width: 30px;
+        min-width: 30px;
+      }
+
+      .control-scorecard-table .total-cell {
+        width: 50px;
+        min-width: 50px;
+      }
+    }
+
+
     .hide { display: none !important; }
 
 
@@ -985,6 +1030,19 @@
           </div>
           <div id="controlScorecardSubtitle" class="control-scorecard-subtitle"></div>
           <div id="controlScorecardWrap" class="control-scorecard-wrap"></div>
+          <div class="scoring-action-box">
+            <div class="scoring-action-row overlay-row">
+              <button id="showScorecardBtnScorecardTab" class="primary" type="button">Show scorecard 10s</button>
+              <button id="showPickemBtnScorecardTab" class="primary" type="button">Show pick'ems 10s</button>
+              <button id="showOddsBtnScorecardTab" class="primary" type="button">Show odds 10s</button>
+            </div>
+          </div>
+          <div class="scoring-action-box">
+            <div class="scoring-action-row ad-row">
+              <button id="showAdBtnScorecardTab" class="primary" type="button">Show Taskis ad 10s</button>
+              <button id="showMahamiesAdBtnScorecardTab" class="primary" type="button">Show Mahamies ad 14s</button>
+            </div>
+          </div>
         </section>
       </section>
 
@@ -1263,10 +1321,15 @@
       prevHoleBtn: document.getElementById("prevHoleBtn"),
       nextHoleBtn: document.getElementById("nextHoleBtn"),
       showScorecardBtn: document.getElementById("showScorecardBtn"),
+      showScorecardBtnScorecardTab: document.getElementById("showScorecardBtnScorecardTab"),
       showAdBtn: document.getElementById("showAdBtn"),
+      showAdBtnScorecardTab: document.getElementById("showAdBtnScorecardTab"),
       showMahamiesAdBtn: document.getElementById("showMahamiesAdBtn"),
+      showMahamiesAdBtnScorecardTab: document.getElementById("showMahamiesAdBtnScorecardTab"),
       showPickemBtn: document.getElementById("showPickemBtn"),
+      showPickemBtnScorecardTab: document.getElementById("showPickemBtnScorecardTab"),
       showOddsBtn: document.getElementById("showOddsBtn"),
+      showOddsBtnScorecardTab: document.getElementById("showOddsBtnScorecardTab"),
       scoreHoleTitle: document.getElementById("scoreHoleTitle"),
       scoreHoleSub: document.getElementById("scoreHoleSub"),
       scoreList: document.getElementById("scoreList"),
@@ -1427,10 +1490,15 @@
     els.prevHoleBtn.addEventListener("click", () => moveScoringHole(-1));
     els.nextHoleBtn.addEventListener("click", () => moveScoringHole(1));
     els.showScorecardBtn.addEventListener("click", showScorecardNow);
+    els.showScorecardBtnScorecardTab.addEventListener("click", showScorecardNow);
     els.showAdBtn.addEventListener("click", showAdNow);
+    els.showAdBtnScorecardTab.addEventListener("click", showAdNow);
     els.showMahamiesAdBtn.addEventListener("click", showMahamiesAdNow);
+    els.showMahamiesAdBtnScorecardTab.addEventListener("click", showMahamiesAdNow);
     els.showPickemBtn.addEventListener("click", showPickemNow);
+    els.showPickemBtnScorecardTab.addEventListener("click", showPickemNow);
     els.showOddsBtn.addEventListener("click", showOddsNow);
+    els.showOddsBtnScorecardTab.addEventListener("click", showOddsNow);
     els.addPickemBtn.addEventListener("click", addPickem);
     els.savePickemScoringRulesBtn.addEventListener("click", savePickemScoringRules);
 
