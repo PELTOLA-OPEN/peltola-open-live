@@ -466,12 +466,29 @@
     .history-entry {
       display: grid;
       gap: 10px;
-      width: max-content;
+      width: 100%;
       max-width: 100%;
+      min-width: 0;
       padding: 12px;
       border: 1px solid var(--line);
       border-radius: 14px;
       background: rgba(0, 0, 0, 0.28);
+      overflow: hidden;
+    }
+
+    .history-entry > .table-wrap {
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-x: contain;
+    }
+
+    .history-entry > .table-wrap > table {
+      width: max-content;
+      min-width: max-content;
     }
 
     .history-entry-title {
@@ -613,6 +630,38 @@
         width: 76px;
       }
       .pickem-detail-spacer { height: 104px; }
+
+      .history-wrap {
+        width: 100%;
+        min-width: 0;
+      }
+
+      .history-entry {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        padding: 10px;
+      }
+
+      .history-entry-title {
+        min-width: 0;
+        gap: 10px;
+      }
+
+      .history-entry-title > span:first-child {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .history-entry > .table-wrap {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+        touch-action: pan-x pan-y;
+      }
     }
   </style>
 </head>
